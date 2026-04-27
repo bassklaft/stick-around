@@ -1,0 +1,28 @@
+// Foods toxic or dangerous to pets. Severity: severe = ER visit,
+// moderate = vet call, mild = monitor + plenty of water.
+// Sources: ASPCA Animal Poison Control + AVMA + Merck Vet Manual.
+export const toxicFoods = [
+  { name: "Chocolate",            species: ["dog","cat"], severity: "severe",   note: "Theobromine + caffeine. Dark and baking chocolate are most toxic." },
+  { name: "Xylitol (sugar-free gum, candy, peanut butter)", species: ["dog"], severity: "severe", note: "Causes rapid hypoglycemia + liver failure. Tiny doses are lethal." },
+  { name: "Grapes & raisins",     species: ["dog"],       severity: "severe",   note: "Idiosyncratic acute kidney injury — no safe dose established." },
+  { name: "Onions, garlic, leeks, chives", species: ["dog","cat"], severity: "moderate", note: "Cooked or raw. Causes hemolytic anemia. Cats are 2x more sensitive than dogs." },
+  { name: "Macadamia nuts",       species: ["dog"],       severity: "moderate", note: "Weakness, vomiting, hyperthermia within 12h." },
+  { name: "Avocado (pit + skin)", species: ["dog","cat"], severity: "mild",     note: "Persin in skin/pit; flesh is generally OK in small amounts. Pit is choking hazard." },
+  { name: "Alcohol",              species: ["dog","cat"], severity: "severe",   note: "All forms — beer, wine, raw bread dough that ferments in the stomach." },
+  { name: "Caffeine (coffee, tea, energy drinks)", species: ["dog","cat"], severity: "severe", note: "Hyperactivity, racing heart, seizures." },
+  { name: "Raw bread dough",      species: ["dog","cat"], severity: "severe",   note: "Ferments in stomach producing alcohol + gas. Surgical emergency." },
+  { name: "Cooked bones",         species: ["dog","cat"], severity: "moderate", note: "Splinter and perforate the GI tract." },
+  { name: "Salt (large amounts)", species: ["dog","cat"], severity: "moderate", note: "Salt poisoning from playdough, ice melts, sea water." },
+  { name: "Fatty foods (bacon, drippings, butter)", species: ["dog","cat"], severity: "moderate", note: "Can trigger pancreatitis, especially in small breeds." },
+  { name: "Macadamia nut + chocolate combo", species: ["dog"], severity: "severe", note: "Compounded toxicity from both ingredients." },
+  { name: "Yeast dough",          species: ["dog","cat"], severity: "severe",   note: "Same risk as raw bread dough." },
+  { name: "Raw fish (regularly)", species: ["dog","cat"], severity: "moderate", note: "Thiamine deficiency over time. Salmon = potentially fatal flukes." },
+  { name: "Milk + dairy",         species: ["dog","cat"], severity: "mild",     note: "Most adults are lactose intolerant. GI upset." },
+  { name: "Raw potato",           species: ["dog","cat"], severity: "moderate", note: "Solanine in green/raw potatoes." },
+  { name: "Mushrooms (wild)",     species: ["dog","cat"], severity: "severe",   note: "Several species are lethal. Treat all wild mushroom ingestion as ER." },
+  { name: "Tomato leaves + stems",species: ["dog","cat"], severity: "mild",     note: "Solanine. Ripe tomato flesh is generally OK." },
+  { name: "Marijuana (any form)", species: ["dog","cat"], severity: "moderate", note: "THC toxicity. Edibles often combine with chocolate or xylitol." },
+  { name: "Ibuprofen / Tylenol",  species: ["dog","cat"], severity: "severe",   note: "Especially fatal to cats. Never give human OTC pain meds." },
+  { name: "Coconut oil (large amounts)", species: ["dog","cat"], severity: "mild", note: "Pancreatitis risk if overdone. Small amounts OK." },
+  { name: "Citrus oils + peels (concentrated)", species: ["dog","cat"], severity: "mild", note: "Mostly an issue in essential-oil form. Fruit flesh generally OK in small amounts." },
+];

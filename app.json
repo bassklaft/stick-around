@@ -1,0 +1,34 @@
+{
+  "expo": {
+    "name": "Stick Around",
+    "slug": "pawrent",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#FFF8F0"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bassklaft.pawrent",
+      "infoPlist": {
+        "NSPhotoLibraryUsageDescription": "Stick Around needs access to your photos so you can pick a profile picture for your pet.",
+        "NSCameraUsageDescription": "Stick Around uses your camera so you can take a profile picture of your pet.",
+        "NSLocationWhenInUseUsageDescription": "Stick Around uses your location to flag local risks for your pet — pavement temperature warnings, known contamination sites near you, and regional concerns like tick zones or wildlife. Location is used in the moment and never stored."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#FFF8F0"
+      },
+      "package": "com.bassklaft.pawrent"
+    },
+    "web": {
+      "favicon": "./assets/icon.png"
+    }
+  }
+}
