@@ -73,6 +73,33 @@ This document is the canonical record of every feature removed or changed for v1
   - Real per-breed photographs (currently breed-specific emojis where available)
   - Soil/puddle contaminants by user location (geolocation + EPA water-quality data + backend)
 
+(h) **Rename "Your Pets" → "My Pets" throughout the app.** Affects:
+
+  - Tab label (`App.js`, `Tabs.Screen` for `name="YourPets"` — keep the route name as `YourPets` to avoid breaking AsyncStorage / navigation history; only change `tabBarLabel` and `title`)
+  - `YourPetsScreen` header title
+  - HomeScreen "Your Pets" card title (line ~50 in `cards` array, key: `"pets"`)
+  - HomeScreen tip-card "See all N tips" navigation target — text only ("See all tips for {breed}") unaffected, but verify
+  - Any user-facing copy in onboarding or alerts that says "Your Pets"
+  - The screen file can stay as `YourPetsScreen.js` (filename = component name = stable)
+
+(i) **Confirm "My Pets" doesn't conflict with any in-app navigation or screen identifier.** When (h) lands:
+
+  - Search for any string `"My Pets"` already in the codebase before adding (none currently)
+  - Confirm no AsyncStorage key uses `myPets` / `my_pets`
+  - Confirm tab `initialRouteName` still resolves (Home is the initial — unaffected)
+  - Test deep-link reset / multi-pet add flow doesn't break
+
+(j) **Generate updated screenshots after the "My Pets" rename for the v1.0.1 minor update.** Required screenshots for App Store Connect (6.7" + 6.1" + 5.5" iPhone displays):
+
+  - Home hub (with photo hero + emergency card)
+  - My Pets (renamed) with breed insider tips
+  - Checklist with progress bar
+  - Toxic foods/plants reference
+  - Risk Map with location-aware hazards
+  - Emergency Resources screen
+
+  Use a real Chow Chow profile (or whatever the demo pet is) so the screenshots feel populated, not empty. Tool: iPhone Simulator → Xcode → Window → Devices and Simulators → screenshot via ⌘S, or `xcrun simctl io <device> screenshot`. Each screenshot needs the time set to 9:41 (Apple's convention) — there's a simctl flag for that.
+
 ---
 
 ## DELETED FILE 1: `src/screens/PremiumScreen.js`
