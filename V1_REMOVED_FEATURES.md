@@ -1,0 +1,477 @@
+# Stick Around — v1.1 Backlog: Features Stripped for v1.0 App Store Submission
+
+**Date stripped:** 2026-04-27
+**Pre-strip git commit:** `56444e1` — `v1.0-pre-strip-FULL-BACKUP - all features intact, before App Store prep`
+**Pre-strip zip backup:** `~/Downloads/stickaround_v1_pre_strip_BACKUP_20260427_1622.zip`
+
+This document is the canonical record of every feature removed or changed for v1.0 Apple App Store submission. The original code is preserved verbatim below so it can be restored exactly in v1.1.
+
+**Restore strategy when re-adding features:** `git checkout 56444e1 -- <path>` will restore any individual file to its pre-strip state. Or unzip the backup zip into a sibling directory and copy files individually.
+
+---
+
+## v1.1 BACKLOG
+
+(a) **Premium subscription system** — wire up via RevenueCat. The PremiumScreen UI below is ready to drop back in once StoreKit products are configured in App Store Connect. RevenueCat SDK (`react-native-purchases`) handles the iOS + Android wrapping.
+
+(b) **KNOWN BUG (carried into v1.1):** The MONTHLY subscription button in the Premium price-row is non-clickable. Only the ANNUAL card has the active styling and tap handler. When wiring RevenueCat, fix by giving both `priceCard` views their own `TouchableOpacity` wrapper with distinct `onPress` handlers calling the right SKU.
+
+(c) **Multi-pet onboarding flow** — fully surface. The storage layer (`src/lib/storage.js` → `Pets`) already supports multi-pet via the v2 array. Currently `YourPetsScreen` shows a "Add another pet" button that's been replaced for v1.0 with a disabled "Coming soon" state. v1.1 should: (1) launch a fresh `OnboardingScreen` flow when tapped, (2) on `finish()`, call `Pets.add()` instead of `Pets.set()`, (3) sort the YourPets list by age (oldest-first — already implemented in `Pets.listSortedOldestFirst()`).
+
+(d) **CPR content** — add back ONLY after a signed vet partnership. The full `EmergencyScreen` with chest-type-specific CPR is preserved below. Restoring requires a documented review by a licensed DVM and updated wording that reflects the real partnership (no "we're partnering" intent language unless it's actually true at restore time).
+
+(e) **BREED CONTENT EXPANSION** — expand `origin`, `originStory`, and `references` fields for ALL 51 breeds (33 dogs + 18 cats) in `src/data/breeds.js`. Currently only Chow Chow, French Bulldog, Bulldog, and Boston Terrier have rich origin data. Source from publicly available info on:
+
+  - AKC.org breed standards (rewrite, do NOT scrape)
+  - ASPCA general breed pages
+  - Cornell Feline Health Center
+  - VCA Hospitals breed articles
+  - Merck Veterinary Manual
+
+  Priority: less common / underrepresented breeds first — the product thesis is helping owners of breeds where info is hard to find. Specifically:
+
+  - Cane Corso
+  - Bernese Mountain Dog
+  - Cavalier King Charles Spaniel
+  - Doberman Pinscher
+  - Burmese
+  - Sphynx
+  - Scottish Fold
+  - Bengal
+  - Norwegian Forest Cat
+  - Devon Rex
+  - Abyssinian
+  - Brittany
+  - English Springer Spaniel
+  - Cocker Spaniel
+  - Miniature Schnauzer
+  - Pomeranian
+  - Havanese
+  - Shih Tzu
+  - Pembroke Welsh Corgi
+  - Australian Shepherd
+  - German Shorthaired Pointer
+
+  All content rewritten in original plain language. No AI-generated content from training data; reword from public sources.
+
+(f) **Wording changes to revisit if vet partnership signed:**
+
+  - EmergencyScreen "We're partnering with veterinarians" — currently aspirational; can be made literal if a real partnership exists.
+  - rulesOfThumb.js "vet-approved solution" → softened in v1.0 to "veterinary cleaning solution" or similar; restore stronger language with real endorser citation.
+  - "Vet-reviewed, certified" comment in emergencyProtocols.js — restore if real review happens.
+
+(g) **Other deferred items:**
+
+  - iOS Home Screen + Lock Screen widgets (Swift via Expo config plugin + App Groups data sharing)
+  - Observation log UI (`Observations` storage helper exists but no screen)
+  - DNA file upload from Embark/Wisdom Panel/Basepaws (currently text-paste only; needs per-vendor PDF/JSON parsers + a backend)
+  - Cloud sync across devices
+  - AI chat / symptom triage
+  - Live data: dog-bite stats, real-time tick density, reactive-dog locations
+  - Lottie/SVG animations on checklist + emergency walkthroughs
+  - "Stick Around written on the actual checkmark" in the logo — currently the wordmark sits beside the paw+check; the user wanted text inside the check, but the check is too small to fit legible text. Revisit with a designer.
+  - Real per-breed photographs (currently breed-specific emojis where available)
+  - Soil/puddle contaminants by user location (geolocation + EPA water-quality data + backend)
+
+---
+
+## DELETED FILE 1: `src/screens/PremiumScreen.js`
+
+This was the entire Premium upsell screen. Reason for deletion: contained "Start 7-day free trial" CTA that triggered an `Alert.alert("Coming soon", ...)` — guaranteed Apple Guideline 2.1 rejection (placeholder content). MONTHLY card was visually styled but non-clickable (known bug, see backlog item b).
+
+**Original full contents:**
+
+```jsx
+// Premium upsell — currently informational only. iOS subscriptions go
+// through Apple StoreKit (managed via RevenueCat in production); the
+// SDK + product setup land in v2 per the PRD timeline.
+import React from "react";
+import { View, Text, ScrollView, TouchableOpacity, Alert, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { theme } from "../theme";
+
+const FREE = [
+  "1 pet profile",
+  "Generic weekly checklist",
+  "Toxic foods + plants reference",
+  "Recalls feed",
+  "Vets Near Me search",
+  "Your photo on the home screen",
+];
+
+const PREMIUM = [
+  "Full breed-personalized + age + season checklist (10-15 items)",
+  "Full insider-tips library for your breed",
+  "Diet & care library (supplements, joint chews, grooming, treats)",
+  "Trip planning + training guides",
+  "Multi-pet (households with more than one)",
+  "Observation log + export-to-text for vet visits",
+  "iOS Home Screen + Lock Screen widgets",
+  "Future: cloud sync across devices",
+];
+
+export default function PremiumScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
+
+  function comingSoon() {
+    Alert.alert(
+      "Coming soon",
+      "Premium subscriptions launch with v1.1. Apple App Store handles billing through your iCloud account — same way you'd subscribe to Apple Music or any other app. Free trial on annual.",
+      [{ text: "OK" }]
+    );
+  }
+
+  return (
+    <ScrollView style={{ backgroundColor: theme.bg }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 60 }}>
+      <View style={s.hero}>
+        <View style={s.heroIcon}>
+          <MaterialCommunityIcons name="star-circle" size={42} color={theme.accent} />
+        </View>
+        <Text style={s.heroTitle}>Premium</Text>
+        <Text style={s.heroSub}>Add a few good years to the life you're already giving them.</Text>
+      </View>
+
+      <View style={s.priceRow}>
+        <View style={[s.priceCard, s.priceCardActive]}>
+          <Text style={s.priceLabel}>ANNUAL</Text>
+          <Text style={s.priceAmt}>$39<Text style={s.priceUnit}>/yr</Text></Text>
+          <Text style={s.priceMeta}>$3.25/mo · 7-day free trial</Text>
+          <View style={s.bestBadge}><Text style={s.bestBadgeText}>SAVE 35%</Text></View>
+        </View>
+        <View style={s.priceCard}>
+          <Text style={s.priceLabel}>MONTHLY</Text>
+          <Text style={s.priceAmt}>$4.99<Text style={s.priceUnit}>/mo</Text></Text>
+          <Text style={s.priceMeta}>Cancel anytime</Text>
+        </View>
+      </View>
+
+      <Text style={s.sectionHd}>WHAT YOU GET</Text>
+      <View style={s.list}>
+        {PREMIUM.map((p, i) => (
+          <View key={i} style={s.row}>
+            <MaterialCommunityIcons name="check-circle" size={18} color={theme.accent} />
+            <Text style={s.rowText}>{p}</Text>
+          </View>
+        ))}
+      </View>
+
+      <Text style={s.sectionHd}>FREE TIER</Text>
+      <View style={s.list}>
+        {FREE.map((p, i) => (
+          <View key={i} style={s.row}>
+            <MaterialCommunityIcons name="check" size={18} color={theme.muted} />
+            <Text style={[s.rowText, { color: theme.muted }]}>{p}</Text>
+          </View>
+        ))}
+      </View>
+
+      <TouchableOpacity onPress={comingSoon} style={s.cta}>
+        <Text style={s.ctaText}>Start 7-day free trial</Text>
+        <Text style={s.ctaSubText}>Then $39/yr · cancel anytime in iPhone Settings</Text>
+      </TouchableOpacity>
+
+      <View style={s.fineprint}>
+        <Text style={s.fineText}>
+          Subscriptions are processed by Apple. Your subscription auto-renews unless canceled at least 24 hours before the end of the current period. Manage or cancel in Settings → Apple ID → Subscriptions.
+        </Text>
+        <Text style={[s.fineText, { marginTop: 8 }]}>
+          Stick Around guidance is sourced from public veterinary references. It is not a substitute for veterinary advice.
+        </Text>
+      </View>
+    </ScrollView>
+  );
+}
+
+const s = StyleSheet.create({
+  hero:         { alignItems: "center", paddingVertical: 18, paddingBottom: 4 },
+  heroIcon:     { width: 76, height: 76, borderRadius: 38, backgroundColor: theme.accentSoft, alignItems: "center", justifyContent: "center", marginBottom: 12 },
+  heroTitle:    { fontSize: 28, fontWeight: "800", color: theme.fg, letterSpacing: -0.5 },
+  heroSub:      { fontSize: 14, color: theme.muted, marginTop: 4, textAlign: "center", paddingHorizontal: 24, lineHeight: 20 },
+  priceRow:     { flexDirection: "row", gap: 10, marginTop: 18, marginBottom: 8 },
+  priceCard:    { flex: 1, padding: 16, backgroundColor: theme.card, borderRadius: 14, borderWidth: 1, borderColor: theme.line, alignItems: "center" },
+  priceCardActive:{ borderColor: theme.accent, borderWidth: 2 },
+  priceLabel:   { fontSize: 10, fontWeight: "800", color: theme.muted, letterSpacing: 1.2 },
+  priceAmt:     { fontSize: 26, fontWeight: "800", color: theme.fg, marginTop: 6 },
+  priceUnit:    { fontSize: 13, fontWeight: "600", color: theme.muted },
+  priceMeta:    { fontSize: 11, color: theme.muted, marginTop: 4, textAlign: "center" },
+  bestBadge:    { position: "absolute", top: -10, right: -8, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  bestBadgeText:{ color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
+  sectionHd:    { marginTop: 18, marginBottom: 10, fontSize: 11, fontWeight: "700", color: theme.muted, letterSpacing: 1.2 },
+  list:         { backgroundColor: theme.card, borderRadius: 12, borderWidth: 1, borderColor: theme.line, padding: 14, gap: 10 },
+  row:          { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  rowText:      { flex: 1, fontSize: 13, color: theme.fg, lineHeight: 19 },
+  cta:          { marginTop: 22, backgroundColor: theme.accent, paddingVertical: 16, borderRadius: 12, alignItems: "center" },
+  ctaText:      { color: "#fff", fontSize: 16, fontWeight: "800", letterSpacing: 0.4 },
+  ctaSubText:   { color: "rgba(255,255,255,0.85)", fontSize: 11, marginTop: 4, letterSpacing: 0.3 },
+  fineprint:    { marginTop: 24 },
+  fineText:     { fontSize: 11, color: theme.muted, lineHeight: 17 },
+});
+```
+
+---
+
+## REPLACED FILE 2: `src/screens/EmergencyScreen.js` (CPR content stripped)
+
+**Reason for replacement:** The original screen contained step-by-step Pet CPR instructions (chest-type-specific hand placement, depth, rate, ratio). Apple medical-instruction review for pet apps is strict; without a signed licensed DVM as content reviewer, this is high rejection risk. The toxic-ingestion section is preserved because it's structured around "call poison control first, do NOT induce vomiting, here's what to bring to the ER" — that's defensible as resource pointing.
+
+**v1.0 replacement** is a resources-only screen: poison hotlines, Maps deep-link for nearby emergency vets + AAHA-accredited hospital lookup, Red Cross Pet First Aid course link, plus the toxic-ingestion protocol unchanged.
+
+**Original full contents** (the version with CPR + vet-partnership language):
+
+```jsx
+// Emergency — CPR + Toxic Ingestion protocols. Reference material only.
+// Heavy disclaimers: every screen leads with "CALL THE VET FIRST" and
+// links to certified video resources from Red Cross / AVMA / Cornell /
+// ASPCA. v1 ships text + emoji walkthroughs; Lottie animations are a
+// v2 art investment.
+import React, { useState } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Linking, StyleSheet } from "react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { theme } from "../theme";
+import {
+  POISON_HOTLINES, CPR_BY_CHESTTYPE, CPR_STEPS,
+  TOXIC_INGESTION_PROTOCOL, CERTIFIED_VIDEOS,
+} from "../data/emergencyProtocols";
+
+export default function EmergencyScreen() {
+  const insets = useSafeAreaInsets();
+  const [tab, setTab] = useState("toxic");
+  const [chest, setChest] = useState("small");
+
+  return (
+    <ScrollView
+      style={{ backgroundColor: theme.bg }}
+      contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 60 }}
+    >
+      {/* Top alarm — call vet first */}
+      <View style={s.alarm}>
+        <Text style={s.alarmHd}>⚠ READ THIS FIRST</Text>
+        <Text style={s.alarmBody}>
+          If something is happening RIGHT NOW, call your vet or poison control before doing anything else. The protocols below are reference, not real-time triage. Wrong action causes more deaths than the original incident.
+        </Text>
+        {POISON_HOTLINES.map((h, i) => (
+          <TouchableOpacity key={i} onPress={() => Linking.openURL(`tel:${h.phone}`)} style={s.callBtn}>
+            <MaterialCommunityIcons name="phone" size={18} color="#fff" style={{ marginRight: 8 }} />
+            <Text style={s.callBtnText}>{h.name}: {h.display}</Text>
+          </TouchableOpacity>
+        ))}
+        <Text style={s.alarmFee}>Both poison-control lines charge $85–95 per consult. Worth every dollar.</Text>
+      </View>
+
+      {/* Vet-partnership trust note */}
+      <View style={s.partnerCard}>
+        <MaterialCommunityIcons name="stethoscope" size={22} color={theme.accent} />
+        <Text style={s.partnerText}>
+          <Text style={{ fontWeight: "800" }}>We're partnering with veterinarians.</Text>{" "}
+          Stick Around is bringing licensed vets onboard to review every emergency protocol on this screen. Until that's complete, all guidance here is summarized from public references — Red Cross Pet First Aid, AVMA, ASPCA APCC, Pet Poison Helpline, Cornell Veterinary College.
+        </Text>
+      </View>
+
+      {/* Tab switcher */}
+      <View style={s.tabs}>
+        <TouchableOpacity onPress={() => setTab("toxic")} style={[s.tab, tab === "toxic" && s.tabActive]}>
+          <MaterialCommunityIcons name="biohazard" size={16} color={tab === "toxic" ? "#fff" : theme.fg} style={{ marginRight: 6 }} />
+          <Text style={[s.tabText, tab === "toxic" && s.tabTextActive]}>Toxic Ingestion</Text>
+        </TouchableOpacity>
+        <TouchableOpacity onPress={() => setTab("cpr")} style={[s.tab, tab === "cpr" && s.tabActive]}>
+          <MaterialCommunityIcons name="heart-pulse" size={16} color={tab === "cpr" ? "#fff" : theme.fg} style={{ marginRight: 6 }} />
+          <Text style={[s.tabText, tab === "cpr" && s.tabTextActive]}>Pet CPR</Text>
+        </TouchableOpacity>
+      </View>
+
+      {tab === "toxic" && <ToxicView />}
+      {tab === "cpr" && <CprView chest={chest} setChest={setChest} />}
+
+      {/* Certified videos */}
+      <Text style={s.sectionHd}>VET-CERTIFIED VIDEO RESOURCES</Text>
+      <Text style={s.sectionSub}>
+        We can't host video walkthroughs ourselves yet. These are the organizations whose pet first-aid courses are widely recommended by veterinarians.
+      </Text>
+      {CERTIFIED_VIDEOS.map((v, i) => (
+        <TouchableOpacity key={i} onPress={() => Linking.openURL(v.url)} style={s.linkCard}>
+          <MaterialCommunityIcons name="play-circle" size={20} color={theme.accent} />
+          <Text style={s.linkCardText}>{v.label}</Text>
+          <MaterialCommunityIcons name="open-in-new" size={14} color={theme.muted} />
+        </TouchableOpacity>
+      ))}
+
+      <View style={s.disclaimer}>
+        <Text style={s.disclaimerText}>
+          ⚠ <Text style={{ fontWeight: "700" }}>Consult your vet on how to perform any of these protocols properly before performing them.</Text> Practice CPR on a stuffed animal, not a live pet. The wrong technique can break ribs or cause aspiration pneumonia. Stick Around is not a substitute for veterinary advice or emergency medical training.
+        </Text>
+      </View>
+    </ScrollView>
+  );
+}
+
+// [ToxicView and CprView function bodies omitted here for brevity but
+//  are preserved verbatim in the git commit 56444e1 and the zip backup.
+//  The full component including:
+//   - All chest-type cards (small / deep / narrow / barrel)
+//   - 7 universal CPR steps
+//   - Tab switcher between Toxic + CPR
+//   - "About the animations" warning card
+//  is recoverable via:
+//      git show 56444e1:src/screens/EmergencyScreen.js
+// ]
+```
+
+---
+
+## CHANGED FILE 3: `App.js`
+
+**What changed:** Removed `PremiumScreen` import + `Premium` route registration.
+
+**Original snippet (BEFORE):**
+
+```jsx
+import EmergencyScreen from "./src/screens/EmergencyScreen";
+import PremiumScreen from "./src/screens/PremiumScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
+```
+
+```jsx
+              <RootStack.Screen name="Emergency" component={EmergencyScreen} options={{ ...pushScreenOptions, title: "Emergency · CPR + Toxic" }} />
+              <RootStack.Screen name="Premium"  component={PremiumScreen}  options={{ ...pushScreenOptions, presentation: "modal", title: "Premium" }} />
+              <RootStack.Screen
+                name="Settings"
+```
+
+**Replacement (AFTER):**
+
+```jsx
+import EmergencyScreen from "./src/screens/EmergencyScreen";
+import SettingsScreen from "./src/screens/SettingsScreen";
+```
+
+```jsx
+              <RootStack.Screen name="Emergency" component={EmergencyScreen} options={{ ...pushScreenOptions, title: "Emergency Resources" }} />
+              <RootStack.Screen
+                name="Settings"
+```
+
+Also: the Emergency screen route title changed from "Emergency · CPR + Toxic" to "Emergency Resources" since CPR is no longer in-app.
+
+---
+
+## CHANGED FILE 4: `src/screens/SettingsScreen.js`
+
+**What changed:** SUBSCRIPTION section removed entirely (the "⭐ Upgrade to Premium" card linking to `navigation.navigate("Premium")`).
+
+**Original snippet (BEFORE):**
+
+```jsx
+      <Text style={s.sectionHd}>SUBSCRIPTION</Text>
+      <TouchableOpacity onPress={() => navigation.navigate("Premium")} style={[s.card, { borderColor: theme.accent }]}>
+        <Text style={[s.body, { fontWeight: "700", color: theme.accent }]}>⭐ Upgrade to Premium</Text>
+        <Text style={[s.sub, { marginTop: 4 }]}>$4.99/mo or $39/yr — full personalized checklist, breed insider tips, multi-pet, widgets, trip + training guides.</Text>
+      </TouchableOpacity>
+
+      <Text style={s.sectionHd}>HELP</Text>
+```
+
+**Replacement (AFTER):** the entire SUBSCRIPTION block deleted. HELP follows directly after the pet-info card.
+
+---
+
+## CHANGED FILE 5: `src/screens/YourPetsScreen.js`
+
+**What changed:** "Add another pet" CTA replaced with a disabled "Coming soon" pill. Removed Alert that linked to Premium.
+
+**Original snippet (BEFORE):**
+
+```jsx
+  function addAnotherPet() {
+    Alert.alert(
+      "Add another pet",
+      "Multi-pet onboarding is coming with Premium. For now, your first pet's profile is the main one and breed-specific tips center on them. Want to upgrade?",
+      [
+        { text: "Maybe later" },
+        { text: "See Premium", onPress: () => navigation.navigate("Premium") },
+      ]
+    );
+  }
+```
+
+```jsx
+      <TouchableOpacity onPress={addAnotherPet} style={s.addBtn}>
+        <MaterialCommunityIcons name="plus-circle-outline" size={22} color={theme.accent} />
+        <Text style={s.addBtnText}>Add another pet</Text>
+      </TouchableOpacity>
+```
+
+**Replacement (AFTER):** `addAnotherPet` removed. Button replaced with a non-interactive "View"-only block reading "Multi-pet support coming soon" — disabled visually (muted colors, no `onPress`).
+
+---
+
+## WORDING AUDIT CHANGES
+
+### File: `src/screens/EmergencyScreen.js` (the v1.0 replacement)
+
+The new resources-only EmergencyScreen does NOT contain any of the following phrases that appeared in the pre-strip version:
+- ❌ "We're partnering with veterinarians" (aspirational vet-partnership claim)
+- ❌ "Stick Around is bringing licensed vets onboard"
+- ❌ "vet-certified video resources" header
+- ❌ "We're working with veterinary partners + medical animators"
+
+### File: `src/data/rulesOfThumb.js`
+
+**Original (line 57):**
+```
+"Clean weekly with vet-approved solution; ..."
+```
+**Replacement:**
+```
+"Clean weekly with a veterinary cleansing solution (chlorhexidine-based, available without prescription); ..."
+```
+
+### File: `src/data/emergencyProtocols.js`
+
+**Original (line 107 comment):**
+```
+// Vet-reviewed, certified, free video resources. These are real
+```
+**Replacement:**
+```
+// Free video resources from public veterinary organizations.
+```
+
+### Universal disclaimer
+
+Both `theme.js` does not need editing, but every screen with health/care content already carries a disclaimer. The standard line used across screens:
+
+> "Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions."
+
+---
+
+## RecallsScreen + RiskScreen Audit (no functional removal)
+
+### RecallsScreen
+- Already labeled as curated/static editorial summary
+- Added **"Last updated: 2026-04-27"** disclosure
+- Added explicit copy: "verify current recalls at fda.gov before acting"
+- All entries already link to FDA + AVMA primary sources
+
+### RiskScreen
+- Location permission is **substantively used**: fetches Open-Meteo current weather, matches against curated hazard-site bboxes (Meeker Plume, Gowanus, Newtown Creek, LA River) and regional flag bboxes (NYC metro, Northeast tick belt, SF Bay Area, Florida, Rocky Mountains)
+- No placeholder behavior — keeping permission and feature
+- Permission string in app.json updated to be more specific
+
+---
+
+## RESTORE CHECKLIST FOR v1.1
+
+When you're ready to restore the full feature set (after v1.0 is approved + RevenueCat is wired):
+
+1. `git show 56444e1:src/screens/PremiumScreen.js > src/screens/PremiumScreen.js`
+2. `git show 56444e1:src/screens/EmergencyScreen.js > src/screens/EmergencyScreen.js`
+3. Restore the App.js import + route registration for Premium and the Emergency title
+4. Restore the SettingsScreen SUBSCRIPTION card
+5. Restore YourPetsScreen `addAnotherPet` flow (or build the proper multi-pet onboarding instead)
+6. Audit + restore the wording changes in rulesOfThumb.js, emergencyProtocols.js
+7. **Fix the known monthly-button bug** before relaunching Premium
+8. Wire RevenueCat (`react-native-purchases`) and configure StoreKit products in App Store Connect for `com.bassklaft.pawrent`
+9. Sign the actual vet partnership before restoring "we're partnering with vets" wording
+10. Then EAS build + submit v1.1

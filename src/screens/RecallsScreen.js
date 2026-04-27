@@ -111,9 +111,9 @@ export default function RecallsScreen() {
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 60 }}
     >
       <View style={s.intro}>
-        <Text style={s.introHd}>⚠ KEEP IN MIND</Text>
+        <Text style={s.introHd}>⚠ KEEP IN MIND · LAST UPDATED 2026-04-27</Text>
         <Text style={s.introBody}>
-          Curated from FDA investigations, AVMA bulletins, and active class actions. New recalls drop weekly — always cross-check the FDA pet food recall page below for the most current data.
+          Curated editorial summary from FDA investigations, AVMA bulletins, and publicly reported class actions. This list is not real-time. New recalls drop weekly — before acting on anything below, verify current status at the FDA pet food recall page.
         </Text>
       </View>
 
@@ -168,7 +168,8 @@ export default function RecallsScreen() {
 
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
-          This list is editorial summary, not legal or medical advice. If your pet shows symptoms after eating any product, call your vet immediately. Class action eligibility varies by state — see the linked sources for filing details.
+          This list is editorial summary, not legal or medical advice. Class action eligibility varies by state — see the linked sources for filing details.{"\n\n"}
+          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

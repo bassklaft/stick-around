@@ -104,8 +104,8 @@ export const TOXIC_INGESTION_PROTOCOL = {
   ],
 };
 
-// Vet-reviewed, certified, free video resources. These are real
-// organizations; no affiliate codes.
+// Free video resources from public veterinary organizations.
+// No affiliate codes; no Stick Around endorsement implied.
 export const CERTIFIED_VIDEOS = [
   { label: "Red Cross — Pet First Aid (free course)",   url: "https://www.redcross.org/take-a-class/classes/cat-and-dog-first-aid/online-LP-00012380.html" },
   { label: "AVMA — Disaster preparedness for pets",     url: "https://www.avma.org/resources-tools/animal-health-welfare/disaster-preparedness" },

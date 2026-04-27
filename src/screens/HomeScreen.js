@@ -88,8 +88,8 @@ export default function HomeScreen({ navigation }) {
             <MaterialCommunityIcons name="hospital-box" size={28} color="#fff" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={s.emergencyTitle}>EMERGENCY · CPR + TOXIC INGESTION</Text>
-            <Text style={s.emergencySubtitle}>Poison-control hotlines · CPR by chest type · what to do RIGHT NOW</Text>
+            <Text style={s.emergencyTitle}>EMERGENCY RESOURCES</Text>
+            <Text style={s.emergencySubtitle}>Poison-control hotlines · find an ER vet · pet first-aid course</Text>
           </View>
           <MaterialCommunityIcons name="chevron-right" size={22} color="#fff" />
         </TouchableOpacity>

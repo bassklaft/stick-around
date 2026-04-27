@@ -54,7 +54,7 @@ export const RULES_OF_THUMB = [
     species: ["dog"],
     icon: "ear-hearing",
     title: "Ear gunk = vet visit, not home cleaning",
-    body: "Dark crumbly = mites. Yeasty smell = infection. Just-greasy = okay. Clean weekly with vet-approved solution; if it's smelly or red or sore, that's a vet trip — DIY cleaning makes infections worse.",
+    body: "Dark crumbly = mites. Yeasty smell = infection. Just-greasy = okay. Clean weekly with a veterinary cleansing solution (chlorhexidine-based, available without prescription); if it's smelly or red or sore, that's a vet trip — DIY cleaning makes infections worse.",
   },
   {
     species: ["dog"],

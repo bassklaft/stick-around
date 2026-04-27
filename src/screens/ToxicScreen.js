@@ -73,6 +73,13 @@ export default function ToxicScreen() {
           );
         }}
         ListEmptyComponent={<Text style={{ color: theme.muted, textAlign: "center", marginTop: 40 }}>No matches.</Text>}
+        ListFooterComponent={
+          <View style={s.footerDisclaimer}>
+            <Text style={s.footerDisclaimerText}>
+              Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+            </Text>
+          </View>
+        }
       />
     </View>
   );
@@ -95,4 +102,6 @@ const s = StyleSheet.create({
   disclaimerBody: { fontSize: 12, color: "#5A3F0A", lineHeight: 17, marginBottom: 10 },
   callBtn:    { backgroundColor: "#F9DAD0", paddingVertical: 10, paddingHorizontal: 12, borderRadius: 8, marginTop: 6 },
   callBtnText:{ fontSize: 12, fontWeight: "700", color: "#9C2A0F", textAlign: "center", letterSpacing: 0.3 },
+  footerDisclaimer:    { marginTop: 16, padding: 14, borderRadius: 10, backgroundColor: theme.accentSoft },
+  footerDisclaimerText:{ fontSize: 11, color: theme.fg, lineHeight: 17 },
 });

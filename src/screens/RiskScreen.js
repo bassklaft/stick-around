@@ -230,7 +230,8 @@ export default function RiskScreen() {
 
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
-          Editorial summary, not a real-time safety service. Live tick density, dog-bite incident maps, and individual rescue/reactive-dog locations aren't in our data — that's a v2 feature requiring per-jurisdiction integrations.
+          Editorial summary, not a real-time safety service. Location is used in the moment to fetch weather and match against a curated list of known hazard sites; it is not stored.{"\n\n"}
+          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

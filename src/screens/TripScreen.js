@@ -125,7 +125,8 @@ export default function TripScreen() {
 
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
-          General travel guidance only — your vet is the right call for medication adjustments, sedation questions, and breed-specific transit risks.
+          General travel guidance only.{"\n\n"}
+          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

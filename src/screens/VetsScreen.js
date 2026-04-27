@@ -50,6 +50,12 @@ export default function VetsScreen() {
       <Text style={s.hint}>
         Tip: save your regular vet's number in your phone Contacts as "🐾 Vet" so it's instantly searchable in an emergency.
       </Text>
+
+      <View style={s.footerDisclaimer}>
+        <Text style={s.footerDisclaimerText}>
+          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+        </Text>
+      </View>
     </View>
   );
 }
@@ -68,4 +74,6 @@ const s = StyleSheet.create({
   btnUrgent:  { backgroundColor: "#C04A2C" },
   divider:    { width: "100%", height: 1, backgroundColor: theme.line, marginVertical: 24 },
   hint:       { fontSize: 11, color: theme.muted, textAlign: "center", marginTop: 24, lineHeight: 17, fontStyle: "italic" },
+  footerDisclaimer:    { marginTop: 18, padding: 14, borderRadius: 10, backgroundColor: theme.accentSoft, alignSelf: "stretch" },
+  footerDisclaimerText:{ fontSize: 11, color: theme.fg, lineHeight: 17, textAlign: "center" },
 });

@@ -2,7 +2,7 @@
 // avatar (tap to set/change photo), name, breed badge, breed summary
 // + insider tips. Tap "Add another pet" to onboard a second.
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl, Linking, Alert, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl, Linking, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -33,16 +33,8 @@ export default function YourPetsScreen() {
     load();
   }
 
-  function addAnotherPet() {
-    Alert.alert(
-      "Add another pet",
-      "Multi-pet onboarding is coming with Premium. For now, your first pet's profile is the main one and breed-specific tips center on them. Want to upgrade?",
-      [
-        { text: "Maybe later" },
-        { text: "See Premium", onPress: () => navigation.navigate("Premium") },
-      ]
-    );
-  }
+  // Multi-pet onboarding lands in v1.1. Storage already supports it
+  // (see Pets.add in lib/storage.js); only the UI flow is stubbed.
 
   if (pets.length === 0) {
     return (
@@ -140,10 +132,10 @@ export default function YourPetsScreen() {
         );
       })}
 
-      <TouchableOpacity onPress={addAnotherPet} style={s.addBtn}>
-        <MaterialCommunityIcons name="plus-circle-outline" size={22} color={theme.accent} />
-        <Text style={s.addBtnText}>Add another pet</Text>
-      </TouchableOpacity>
+      <View style={s.addBtnDisabled}>
+        <MaterialCommunityIcons name="plus-circle-outline" size={22} color={theme.muted} />
+        <Text style={s.addBtnDisabledText}>Multi-pet support coming soon</Text>
+      </View>
 
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
@@ -184,8 +176,8 @@ const s = StyleSheet.create({
   tipRow:        { flexDirection: "row", marginBottom: 8 },
   tipBullet:     { color: theme.accent, fontWeight: "800", marginRight: 8, fontSize: 14, lineHeight: 19 },
   tipBody:       { flex: 1, fontSize: 13, color: theme.fg, lineHeight: 19 },
-  addBtn:        { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, padding: 16, borderRadius: 12, borderWidth: 2, borderColor: theme.accent, borderStyle: "dashed", backgroundColor: theme.bg, marginTop: 4 },
-  addBtnText:    { color: theme.accent, fontWeight: "700", fontSize: 14 },
+  addBtnDisabled:    { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: theme.line, borderStyle: "dashed", backgroundColor: theme.bg, marginTop: 4, opacity: 0.55 },
+  addBtnDisabledText:{ color: theme.muted, fontWeight: "600", fontSize: 13 },
   disclaimer:    { marginTop: 16, padding: 14, borderRadius: 10, backgroundColor: theme.accentSoft },
   disclaimerText:{ fontSize: 11, color: theme.fg, lineHeight: 17 },
 });
