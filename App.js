@@ -83,7 +83,7 @@ function MainTabs({ navigation }) {
       <Tabs.Screen name="Checklist" component={ChecklistScreen}
         options={{ title: "This Week", tabBarLabel: "Checklist" }} />
       <Tabs.Screen name="Home"      component={HomeScreen}
-        options={{ title: "Stick Around", tabBarLabel: "Home" }} />
+        options={{ title: "FloofLife", tabBarLabel: "Home" }} />
       <Tabs.Screen name="YourPets"  component={YourPetsScreen}
         options={{ title: "Your Pets", tabBarLabel: "Your Pets" }} />
     </Tabs.Navigator>

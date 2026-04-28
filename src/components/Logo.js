@@ -1,4 +1,4 @@
-// Stick Around logo — paw print with a green check overlapping, and the
+// FloofLife logo — paw print with a green check overlapping, and the
 // brand name appearing alongside the check. Tappable to navigate Home.
 // Implemented with stacked MaterialCommunityIcons since the project
 // doesn't ship react-native-svg.
@@ -18,7 +18,7 @@ export default function Logo({ onPress, compact = false }) {
         </View>
       </View>
       {!compact && (
-        <Text style={s.text}>Stick Around</Text>
+        <Text style={s.text}>FloofLife</Text>
       )}
     </Wrap>
   );

@@ -73,7 +73,7 @@ export default function EmergencyScreen() {
       {/* Pet first aid — outbound link only */}
       <Text style={s.sectionHd}>LEARN PET FIRST AID</Text>
       <Text style={s.sectionSub}>
-        Stick Around does not provide step-by-step emergency medical instructions. For pet CPR, choking response, and bleed control, take a certified course from the American Red Cross.
+        FloofLife does not provide step-by-step emergency medical instructions. For pet CPR, choking response, and bleed control, take a certified course from the American Red Cross.
       </Text>
       <TouchableOpacity onPress={() => Linking.openURL("https://www.redcross.org/take-a-class/classes/cat-and-dog-first-aid/online-LP-00012380.html")} style={s.linkBtn}>
         <MaterialCommunityIcons name="open-in-new" size={16} color={theme.accent} style={{ marginRight: 10 }} />
@@ -117,7 +117,7 @@ export default function EmergencyScreen() {
       {/* Bottom disclaimer */}
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
-          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+          FloofLife provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

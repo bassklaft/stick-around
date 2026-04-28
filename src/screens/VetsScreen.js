@@ -53,7 +53,7 @@ export default function VetsScreen() {
 
       <View style={s.footerDisclaimer}>
         <Text style={s.footerDisclaimerText}>
-          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+          FloofLife provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </View>

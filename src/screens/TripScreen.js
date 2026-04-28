@@ -126,7 +126,7 @@ export default function TripScreen() {
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
           General travel guidance only.{"\n\n"}
-          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+          FloofLife provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

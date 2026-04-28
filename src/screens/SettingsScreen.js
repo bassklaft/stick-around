@@ -23,11 +23,11 @@ export default function SettingsScreen({ navigation }) {
 
       <Text style={s.sectionHd}>HELP</Text>
       <Row label="Contact support"   onPress={() => Linking.openURL("mailto:hello@stickaround.app")} />
-      <Row label="Privacy policy"    onPress={() => Alert.alert("Privacy", "Stick Around stores all data on your device. We do not collect, transmit, or sell your data.")} />
-      <Row label="Terms of service"  onPress={() => Alert.alert("Terms", "Stick Around provides general guidance for healthy pets. It is not a substitute for veterinary advice.")} />
+      <Row label="Privacy policy"    onPress={() => Alert.alert("Privacy", "FloofLife stores all data on your device. We do not collect, transmit, or sell your data.")} />
+      <Row label="Terms of service"  onPress={() => Alert.alert("Terms", "FloofLife provides general guidance for healthy pets. It is not a substitute for veterinary advice.")} />
 
       <Text style={s.sectionHd}>DANGER ZONE</Text>
-      <TouchableOpacity onPress={() => Alert.alert("Reset Stick Around?", "This deletes your pet profile and all checklist data. Cannot be undone.", [
+      <TouchableOpacity onPress={() => Alert.alert("Reset FloofLife?", "This deletes your pet profile and all checklist data. Cannot be undone.", [
         { text: "Cancel" },
         { text: "Delete", style: "destructive", onPress: async () => { await Pet.clear(); Alert.alert("Done", "Restart the app."); } },
       ])} style={[s.card, { borderColor: theme.red }]}>
@@ -35,7 +35,7 @@ export default function SettingsScreen({ navigation }) {
       </TouchableOpacity>
 
       <View style={s.disclaimer}>
-        <Text style={s.disclaimerText}>Stick Around provides general guidance for healthy pets. It is not a substitute for veterinary advice. Always consult your vet for medical questions.</Text>
+        <Text style={s.disclaimerText}>FloofLife provides general guidance for healthy pets. It is not a substitute for veterinary advice. Always consult your vet for medical questions.</Text>
       </View>
     </ScrollView>
   );

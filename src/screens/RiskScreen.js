@@ -181,7 +181,7 @@ export default function RiskScreen() {
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.locBtnText}>Use my location</Text>}
           </TouchableOpacity>
           {perm === "denied" && (
-            <Text style={s.locDenied}>Permission denied — enable in Settings → Stick Around → Location.</Text>
+            <Text style={s.locDenied}>Permission denied — enable in Settings → FloofLife → Location.</Text>
           )}
         </View>
       ) : (
@@ -231,7 +231,7 @@ export default function RiskScreen() {
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
           Editorial summary, not a real-time safety service. Location is used in the moment to fetch weather and match against a curated list of known hazard sites; it is not stored.{"\n\n"}
-          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+          FloofLife provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

@@ -169,7 +169,7 @@ export default function RecallsScreen() {
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
           This list is editorial summary, not legal or medical advice. Class action eligibility varies by state — see the linked sources for filing details.{"\n\n"}
-          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+          FloofLife provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

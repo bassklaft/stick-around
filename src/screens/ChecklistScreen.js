@@ -70,7 +70,7 @@ export default function ChecklistScreen() {
       })}
 
       <View style={s.disclaimer}>
-        <Text style={s.disclaimerText}>Stick Around guidance is not a substitute for veterinary advice. When something feels wrong, call your vet.</Text>
+        <Text style={s.disclaimerText}>FloofLife guidance is not a substitute for veterinary advice. When something feels wrong, call your vet.</Text>
       </View>
     </ScrollView>
   );

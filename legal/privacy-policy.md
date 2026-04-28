@@ -1,18 +1,18 @@
-# Stick Around — Privacy Policy
+# FloofLife — Privacy Policy
 
 **Last updated: April 27, 2026**
 
-Stick Around ("the App") is operated by Maxwell Klafter ("we," "us," or "our"), based in Brooklyn, New York, USA.
+FloofLife ("the App") is operated by Maxwell Klafter ("we," "us," or "our"), based in Brooklyn, New York, USA.
 
 This Privacy Policy explains how the App handles your information.
 
 ## Summary
 
-**Stick Around stores all your data locally on your device. We do not collect, transmit, or store any personal information on our servers. We do not have servers that hold your data.**
+**FloofLife stores all your data locally on your device. We do not collect, transmit, or store any personal information on our servers. We do not have servers that hold your data.**
 
 ## What information the App handles
 
-When you use Stick Around, you may provide:
+When you use FloofLife, you may provide:
 - Your pet's name, species, breed, age, weight, and photo
 - Notes and observations you log about your pet
 - Your interactions with checklists and other features
@@ -34,7 +34,7 @@ The App may request access to your photo library or camera so you can add a phot
 
 ## Children
 
-Stick Around is not directed to children under 13 and we do not knowingly collect information from children.
+FloofLife is not directed to children under 13 and we do not knowingly collect information from children.
 
 ## Changes to this policy
 

@@ -257,7 +257,7 @@ export default function DietScreen() {
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
           Always introduce new supplements/foods slowly and one at a time so you can spot reactions. Talk to your vet before adding supplements if your pet is on prescription medication. Products mentioned are referenced from pet-owner communities and are not medical endorsements.{"\n\n"}
-          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+          FloofLife provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

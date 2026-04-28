@@ -1,4 +1,4 @@
-# Stick Around — v1.1 Backlog: Features Stripped for v1.0 App Store Submission
+# FloofLife — v1.1 Backlog: Features Stripped for v1.0 App Store Submission
 
 **Date stripped:** 2026-04-27
 **Pre-strip git commit:** `56444e1` — `v1.0-pre-strip-FULL-BACKUP - all features intact, before App Store prep`
@@ -69,7 +69,7 @@ This document is the canonical record of every feature removed or changed for v1
   - AI chat / symptom triage
   - Live data: dog-bite stats, real-time tick density, reactive-dog locations
   - Lottie/SVG animations on checklist + emergency walkthroughs
-  - "Stick Around written on the actual checkmark" in the logo — currently the wordmark sits beside the paw+check; the user wanted text inside the check, but the check is too small to fit legible text. Revisit with a designer.
+  - "FloofLife written on the actual checkmark" in the logo — currently the wordmark sits beside the paw+check; the user wanted text inside the check, but the check is too small to fit legible text. Revisit with a designer.
   - Real per-breed photographs (currently breed-specific emojis where available)
   - Soil/puddle contaminants by user location (geolocation + EPA water-quality data + backend)
 
@@ -203,7 +203,7 @@ export default function PremiumScreen({ navigation }) {
           Subscriptions are processed by Apple. Your subscription auto-renews unless canceled at least 24 hours before the end of the current period. Manage or cancel in Settings → Apple ID → Subscriptions.
         </Text>
         <Text style={[s.fineText, { marginTop: 8 }]}>
-          Stick Around guidance is sourced from public veterinary references. It is not a substitute for veterinary advice.
+          FloofLife guidance is sourced from public veterinary references. It is not a substitute for veterinary advice.
         </Text>
       </View>
     </ScrollView>
@@ -292,7 +292,7 @@ export default function EmergencyScreen() {
         <MaterialCommunityIcons name="stethoscope" size={22} color={theme.accent} />
         <Text style={s.partnerText}>
           <Text style={{ fontWeight: "800" }}>We're partnering with veterinarians.</Text>{" "}
-          Stick Around is bringing licensed vets onboard to review every emergency protocol on this screen. Until that's complete, all guidance here is summarized from public references — Red Cross Pet First Aid, AVMA, ASPCA APCC, Pet Poison Helpline, Cornell Veterinary College.
+          FloofLife is bringing licensed vets onboard to review every emergency protocol on this screen. Until that's complete, all guidance here is summarized from public references — Red Cross Pet First Aid, AVMA, ASPCA APCC, Pet Poison Helpline, Cornell Veterinary College.
         </Text>
       </View>
 
@@ -326,7 +326,7 @@ export default function EmergencyScreen() {
 
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
-          ⚠ <Text style={{ fontWeight: "700" }}>Consult your vet on how to perform any of these protocols properly before performing them.</Text> Practice CPR on a stuffed animal, not a live pet. The wrong technique can break ribs or cause aspiration pneumonia. Stick Around is not a substitute for veterinary advice or emergency medical training.
+          ⚠ <Text style={{ fontWeight: "700" }}>Consult your vet on how to perform any of these protocols properly before performing them.</Text> Practice CPR on a stuffed animal, not a live pet. The wrong technique can break ribs or cause aspiration pneumonia. FloofLife is not a substitute for veterinary advice or emergency medical training.
         </Text>
       </View>
     </ScrollView>
@@ -439,7 +439,7 @@ Also: the Emergency screen route title changed from "Emergency · CPR + Toxic" t
 
 The new resources-only EmergencyScreen does NOT contain any of the following phrases that appeared in the pre-strip version:
 - ❌ "We're partnering with veterinarians" (aspirational vet-partnership claim)
-- ❌ "Stick Around is bringing licensed vets onboard"
+- ❌ "FloofLife is bringing licensed vets onboard"
 - ❌ "vet-certified video resources" header
 - ❌ "We're working with veterinary partners + medical animators"
 
@@ -469,7 +469,7 @@ The new resources-only EmergencyScreen does NOT contain any of the following phr
 
 Both `theme.js` does not need editing, but every screen with health/care content already carries a disclaimer. The standard line used across screens:
 
-> "Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions."
+> "FloofLife provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions."
 
 ---
 

@@ -1,6 +1,6 @@
 // Home hub — pet-photo hero with greeting + 5 destination cards.
 // The hero is the emotional anchor: a big photo of the pet behind a
-// gentle dark gradient, name + breed overlaid. Stick Around exists to
+// gentle dark gradient, name + breed overlaid. FloofLife exists to
 // keep that face around for more years.
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, ImageBackground, RefreshControl, Linking, Platform, StyleSheet } from "react-native";
@@ -130,7 +130,7 @@ export default function HomeScreen({ navigation }) {
 
         <View style={s.disclaimer}>
           <Text style={s.disclaimerText}>
-            Stick Around guidance is not a substitute for veterinary advice. When something feels wrong, call your vet.
+            FloofLife guidance is not a substitute for veterinary advice. When something feels wrong, call your vet.
           </Text>
         </View>
       </View>

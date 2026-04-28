@@ -1,14 +1,14 @@
-# Stick Around — Terms of Service
+# FloofLife — Terms of Service
 
 **Last updated: April 27, 2026**
 
-These Terms govern your use of the Stick Around mobile application ("the App"), operated by Maxwell Klafter ("we," "us," or "our"), based in Brooklyn, New York, USA.
+These Terms govern your use of the FloofLife mobile application ("the App"), operated by Maxwell Klafter ("we," "us," or "our"), based in Brooklyn, New York, USA.
 
 By installing or using the App, you agree to these Terms.
 
 ## Not veterinary advice
 
-**Stick Around provides general pet care information and tools for your reference. It is not a substitute for professional veterinary care, diagnosis, or treatment. Always consult a licensed veterinarian for medical decisions about your pet.**
+**FloofLife provides general pet care information and tools for your reference. It is not a substitute for professional veterinary care, diagnosis, or treatment. Always consult a licensed veterinarian for medical decisions about your pet.**
 
 We are not veterinarians. The information in the App is compiled from publicly available sources and is for informational purposes only. We make no representations about the accuracy, completeness, or fitness of any information in the App for any particular pet or situation.
 

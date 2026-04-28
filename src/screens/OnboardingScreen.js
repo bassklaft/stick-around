@@ -50,7 +50,7 @@ export default function OnboardingScreen({ onDone }) {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: theme.bg }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 32, paddingBottom: 60, paddingHorizontal: 22 }} keyboardShouldPersistTaps="handled">
-        <Text style={s.brand}>Stick Around</Text>
+        <Text style={s.brand}>FloofLife</Text>
         <Text style={s.tagline}>Better pet parenting, on autopilot</Text>
 
         {step === 0 && (
@@ -149,7 +149,7 @@ export default function OnboardingScreen({ onDone }) {
 
             <View style={s.disclaimer}>
               <Text style={s.disclaimerText}>
-                Stick Around gives general guidance for healthy pets, sourced from public veterinary references. It is <Text style={{ fontWeight: "700" }}>not a substitute for veterinary advice</Text>. Always consult your vet for medical questions.
+                FloofLife gives general guidance for healthy pets, sourced from public veterinary references. It is <Text style={{ fontWeight: "700" }}>not a substitute for veterinary advice</Text>. Always consult your vet for medical questions.
               </Text>
             </View>
 

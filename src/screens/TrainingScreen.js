@@ -186,7 +186,7 @@ export default function TrainingScreen() {
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
           Training is its own discipline. If your dog has reactivity, fear, or aggression issues, a force-free certified trainer (CCPDT or KPA-CTP credentials) is the right call.{"\n\n"}
-          Stick Around provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
+          FloofLife provides general care guidance and is not a substitute for professional veterinary care. Always consult your veterinarian for medical decisions.
         </Text>
       </View>
     </ScrollView>

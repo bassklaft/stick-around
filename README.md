@@ -1,4 +1,4 @@
-# Stick Around — v1 scaffold
+# FloofLife — v1 scaffold
 
 Working Expo scaffold per Pawrent_PRD_v1.md. Onboarding flow, weekly
 checklist generator (breed + age + season aware), toxic foods/plants
@@ -38,6 +38,6 @@ Switch to expo-sqlite when observation log lands (week 4).
 
 ## Disclaimer
 
-Stick Around guidance is sourced from public veterinary references (AKC,
+FloofLife guidance is sourced from public veterinary references (AKC,
 ASPCA, Merck Vet Manual, AVMA, Cornell Feline Health). It is not a
 substitute for veterinary advice.
