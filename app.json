@@ -12,7 +12,7 @@
       "backgroundColor": "#FFF8F0"
     },
     "ios": {
-      "supportsTablet": true,
+      "supportsTablet": false,
       "bundleIdentifier": "com.bassklaft.pawrent",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false,
