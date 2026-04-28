@@ -102,6 +102,106 @@ This document is the canonical record of every feature removed or changed for v1
 
 ---
 
+## v1.1 NEW FEATURES — FROM USER FEEDBACK 2026-04-28
+
+These are NEW v1.1 ideas, not restorations of v1.0 features. Captured from user feedback session 2026-04-28.
+
+### PREVENTIVE CARE TRACKING (high priority for v1.1)
+
+#### 1. Vaccination & preventive medication tracker (integrated into the weekly checklist)
+
+- **Flea/tick preventative** — track product, last dose date, frequency (monthly, 3-month, 6-month options like Bravecto)
+- **Heartworm preventative** — track product, last dose date, frequency
+- **Core vaccines:**
+  - Rabies (dogs + cats)
+  - DHPP / DAPP (dogs)
+  - FVRCP (cats)
+  - Track date administered, due date based on standard schedules
+- **Non-core vaccines** surfaced as breed/region-aware prompts:
+  - Bordetella
+  - Lyme
+  - Leptospirosis
+  - Canine Influenza
+  - FeLV (cats)
+- **Each entry tracks:**
+  - Which vet administered
+  - Date
+  - Next due date
+  - Any reactions noted
+- **Reminders:** generate checklist items 30 / 14 / 7 days before next dose due
+
+#### 2. Vaccine education prompts (informational only — NOT recommendations)
+
+"Check with vet about [specific vaccine]" prompts based on:
+
+- **Region** — e.g., Lepto in areas with rodent / standing-water exposure, Lyme in tick-heavy zones
+- **Breed** — flagging breeds with documented vaccine sensitivities
+- **Lifestyle** — boarding / dog parks / hiking → Bordetella, Lepto
+- **Age** — puppy vs adult vs senior schedules
+
+Pull regional disease-prevalence data if a free public source exists (CDC, Companion Animal Parasite Council). Otherwise, editorial summary with explicit "verify locally" disclaimer.
+
+#### 3. Spay / neuter timing guidance (informational only — NOT a recommendation)
+
+Display breed-specific timing research from peer-reviewed sources:
+
+- UC Davis hip-dysplasia studies
+- Hart et al. cancer-risk studies for golden retrievers
+- Other breed-specific research as it surfaces
+
+**Framing:** "Current research suggests X timing for [breed] due to [reason]. Discuss with your vet."
+
+**Rules:**
+- NEVER make a direct recommendation
+- Always defer to vet
+- Cite sources
+
+#### 4. CRITICAL — Breed-specific vaccine reaction warnings
+
+This is genuinely safety-critical content. Treat with the seriousness of toxic-food warnings.
+
+- **Chow Chows:** documented adverse reactions to Leptospirosis vaccines (both combo and standalone). User Max has personal experience — his Chow Chow Falafel almost died from a lepto vaccine reaction. Flag this **prominently** for Chow Chow owners on any Lepto-related prompt.
+- **Shar-Peis:** prone to Familial Shar-Pei Fever (FSF) — autoinflammatory condition. Flag in breed health concerns. Related Asian primitive breeds (Chow, Akita, etc.) may share inflammatory tendencies.
+- **General principle:** when adding any vaccine prompt, cross-check the breed for documented adverse reactions and surface a warning card BEFORE the prompt.
+- **Source discipline:** peer-reviewed veterinary literature, AKC parent-club resources, breed-specific veterinary research. **NOT** forum anecdotes.
+
+#### 5. Vaccine reaction logging
+
+- When a user logs a vaccine in their pet's history, prompt: "Did you observe any reaction in the 24–48 hours after?" with options:
+  - None
+  - Mild lethargy
+  - Vomiting
+  - Facial swelling
+  - Anaphylactic
+  - Other (free text)
+- Build a **longitudinal record** the user can show the vet at next visit
+- If a severe reaction is logged, surface a warning before any future similar vaccine: "Falafel had a severe reaction to Lepto in [date]. Discuss with your vet before any future Lepto vaccination."
+
+### DESIGN NOTES FOR IMPLEMENTATION
+
+- All vaccine guidance carries the standard disclaimer ("informational only, consult your vet")
+- Breed-specific reaction warnings = HIGHLIGHTED card, not a footnote (safety-critical)
+- Cross-reference with the existing breed health concerns data structure
+- Consider either:
+  - A new "Health Records" tab, or
+  - Folding into the existing My Pets tab (post-rename per backlog item h)
+- **Storage layer:** extend the pet schema with a `vaccinations` array. Each entry shape:
+  ```js
+  {
+    date: "2026-04-15",
+    vaccine: "Leptospirosis",
+    brand: "Nobivac Lepto4",
+    vet: "Dr. Smith — Heart of Chelsea Veterinary",
+    nextDueDate: "2027-04-15",
+    reactions: ["mild_lethargy"], // or [] if none
+    notes: "Free text"
+  }
+  ```
+- Migrate any existing pet records by initialising `vaccinations: []` on first load
+- Keep AsyncStorage key namespacing consistent with existing `pawrent` prefix (do not rename storage keys here — see backlog item h for the broader rename plan)
+
+---
+
 ## DELETED FILE 1: `src/screens/PremiumScreen.js`
 
 This was the entire Premium upsell screen. Reason for deletion: contained "Start 7-day free trial" CTA that triggered an `Alert.alert("Coming soon", ...)` — guaranteed Apple Guideline 2.1 rejection (placeholder content). MONTHLY card was visually styled but non-clickable (known bug, see backlog item b).
