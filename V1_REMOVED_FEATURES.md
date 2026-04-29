@@ -202,6 +202,41 @@ This is genuinely safety-critical content. Treat with the seriousness of toxic-f
 
 ---
 
+## 2026-04-29 — additional feature ideas
+
+### FLEA/TICK PREVENTATIVE SEIZURE WARNING (v1.1 priority — high, safety-critical)
+
+Add to the breed-specific warnings system (alongside the Lepto / Chow Chow warning from the 2026-04-28 section above).
+
+#### General warning
+
+Flea/tick preventatives in the **isoxazoline class** (Bravecto, Nexgard, Simparica, Credelio) have FDA-documented neurological adverse events including seizures, especially in dogs with a history of seizures or epilepsy.
+
+**Source:** FDA Animal Drug Safety Communication, September 2018 — "FDA Alerts Pet Owners and Veterinarians About Potential for Neurologic Adverse Events Associated with Certain Flea and Tick Products."
+
+#### Surface conditions
+
+- **For dogs flagged as seizure-prone** (user has logged a seizure history on the pet's profile, or breed is in a known seizure-predisposed list): surface a HIGHLIGHTED warning card BEFORE any flea/tick preventative reminder:
+
+  > Some flea/tick preventatives have been associated with seizures in dogs with epilepsy or seizure history. Discuss isoxazoline-class drugs (Bravecto, Nexgard, Simparica, Credelio) with your vet before use.
+
+- **For all dogs receiving a new flea/tick preventative for the first time**: prompt the user to monitor for adverse reactions for 48 hours. Build into the vaccine-reaction-logging UI already specified in the 2026-04-28 backlog (item 5 — "Vaccine reaction logging").
+
+#### Natural / alternative preventatives
+
+Editorial note (informational, NOT prescriptive):
+
+- Natural / herbal flea preventatives (essential oils, garlic, brewer's yeast) have **weaker efficacy data** and are not equivalent in protection.
+- Frame as: "Discuss tradeoffs with your vet." Never recommend an alternative directly.
+
+#### Implementation notes
+
+- Same warning-card design pattern as the Lepto / Chow Chow warning (HIGHLIGHTED, not footnote — safety-critical content)
+- Cross-reference with the `vaccinations` schema's `reactions` array — if user logs a seizure reaction to a previous flea/tick dose, surface a stronger warning before any future similar product
+- Sources for any expanded list of seizure-predisposed breeds must be peer-reviewed veterinary literature (NOT forum anecdotes), per the 2026-04-28 source-discipline guidance
+
+---
+
 ## DELETED FILE 1: `src/screens/PremiumScreen.js`
 
 This was the entire Premium upsell screen. Reason for deletion: contained "Start 7-day free trial" CTA that triggered an `Alert.alert("Coming soon", ...)` — guaranteed Apple Guideline 2.1 rejection (placeholder content). MONTHLY card was visually styled but non-clickable (known bug, see backlog item b).
