@@ -18,6 +18,7 @@ export default function YourPetsScreen() {
   const navigation = useNavigation();
   const [pets, setPets] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
+  const [healthOpen, setHealthOpen] = useState({});
 
   const load = useCallback(async () => {
     const list = await Pets.listSortedOldestFirst();
@@ -113,6 +114,39 @@ export default function YourPetsScreen() {
                     </Text>
                   </View>
                 )}
+
+                {Array.isArray(breed.health) && breed.health.length > 0 && (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => setHealthOpen(prev => ({ ...prev, [pet.id]: !prev[pet.id] }))}
+                    style={s.healthDisclosure}
+                  >
+                    <View style={s.healthHeader}>
+                      <Text style={s.healthHeaderText}>
+                        💛 Health considerations to know
+                      </Text>
+                      <Text style={s.healthHeaderHint}>
+                        {healthOpen[pet.id] ? "Tap to hide" : "Tap to learn more"}
+                      </Text>
+                    </View>
+                    {healthOpen[pet.id] && (
+                      <View style={{ marginTop: 10 }}>
+                        <Text style={s.healthIntro}>
+                          Every breed has health patterns worth knowing — being aware lets you screen early and stay ahead of issues.
+                        </Text>
+                        {breed.health.map((h, i) => (
+                          <View key={i} style={s.healthRow}>
+                            <Text style={s.healthBullet}>›</Text>
+                            <Text style={s.healthBody}>{h}</Text>
+                          </View>
+                        ))}
+                        <Text style={s.healthFooter}>
+                          Discuss screening cadence with your vet — most of these are catchable early.
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
               </View>
             )}
 
@@ -170,6 +204,15 @@ const s = StyleSheet.create({
   breedRefText:  { fontSize: 12, color: theme.accent, fontWeight: "600" },
   brachyWarn:    { marginTop: 12, padding: 10, backgroundColor: "#FCE9C8", borderRadius: 8, borderWidth: 1, borderColor: "#E0A82E" },
   brachyText:    { fontSize: 12, color: "#5A3F0A", lineHeight: 18 },
+  healthDisclosure:{ marginTop: 12, padding: 12, backgroundColor: theme.bg, borderRadius: 10, borderWidth: 1, borderColor: theme.line },
+  healthHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  healthHeaderText:{ fontSize: 13, fontWeight: "700", color: theme.fg },
+  healthHeaderHint:{ fontSize: 11, color: theme.accent, fontWeight: "600" },
+  healthIntro:     { fontSize: 12, color: theme.muted, lineHeight: 17, marginBottom: 8 },
+  healthRow:       { flexDirection: "row", marginBottom: 6 },
+  healthBullet:    { color: theme.accent, fontWeight: "800", marginRight: 8, fontSize: 14, lineHeight: 19 },
+  healthBody:      { flex: 1, fontSize: 12, color: theme.fg, lineHeight: 18 },
+  healthFooter:    { fontSize: 11, color: theme.muted, fontStyle: "italic", marginTop: 6, lineHeight: 16 },
   tipsCard:      { marginTop: 12, padding: 14, backgroundColor: theme.accentSoft, borderRadius: 12, borderWidth: 1, borderColor: theme.accent + "44" },
   tipsTitle:     { fontWeight: "800", color: theme.fg, fontSize: 14, marginBottom: 4 },
   tipsSub:       { fontSize: 11, color: theme.muted, lineHeight: 16, marginBottom: 10, fontStyle: "italic" },

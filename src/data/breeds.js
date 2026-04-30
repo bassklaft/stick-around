@@ -48,7 +48,7 @@ const dogBreedData = {
   },
   "golden retriever": {
     species: "dog", lifespan: "10-12 years", energy: "high",
-    summary: "Family-oriented, eager, strong retriever instinct. Elevated cancer rates relative to other breeds.",
+    summary: "Family-oriented, eager, strong retriever instinct. Like all retrievers, deserves attentive long-term care.",
     health: ["Hemangiosarcoma + lymphoma", "Hip/elbow dysplasia", "Hypothyroidism"],
     grooming: "Brush 2-3x/week; heavy shedding",
     exercise: "60-90 min/day, ideally including swimming",
@@ -211,7 +211,7 @@ const dogBreedData = {
   },
   "cavalier king charles spaniel": {
     species: "dog", lifespan: "9-14 years", energy: "moderate",
-    summary: "Affectionate lap dog, gentle, loves people. Tragic breed-wide cardiac issue makes vet screening critical.",
+    summary: "Affectionate lap dog, gentle, loves people. Regular cardiac screening is part of responsible ownership for this breed.",
     health: ["Mitral valve disease (~50% by age 5)", "Syringomyelia (skull-too-small condition)", "Hip dysplasia", "Patellar luxation"],
     grooming: "Brush 2-3x/week; ear cleaning weekly",
     exercise: "30-60 min/day",
@@ -222,7 +222,7 @@ const dogBreedData = {
   },
   "doberman pinscher": {
     species: "dog", lifespan: "10-13 years", energy: "high",
-    summary: "Loyal, alert, athletic. Famously prone to heart disease — get screened.",
+    summary: "Loyal, alert, athletic. Cardiac screening is part of routine care for this breed.",
     health: ["Dilated cardiomyopathy (DCM)", "Bloat", "Wobbler syndrome (cervical spine)", "Von Willebrand's disease"],
     grooming: "Weekly brush; minimal",
     exercise: "60-90 min/day",
@@ -238,7 +238,7 @@ const dogBreedData = {
   },
   "boxer": {
     species: "dog", lifespan: "10-12 years", energy: "high",
-    summary: "Playful, exuberant, brachycephalic-ish. Cancer rates are high for the breed.",
+    summary: "Playful, exuberant, brachycephalic-ish. Worth knowing the breed-specific health considerations as they age.",
     health: ["Mast cell tumors + lymphoma", "Aortic stenosis", "Hip dysplasia", "Boxer cardiomyopathy"],
     grooming: "Weekly brush; minimal",
     exercise: "60-90 min/day; AVOID heat",
@@ -265,7 +265,7 @@ const dogBreedData = {
   },
   "great dane": {
     species: "dog", lifespan: "8-10 years", energy: "moderate",
-    summary: "Gentle giant. Short lifespan; bone + heart concerns dominate care.",
+    summary: "Gentle giant. Their size means proactive care for joints and heart matters from day one.",
     health: ["Bloat (GDV) — top concern", "Dilated cardiomyopathy", "Wobbler syndrome", "Bone cancer (osteosarcoma)"],
     grooming: "Weekly brush; minimal",
     exercise: "30-60 min/day moderate; growing puppies need controlled exercise",
@@ -293,7 +293,7 @@ const dogBreedData = {
   },
   "bernese mountain dog": {
     species: "dog", lifespan: "7-10 years", energy: "moderate",
-    summary: "Calm giant, family-oriented. Heartbreakingly short lifespan due to high cancer rates.",
+    summary: "Calm giant, family-oriented. Like other large breeds, requires extra attention to long-term health.",
     health: ["Histiocytic sarcoma + other cancers (~50% lifetime)", "Hip + elbow dysplasia", "Bloat"],
     grooming: "Brush 2-3x/week; heavy shedding",
     exercise: "30-60 min/day",
