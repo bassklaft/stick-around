@@ -21,6 +21,7 @@ import TripScreen from "./src/screens/TripScreen";
 import TrainingScreen from "./src/screens/TrainingScreen";
 import RiskScreen from "./src/screens/RiskScreen";
 import EmergencyScreen from "./src/screens/EmergencyScreen";
+import DogAgeScreen from "./src/screens/DogAgeScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import { theme } from "./src/theme";
 
@@ -139,6 +140,7 @@ export default function App() {
               <RootStack.Screen name="Training" component={TrainingScreen} options={{ ...pushScreenOptions, title: "Training Exercises" }} />
               <RootStack.Screen name="Risk"     component={RiskScreen}     options={{ ...pushScreenOptions, title: "Risk Map" }} />
               <RootStack.Screen name="Emergency" component={EmergencyScreen} options={{ ...pushScreenOptions, title: "Emergency Resources" }} />
+              <RootStack.Screen name="DogAge"   component={DogAgeScreen}   options={{ ...pushScreenOptions, title: "Age in Human Years" }} />
               <RootStack.Screen
                 name="Settings"
                 component={SettingsScreen}
