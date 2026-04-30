@@ -637,3 +637,26 @@ When you're ready to restore the full feature set (after v1.0 is approved + Reve
 8. Wire RevenueCat (`react-native-purchases`) and configure StoreKit products in App Store Connect for `com.bassklaft.pawrent`
 9. Sign the actual vet partnership before restoring "we're partnering with vets" wording
 10. Then EAS build + submit v1.1
+
+---
+
+## 2026-04-30 — additional feature ideas
+
+### TRANSFER APP TO TENTENTHS LLC (v1.x or v2.0 polish)
+
+Currently FloofLife is published under Maxwell Bernard Klafter's Individual Apple Developer account. The App Store listing briefly shows "MAXWELL BERNARD KLAFTER" as developer/seller before the subtitle loads, which is unbranded and personal-feeling.
+
+Goal: transfer the app to a TenTenths LLC Organization account on Apple Developer Program for cleaner branding ("TenTenths LLC" or similar appears as developer instead).
+
+Steps required:
+1. Obtain D-U-N-S number for TenTenths LLC from Dun & Bradstreet (free, 1-5 business days)
+2. Enroll in Apple Developer Program as Organization under TenTenths LLC ($99/year; Apple verifies LLC against D-U-N-S, takes 1-3 weeks)
+3. Use Apple's app transfer process to move FloofLife from Individual to Organization account (1-2 weeks; both accounts need to meet criteria, including having an active app, no in-app purchases conflicts, etc.)
+
+Total timeline: 3-6 weeks of paperwork.
+
+Tradeoffs to consider before doing this:
+- Some download/review history may not transfer cleanly
+- Need to keep Individual account active during transfer
+- May want to do this once FloofLife has more momentum (so we're transferring something with traction, not a new app)
+- Could combine with v1.1 launch as a clean rebrand moment
