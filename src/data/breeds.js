@@ -270,13 +270,13 @@ const dogBreedData = {
     grooming: "Weekly brush; minimal",
     exercise: "30-60 min/day moderate; growing puppies need controlled exercise",
     checklist: [
-      { title: "Feed 2-3 small meals (not one large) + no exercise within 1h of eating", why: "Bloat (GDV) is the #1 killer of Great Danes.", cadence: "always", category: "safety" },
+      { title: "Feed 2-3 small meals (not one large) + no exercise within 1h of eating", why: "Great Danes need extra care due to heightened bloat (GDV) risk — knowing the signs is essential.", cadence: "always", category: "safety" },
       { title: "Discuss prophylactic gastropexy with your vet", why: "Reduces bloat/torsion risk dramatically; common practice in Danes.", cadence: "once", category: "care" },
     ],
     tips: [
       "Most Dane owners get a prophylactic gastropexy done at the spay/neuter appointment. Call ahead — not every vet does it.",
       "Puppy growth needs to be SLOW. Adult-formula or large-breed-puppy food only. Free-feeding is a recipe for orthopedic problems.",
-      "Plan for grief. The breed averages 8 years and bloat can be sudden. Pet insurance with no breed exclusions is worth it.",
+      "Great Danes have shorter lifespans than smaller breeds — make every year count with proactive joint and heart care.",
       "Their tails clear coffee tables. Plan furniture accordingly.",
     ],
   },
