@@ -227,7 +227,7 @@ const dogBreedData = {
     grooming: "Weekly brush; minimal",
     exercise: "60-90 min/day",
     checklist: [
-      { title: "Watch for sudden weakness, fainting, or rapid breathing", why: "DCM affects ~50% of Dobies; sudden death is a real risk.", cadence: "weekly", category: "observe" },
+      { title: "Watch for sudden weakness, fainting, or rapid breathing", why: "Dobermans need extra care due to heightened cardiac risk — annual screening matters.", cadence: "weekly", category: "observe" },
     ],
     tips: [
       "Annual cardiac echo + Holter monitor starting at age 2 is the standard recommendation from the Doberman Pinscher Club of America. Catches DCM before symptoms.",
@@ -243,7 +243,7 @@ const dogBreedData = {
     grooming: "Weekly brush; minimal",
     exercise: "60-90 min/day; AVOID heat",
     checklist: [
-      { title: "Run hands over skin — mast cell tumors look like bug bites", why: "Boxers get mast cell tumors at 2-3x the average rate.", cadence: "weekly", category: "observe" },
+      { title: "Run hands over skin — mast cell tumors look like bug bites", why: "Boxers need extra care due to heightened skin tumor risk — monthly lump checks help catch issues early.", cadence: "weekly", category: "observe" },
     ],
   },
   "siberian husky": {
@@ -266,7 +266,7 @@ const dogBreedData = {
   "great dane": {
     species: "dog", lifespan: "8-10 years", energy: "moderate",
     summary: "Gentle giant. Their size means proactive care for joints and heart matters from day one.",
-    health: ["Bloat (GDV) — top concern", "Dilated cardiomyopathy", "Wobbler syndrome", "Bone cancer (osteosarcoma)"],
+    health: ["Bloat (GDV) — top concern", "Dilated cardiomyopathy", "Wobbler syndrome", "Heightened bone cancer risk — early lameness deserves attention"],
     grooming: "Weekly brush; minimal",
     exercise: "30-60 min/day moderate; growing puppies need controlled exercise",
     checklist: [
@@ -294,17 +294,17 @@ const dogBreedData = {
   "bernese mountain dog": {
     species: "dog", lifespan: "7-10 years", energy: "moderate",
     summary: "Calm giant, family-oriented. Like other large breeds, requires extra attention to long-term health.",
-    health: ["Histiocytic sarcoma + other cancers (~50% lifetime)", "Hip + elbow dysplasia", "Bloat"],
+    health: ["Elevated cancer risk (histiocytic sarcoma + others) — talk to your vet about screening cadence", "Hip + elbow dysplasia", "Bloat"],
     grooming: "Brush 2-3x/week; heavy shedding",
     exercise: "30-60 min/day",
     checklist: [
-      { title: "Lump check — feel for new masses anywhere on the body", why: "Berners have one of the highest cancer rates of any breed.", cadence: "weekly", category: "observe" },
+      { title: "Lump check — feel for new masses anywhere on the body", why: "Berners need extra care due to heightened cancer risk — early screening matters most.", cadence: "weekly", category: "observe" },
     ],
     tips: [
-      "Get pet insurance the day you bring the puppy home. Cancer treatment is $10-30k. The Berner-Garde Foundation tracks breed health data.",
+      "The Berner-Garde Foundation tracks breed health data and is a strong resource for owners.",
       "Slow exercise growth — long walks under 1 year can damage growing joints. Stick to short bursts.",
       "Their coat doesn't insulate them from heat well. A/C in summer; baby pool in shade.",
-      "The breed-typical 'Berner cancer cluster' is histiocytic sarcoma. Any persistent lameness or lethargy past age 5 deserves immediate vet attention.",
+      "Persistent lameness or lethargy past age 5 deserves prompt vet attention — early detection makes the biggest difference.",
     ],
   },
   "pomeranian": {
@@ -553,7 +553,7 @@ const catBreedData = {
     grooming: "Weekly brush",
     exercise: "Daily play",
     checklist: [
-      { title: "Watch for increased thirst + urination", why: "Burmese have one of the highest diabetes rates of any breed.", cadence: "weekly", category: "observe" },
+      { title: "Watch for increased thirst + urination", why: "Burmese need extra care due to heightened diabetes risk — watch for increased thirst or urination.", cadence: "weekly", category: "observe" },
     ],
   },
   "american shorthair": {
