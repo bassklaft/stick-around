@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets } from "../lib/storage";
 import { breedFacts, dogBreeds, catBreeds, breedEmoji } from "../data/breeds";
+import { MAX_BREEDS, shortBreedName } from "../lib/petBreeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { theme } from "../theme";
 
@@ -17,7 +18,7 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
   const [species, setSpecies] = useState("dog");
-  const [breed, setBreed] = useState("");
+  const [selectedBreeds, setSelectedBreeds] = useState([]);
   const [ageYears, setAgeYears] = useState("");
   const [weightLbs, setWeightLbs] = useState("");
   const [photoUri, setPhotoUri] = useState(null);
@@ -25,7 +26,23 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
   const [dnaNotes, setDnaNotes] = useState("");
 
   const breeds = species === "cat" ? catBreeds : dogBreeds;
-  const isMixed = breed === "mixed" || breed === "mixed cat";
+  const includesMixed = selectedBreeds.includes("mixed") || selectedBreeds.includes("mixed cat");
+  const showMixDetails = includesMixed || selectedBreeds.length >= 2;
+  const atMax = selectedBreeds.length >= MAX_BREEDS;
+
+  function toggleBreed(b) {
+    setSelectedBreeds((prev) => {
+      if (prev.includes(b)) return prev.filter((x) => x !== b);
+      if (prev.length >= MAX_BREEDS) {
+        Alert.alert("3 breeds max", "Remove one to swap. Most mixes are well-described by 2-3 dominant breeds.");
+        return prev;
+      }
+      return [...prev, b];
+    });
+  }
+  function removeBreed(b) {
+    setSelectedBreeds((prev) => prev.filter((x) => x !== b));
+  }
 
   async function pickPhoto() {
     const uri = await pickPetPhoto();
@@ -36,10 +53,14 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
     if (!name.trim()) { Alert.alert("Pick a name", "Your pet needs a name."); return; }
     const ageNum = parseFloat(ageYears);
     const weightNum = parseFloat(weightLbs);
+    const breedsList = selectedBreeds.length > 0
+      ? selectedBreeds
+      : [species === "cat" ? "domestic shorthair" : "mixed"];
     const payload = {
       name: name.trim(),
       species,
-      breed: breed || (species === "cat" ? "domestic shorthair" : "mixed"),
+      breeds: breedsList,
+      breed: breedsList[0],
       mixOf: mixOf.trim() || null,
       dnaNotes: dnaNotes.trim() || null,
       ageYears: isFinite(ageNum) ? ageNum : null,
@@ -92,19 +113,39 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
         {step === 2 && (
           <View style={s.section}>
             <Text style={s.h1}>What breed?</Text>
-            <Text style={s.sub}>Pick the closest match — this personalizes the weekly checklist.</Text>
+            <Text style={s.sub}>
+              Pick up to {MAX_BREEDS} breeds. The first one is the primary; the rest blend into the weekly checklist for accurate mixed-breed care.
+            </Text>
+
+            {selectedBreeds.length > 0 && (
+              <View style={s.selectedRow}>
+                {selectedBreeds.map((b, idx) => (
+                  <TouchableOpacity key={b} style={[s.selectedChip, idx === 0 && s.primaryChip]} onPress={() => removeBreed(b)} activeOpacity={0.7}>
+                    {idx === 0 && <Text style={s.primaryFlag}>PRIMARY · </Text>}
+                    <Text style={s.selectedChipEmoji}>{breedEmoji(b)}</Text>
+                    <Text style={s.selectedChipText}>{shortBreedName(b)}</Text>
+                    <MaterialCommunityIcons name="close-circle" size={16} color="#fff" style={{ marginLeft: 6 }} />
+                  </TouchableOpacity>
+                ))}
+                <Text style={s.selectedHint}>{atMax ? "Maximum reached — tap a chip to remove." : `Tap to remove · ${MAX_BREEDS - selectedBreeds.length} more allowed.`}</Text>
+              </View>
+            )}
+
             <View style={s.breedGrid}>
-              {breeds.map(b => (
-                <TouchableOpacity key={b} style={[s.breedChip, breed === b && s.breedChipActive]} onPress={() => setBreed(b)}>
-                  <Text style={s.breedChipEmoji}>{breedEmoji(b)}</Text>
-                  <Text style={[s.breedChipText, breed === b && s.breedChipTextActive]}>{titleCase(b)}</Text>
-                </TouchableOpacity>
-              ))}
+              {breeds.map(b => {
+                const isSelected = selectedBreeds.includes(b);
+                return (
+                  <TouchableOpacity key={b} style={[s.breedChip, isSelected && s.breedChipActive]} onPress={() => toggleBreed(b)}>
+                    <Text style={s.breedChipEmoji}>{breedEmoji(b)}</Text>
+                    <Text style={[s.breedChipText, isSelected && s.breedChipTextActive]}>{titleCase(b)}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
-            {isMixed && (
+            {showMixDetails && (
               <View style={{ marginTop: 18 }}>
-                <Text style={s.label}>Mix of (e.g. lab + pit bull)</Text>
+                <Text style={s.label}>Mix of (free-form, e.g. "75% lab, 25% pit bull")</Text>
                 <TextInput value={mixOf} onChangeText={setMixOf} placeholder="optional — helps us tailor advice"
                   placeholderTextColor={theme.muted} style={s.input} />
                 <Text style={[s.label, { marginTop: 14 }]}>DNA results breakdown (optional)</Text>
@@ -204,6 +245,13 @@ const s = StyleSheet.create({
   breedChipEmoji:     { fontSize: 16 },
   breedChipText:      { color: theme.fg, fontSize: 14 },
   breedChipTextActive:{ color: "#fff", fontWeight: "600" },
+  selectedRow:        { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 14, marginBottom: 4, padding: 10, backgroundColor: theme.accentSoft, borderRadius: 12, borderWidth: 1, borderColor: theme.accent + "55" },
+  selectedChip:       { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: theme.muted },
+  primaryChip:        { backgroundColor: theme.accent },
+  primaryFlag:        { color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6, marginRight: 4 },
+  selectedChipEmoji:  { fontSize: 14, marginRight: 4 },
+  selectedChipText:   { color: "#fff", fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
+  selectedHint:       { width: "100%", fontSize: 11, color: theme.muted, marginTop: 4, fontStyle: "italic" },
   disclaimer:       { marginTop: 24, padding: 14, backgroundColor: theme.accentSoft, borderRadius: 10 },
   disclaimerText:   { fontSize: 12, color: theme.fg, lineHeight: 18 },
   dnaHint:          { fontSize: 11, color: theme.muted, marginTop: 8, lineHeight: 17, fontStyle: "italic" },
