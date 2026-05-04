@@ -38,6 +38,17 @@ A personal record of what got built, when, and what it took.
 - 4 phases of feature work shipped in one afternoon
 - Hard call: deferred document parsing + remote push notifications to v1.3 instead of cramming into v1.2 (would have shipped broken)
 
+### May 4 EOD — trial button still silent, pausing for the evening
+- Four v1.1 builds deployed to TestFlight today: 6 (greyed button), 7 (button visually fixed but tap silent), 8 (Pressable + hitSlop + heavy `console.warn` instrumentation), 9 (`resolvePkg` fallback so the SDK package matches custom RevenueCat dashboard identifiers, plus pet-photo persistence to `documentDirectory`, plus checklist cadence-based auto-uncheck)
+- Build 9 verified to contain every fix on the v1.1-work branch — `git show v1.1-work:src/screens/PremiumScreen.js` shows `Pressable`, `hitSlop={12}`, `resolvePkg`, the full `[premium]` log set; `git show v1.1-work:src/lib/photoPicker.js` shows the `FileSystem.documentDirectory` copy and `persistPhotoForPet` helper. The fixes are in the binary
+- User on build 9 reports: trial button still does nothing, Console.app shows the FloofLife process is alive but **none of the `[premium]` diagnostic warns are visible** at any log level. That's the biggest signal — it means either (a) the JS bundle in the binary isn't the one we built (stale OTA cached somewhere), (b) production-build `console.warn` isn't reaching OS log under the filter we're using, or (c) the screen we think is mounting actually isn't
+- Photo persistence fix is in the v1.1 binary but hasn't been confirmed in the wild yet — the user can test by deleting + reinstalling FloofLife from TestFlight and seeing whether their pet's photo survives
+- **Pausing for the evening — no more EAS builds tonight.** Plan for tomorrow morning:
+  1. Verify what JS bundle is actually live on build 9 (check the build's source map / fingerprint vs the commit)
+  2. Switch the diagnostic surface from `console.warn` (which depends on Console.app filtering working correctly) to in-app `Alert`s or an on-screen debug banner — if the press fires, an alert can't be missed; if no alert appears, the press isn't reaching JS at all
+  3. Try the purchase flow with a fresh sandbox tester account in case the existing one is in a weird state
+  4. If still broken, consider stripping the Premium screen down to a 10-line minimal repro (one Pressable, one console.warn, one Alert) and shipping that as build 10 to isolate the issue
+
 ---
 
 ## What's next — v1.3 through v1.5 (May 2026)
