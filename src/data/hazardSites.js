@@ -45,7 +45,7 @@ export const HAZARD_SITES = [
     severity: "moderate",
     summary: "The LA River bed and adjacent corridors carry industrial runoff, fertilizer, and heavy-metal sediment from upstream.",
     advice: "Don't let your dog drink from the river or its tributaries. Watch for blue-green algae warnings in summer.",
-    sourceUrl: "https://www.lariver.org/",
+    sourceUrl: "https://lariver.lacity.gov/",
   },
 ];
 

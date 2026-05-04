@@ -19,7 +19,7 @@ const ENTRIES = [
     severity: "investigation",
     summary: "FDA received reports of intestinal blockages — including some fatal — between 2003 and 2006, prompting a class-action lawsuit and reformulation. Newer Greenies are designed to break down more easily, but owner concerns persist on Reddit and Facebook owner groups.",
     advice: "If you feed Greenies, supervise consumption, choose the size matched to your dog (oversized chews are riskier), and watch for vomiting or refusing food in the 24-48h after.",
-    sourceUrl: "https://www.fda.gov/animal-veterinary/recalls-withdrawals",
+    sourceUrl: "https://www.fda.gov/animal-veterinary/safety-health/recalls-withdrawals",
     sourceLabel: "FDA pet food recalls",
     year: "2003-present",
   },
@@ -39,7 +39,7 @@ const ENTRIES = [
     severity: "recall",
     summary: "Recalled in 2021 after >70 dog deaths from aflatoxin contamination. Several brands under the Midwestern Pet Foods umbrella affected. Owners should check lot numbers if they have older bags in storage.",
     advice: "Check FDA recall page for lot numbers. Aflatoxin is undetectable by smell or taste.",
-    sourceUrl: "https://www.fda.gov/animal-veterinary/recalls-withdrawals",
+    sourceUrl: "https://www.fda.gov/animal-veterinary/safety-health/recalls-withdrawals",
     sourceLabel: "FDA recalls page",
     year: "2020-2021",
   },
@@ -49,7 +49,7 @@ const ENTRIES = [
     severity: "recall",
     summary: "2019 recall of canned dog food due to elevated vitamin D causing kidney damage and several deaths. Class action settled in 2021.",
     advice: "Old recalled stock should be off shelves, but owners should check the FDA archive for affected lot numbers if they have any pre-2019 cans stored.",
-    sourceUrl: "https://www.fda.gov/animal-veterinary/recalls-withdrawals",
+    sourceUrl: "https://www.fda.gov/animal-veterinary/safety-health/recalls-withdrawals",
     sourceLabel: "FDA recalls page",
     year: "2019",
   },
@@ -59,8 +59,8 @@ const ENTRIES = [
     severity: "concern",
     summary: "Vets and emergency clinics report frequent broken teeth and intestinal blockages from very hard chews (yak/Himalayan cheese, antlers, cow hooves). No formal recall — these are sold as 'natural' but the hardness causes mechanical injury.",
     advice: "Use the 'thumbnail rule' — if you can't dent it with a thumbnail, it's likely too hard for your dog's teeth. Always supervise.",
-    sourceUrl: "https://avdc.org/AVDCccpd/animal-veterinary-dental-college-position-statement-dental-related/",
-    sourceLabel: "AVDC dental position statement",
+    sourceUrl: "https://avdc.org/",
+    sourceLabel: "American Veterinary Dental College",
     year: "Ongoing concern",
   },
   {
@@ -69,7 +69,7 @@ const ENTRIES = [
     severity: "concern",
     summary: "Choking + intestinal blockage risk widely reported. Many vets recommend skipping rawhide entirely in favor of bully sticks or single-ingredient freeze-dried.",
     advice: "If you do feed rawhide, supervise closely and remove smaller-than-walnut pieces.",
-    sourceUrl: "https://www.fda.gov/animal-veterinary/recalls-withdrawals",
+    sourceUrl: "https://www.fda.gov/animal-veterinary/safety-health/recalls-withdrawals",
     sourceLabel: "FDA recalls page",
     year: "Ongoing concern",
   },
@@ -79,7 +79,7 @@ const ENTRIES = [
     severity: "investigation",
     summary: "FDA investigation 2007-present into jerky treats (chicken, duck, sweet potato) sourced from China linked to thousands of pet illnesses and deaths. No single contaminant identified; advisory remains active.",
     advice: "Check the country of origin on jerky treats. Many US-made alternatives exist (Bocce's, Stella & Chewy's, etc.).",
-    sourceUrl: "https://www.fda.gov/animal-veterinary/recalls-withdrawals/jerky-pet-treats",
+    sourceUrl: "https://www.fda.gov/animal-veterinary/safety-health/recalls-withdrawals",
     sourceLabel: "FDA jerky treat advisory",
     year: "2007-present",
   },
@@ -118,9 +118,9 @@ export default function RecallsScreen() {
       </View>
 
       <View style={s.linksRow}>
-        <TouchableOpacity style={s.linkBtn} onPress={() => Linking.openURL("https://www.fda.gov/animal-veterinary/recalls-withdrawals")}>
+        <TouchableOpacity style={s.linkBtn} onPress={() => Linking.openURL("https://www.fda.gov/animal-veterinary/safety-health/recalls-withdrawals")}>
           <MaterialCommunityIcons name="open-in-new" size={14} color={theme.accent} />
-          <Text style={s.linkBtnText}>FDA pet food recalls</Text>
+          <Text style={s.linkBtnText}>FDA recalls + withdrawals</Text>
         </TouchableOpacity>
         <TouchableOpacity style={s.linkBtn} onPress={() => Linking.openURL("https://www.avma.org/resources-tools/pet-owners/petcare/recalls")}>
           <MaterialCommunityIcons name="open-in-new" size={14} color={theme.accent} />

@@ -107,7 +107,7 @@ export const TOXIC_INGESTION_PROTOCOL = {
 // Free video resources from public veterinary organizations.
 // No affiliate codes; no FloofLife endorsement implied.
 export const CERTIFIED_VIDEOS = [
-  { label: "Red Cross — Pet First Aid (free course)",   url: "https://www.redcross.org/take-a-class/classes/cat-and-dog-first-aid/online-LP-00012380.html" },
+  { label: "Red Cross — Pet First Aid (free course)",   url: "https://www.redcross.org/take-a-class/cpr" },
   { label: "AVMA — Disaster preparedness for pets",     url: "https://www.avma.org/resources-tools/animal-health-welfare/disaster-preparedness" },
   { label: "ASPCA — Pet Poison Control",                url: "https://www.aspca.org/pet-care/animal-poison-control" },
   { label: "Cornell Veterinary College — Pet First Aid",url: "https://www.vet.cornell.edu/" },

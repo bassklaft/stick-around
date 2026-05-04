@@ -75,7 +75,7 @@ export default function EmergencyScreen() {
       <Text style={s.sectionSub}>
         FloofLife does not provide step-by-step emergency medical instructions. For pet CPR, choking response, and bleed control, take a certified course from the American Red Cross.
       </Text>
-      <TouchableOpacity onPress={() => Linking.openURL("https://www.redcross.org/take-a-class/classes/cat-and-dog-first-aid/online-LP-00012380.html")} style={s.linkBtn}>
+      <TouchableOpacity onPress={() => Linking.openURL("https://www.redcross.org/take-a-class/cpr")} style={s.linkBtn}>
         <MaterialCommunityIcons name="open-in-new" size={16} color={theme.accent} style={{ marginRight: 10 }} />
         <Text style={s.linkBtnText}>American Red Cross — Cat & Dog First Aid Course</Text>
       </TouchableOpacity>
