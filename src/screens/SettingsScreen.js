@@ -21,6 +21,12 @@ export default function SettingsScreen({ navigation }) {
         <Text style={s.sub}>{titleCase(pet.breed || "")} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
       </View>
 
+      <Text style={s.sectionHd}>SUBSCRIPTION</Text>
+      <TouchableOpacity onPress={() => navigation.navigate("Premium")} style={[s.card, { borderColor: theme.accent }]}>
+        <Text style={[s.body, { fontWeight: "700", color: theme.accent }]}>⭐ Upgrade to Premium</Text>
+        <Text style={[s.sub, { marginTop: 4 }]}>$4.99/mo or $39/yr — multi-pet, expanded breed depth, health & care tracking.</Text>
+      </TouchableOpacity>
+
       <Text style={s.sectionHd}>HELP</Text>
       <Row label="Contact support"   onPress={() => Linking.openURL("mailto:hello@stickaround.app")} />
       <Row label="Privacy policy"    onPress={() => Alert.alert("Privacy", "FloofLife stores all data on your device. We do not collect, transmit, or sell your data.")} />
