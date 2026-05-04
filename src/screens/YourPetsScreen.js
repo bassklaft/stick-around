@@ -39,8 +39,8 @@ export default function YourPetsScreen() {
   function addAnotherPet() {
     if (!isPremium) {
       Alert.alert(
-        "Multi-pet is a Premium feature",
-        "Upgrade to add a second (or third, or fifth) pet to FloofLife. Each gets their own breed-tailored checklist.",
+        "Multi-floof is a Premium feature",
+        "Upgrade to add a second (or third, or fifth) floof to FloofLife. Each gets their own breed-tailored checklist.",
         [
           { text: "Maybe later" },
           { text: "See Premium", onPress: () => navigation.navigate("Premium") },
@@ -55,8 +55,8 @@ export default function YourPetsScreen() {
     return (
       <View style={s.empty}>
         <Text style={{ fontSize: 48 }}>🐾</Text>
-        <Text style={s.emptyTitle}>No pets yet</Text>
-        <Text style={s.emptyBody}>Reset all data and run onboarding to add your first pet.</Text>
+        <Text style={s.emptyTitle}>No floofs yet</Text>
+        <Text style={s.emptyBody}>Reset all data and run onboarding to add your first floof.</Text>
       </View>
     );
   }
@@ -182,7 +182,7 @@ export default function YourPetsScreen() {
 
       <TouchableOpacity onPress={addAnotherPet} style={s.addBtn} activeOpacity={0.8}>
         <MaterialCommunityIcons name="plus-circle-outline" size={22} color={theme.accent} />
-        <Text style={s.addBtnText}>Add another pet</Text>
+        <Text style={s.addBtnText}>Add another floof</Text>
         {!isPremium && (
           <View style={s.premiumBadge}>
             <Text style={s.premiumBadgeText}>PREMIUM</Text>

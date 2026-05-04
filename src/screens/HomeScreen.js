@@ -41,7 +41,7 @@ export default function HomeScreen({ navigation }) {
   const hasPhoto = !!pet.photoUri;
 
   const cards = [
-    { key: "pets",     title: "Your Pets",            subtitle: `${pet.name} · ${titleCase(pet.breed || "")}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
+    { key: "pets",     title: "My Floofs",            subtitle: `${pet.name} · ${titleCase(pet.breed || "")}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
     { key: "age",      title: "Age in Human Years",   subtitle: `${pet.name}'s real human-equivalent age — beyond "1 yr = 7 yr"`, icon: "calendar-heart", tint: "#7A4F0A", onPress: () => navigation.navigate("DogAge") },
     { key: "diet",     title: "Diet & Care",          subtitle: "Supplements, fresh foods, grooming products",     icon: "food-apple",     tint: "#3F8E5C",    onPress: () => navigation.navigate("Diet") },
     { key: "toxic",    title: "Toxic Foods & Plants", subtitle: "Quick reference — what to keep away",             icon: "leaf",           tint: theme.green,  onPress: () => navigation.navigate("Toxic") },
