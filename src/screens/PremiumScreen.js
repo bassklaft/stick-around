@@ -2,8 +2,8 @@
 // drives real StoreKit purchases. Annual is selected by default since
 // it's where the trial lives; the monthly card is now a real toggle
 // (the v0 "monthly button non-clickable" bug is fixed here).
-import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, StyleSheet } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, Text, ScrollView, TouchableOpacity, Pressable, ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Purchases from "react-native-purchases";
@@ -47,17 +47,39 @@ export default function PremiumScreen({ navigation }) {
   const monthly = offerings?.monthly ?? null;
   const selectedPkg = selected === "annual" ? annual : monthly;
 
-  // One-time diagnostic on each render — visible in TestFlight via
-  // Mac's Console.app. Helps catch "everything looks right but the
-  // button is dead" cases like the v1.1 build-6 bug.
+  // Render-time diagnostic — visible in Mac Console.app when device is
+  // tethered. Build 6 had a greyed button; build 7 fixed the gating
+  // but the tap fired silently; this lands every render so we see the
+  // exact state the next time something fires (or doesn't).
   console.warn("[premium] render ready=" + ready +
     " offering=" + (offerings?.identifier ?? "none") +
     " annual=" + (!!annual) + " monthly=" + (!!monthly) +
     " selected=" + selected + " selectedPkg=" + (selectedPkg?.identifier ?? "none") +
-    " isPremium=" + isPremium);
+    " isPremium=" + isPremium + " working=" + working);
+
+  // One-shot mount diagnostic so we know the component instantiated
+  // and we can sanity-check the handler bound at mount time.
+  useEffect(() => {
+    console.warn("[premium] mount · purchase fn type=" + typeof purchase + " · restore fn type=" + typeof restore);
+    return () => { console.warn("[premium] unmount"); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function purchase() {
+    // Aggressive top-of-handler logging. If we never see this in
+    // Console.app on tap, the press isn't reaching JS at all and the
+    // bug is in the touch surface (TouchableOpacity child layout,
+    // pointerEvents, modal-sheet gesture intercept, etc.).
+    console.warn("[premium] TRIAL TAPPED " + new Date().toISOString());
+    console.warn("[premium] SELECTED PKG " + (selectedPkg ? JSON.stringify({
+      id: selectedPkg.identifier,
+      productId: selectedPkg.product?.identifier,
+      priceString: selectedPkg.product?.priceString,
+      offering: selectedPkg.offeringIdentifier,
+    }) : "null"));
+
     if (!selectedPkg) {
+      console.warn("[premium] PURCHASE EARLY EXIT — no selectedPkg");
       Alert.alert(
         "Subscriptions unavailable",
         "We couldn't load subscription options. Check your connection and try again.",
@@ -66,7 +88,11 @@ export default function PremiumScreen({ navigation }) {
     }
     setWorking(true);
     try {
+      console.warn("[premium] CALLING Purchases.purchasePackage…");
       const result = await Purchases.purchasePackage(selectedPkg);
+      console.warn("[premium] PURCHASE RESOLVED entitlements=" +
+        Object.keys(result?.customerInfo?.entitlements?.active ?? {}).join(",") +
+        " productId=" + result?.productIdentifier);
       await refresh();
       const nowPremium = !!result?.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
       if (nowPremium) {
@@ -75,8 +101,14 @@ export default function PremiumScreen({ navigation }) {
           "Thanks for supporting FloofLife. Your premium features are unlocked.",
           [{ text: "OK", onPress: () => navigation.goBack() }],
         );
+      } else {
+        console.warn("[premium] PURCHASE OK BUT ENTITLEMENT NOT ACTIVE — RevenueCat product/entitlement mapping may be off");
       }
     } catch (err) {
+      console.warn("[premium] PURCHASE ERROR code=" + (err?.code ?? "?") +
+        " userCancelled=" + !!err?.userCancelled +
+        " message=" + (err?.message ?? "?") +
+        " underlyingError=" + (err?.underlyingErrorMessage ?? "?"));
       if (err?.userCancelled) return;
       const msg = err?.message ?? "";
       if (/network|connection|offline/i.test(msg)) {
@@ -90,9 +122,12 @@ export default function PremiumScreen({ navigation }) {
   }
 
   async function restore() {
+    console.warn("[premium] RESTORE TAPPED " + new Date().toISOString());
     setWorking(true);
     try {
       const info = await Purchases.restorePurchases();
+      console.warn("[premium] RESTORE RESOLVED entitlements=" +
+        Object.keys(info?.entitlements?.active ?? {}).join(","));
       await refresh();
       const restored = !!info?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
       Alert.alert(
@@ -103,6 +138,8 @@ export default function PremiumScreen({ navigation }) {
         [{ text: "OK", onPress: () => restored && navigation.goBack() }],
       );
     } catch (err) {
+      console.warn("[premium] RESTORE ERROR code=" + (err?.code ?? "?") +
+        " message=" + (err?.message ?? "?"));
       if (err?.userCancelled) return;
       Alert.alert("Restore failed", err?.message ?? "Please try again.");
     } finally {
@@ -175,24 +212,46 @@ export default function PremiumScreen({ navigation }) {
 
       {!isPremium && (
         <>
-          <TouchableOpacity onPress={purchase} disabled={working || !selectedPkg} style={[s.cta, (working || !selectedPkg) && s.ctaDisabled]}>
+          {/* Pressable instead of TouchableOpacity — rules out a
+              TouchableOpacity-specific touch-surface bug as the cause
+              of the silent build-7 tap. hitSlop adds 12 px on every
+              side so a near-miss still fires. The synchronous log in
+              onPress fires before any state change so we can confirm
+              the press reached JS even if `purchase()` errors. */}
+          <Pressable
+            onPress={() => {
+              console.warn("[premium] CTA Pressable onPress fired " + new Date().toISOString());
+              purchase().catch((e) => console.warn("[premium] purchase() rejected outside try " + (e?.message ?? e)));
+            }}
+            disabled={working || !selectedPkg}
+            hitSlop={12}
+            style={({ pressed }) => [s.cta, pressed && { opacity: 0.85 }, (working || !selectedPkg) && s.ctaDisabled]}
+          >
             {working ? (
               <ActivityIndicator color="#fff" />
             ) : (
-              <>
+              <View style={{ alignItems: "center" }}>
                 <Text style={s.ctaText}>{selected === "annual" ? "Start 7-day free trial" : "Subscribe monthly"}</Text>
                 <Text style={s.ctaSubText}>
                   {selected === "annual"
                     ? `Then ${annualMeta} · cancel anytime in iPhone Settings`
                     : `${monthlyMeta} · cancel anytime in iPhone Settings`}
                 </Text>
-              </>
+              </View>
             )}
-          </TouchableOpacity>
+          </Pressable>
 
-          <TouchableOpacity onPress={restore} disabled={working} style={s.restoreLink}>
+          <Pressable
+            onPress={() => {
+              console.warn("[premium] RESTORE Pressable onPress fired " + new Date().toISOString());
+              restore().catch((e) => console.warn("[premium] restore() rejected outside try " + (e?.message ?? e)));
+            }}
+            disabled={working}
+            hitSlop={12}
+            style={({ pressed }) => [s.restoreLink, pressed && { opacity: 0.7 }]}
+          >
             <Text style={s.restoreText}>Restore purchases</Text>
-          </TouchableOpacity>
+          </Pressable>
         </>
       )}
 
