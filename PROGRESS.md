@@ -31,8 +31,9 @@ A personal record of what got built, when, and what it took.
 - Subscription pricing: $4.99/mo or $39/yr with 7-day free trial on annual
 - Restored multi-pet support (gated behind Premium)
 - Built v1.2 in parallel: mixed-breed support, Health Tracker (vaccines/preventatives/wellness), multi-factor age calculator, URL audit infrastructure
-- Real fix on a real bug: greyed-out trial button on TestFlight build 6 → diagnosed + patched same afternoon (StrictMode double-effect orphaning the `ready` flag in the finally block)
-- Rebrand: "Your Pets" → "My Floofs" — distinctive, on-brand
+- Real fix on a real bug: greyed-out trial button on TestFlight build 6 → diagnosed + patched same afternoon (StrictMode double-effect orphaning the `ready` flag in the finally block) → shipped as v1.1 build 7
+- Rebrand: "Your Pets" → "My Floofs" — distinctive, on-brand. Cherry-picked to both v1.1 + v1.2 branches
+- Phase 4 polish: Age Calculator rebrand + multi-factor calc (AVMA size-adjusted + Wang 2020 epigenetic clock for dogs, AAFP curve for cats), home card reorder, `npm run audit:links` script that found and fixed four real dead links (FDA recalls 404, AVDC, Red Cross course, LA River), recall source tags + new disclaimer copy, v1.3-v1.5 roadmap committed
 - 4 phases of feature work shipped in one afternoon
 - Hard call: deferred document parsing + remote push notifications to v1.3 instead of cramming into v1.2 (would have shipped broken)
 

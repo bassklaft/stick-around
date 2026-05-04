@@ -18,6 +18,43 @@ Entry format:
 
 ## v1.2 (in development)
 
+> **Smarter Age Calculator** — Multi-factor age math, in plain language.
+> - We replaced the placeholder "1 dog year ≈ 7 human years" with a real calculation that combines breed-size class (using AVMA-aligned thresholds — toy/small/medium/large/giant), the breed's typical lifespan range, body weight, and the Wang et al. 2020 epigenetic-clock formula (UC San Diego methylation curve). Cats get the AAFP feline life-stage curve. The result is a low/mid/high range, plus a list of every named factor we considered ("Size class: Large 50–90 lb · Breed lifespan: 10–12 yr · Epigenetic curve: Wang 2020"). The calculator briefly walks you through the steps it's actually running — no fake "analyzing" theater.
+> - Owners deserve the real answer. Mixed-breed pets get a blended lifespan range across all their breeds; lifestyle adjustments (weight status, diet, exercise, vet checkups) nudge the rate within bounded limits. Honest disclaimer included: it's an estimate, not a measurement.
+> - Status: code complete on `v1.2-work` (not yet built)
+> - Version: v1.2
+
+> **Recalls now sourced and clearly labeled** — FDA, consumer advocacy, and active class actions, with peer-reviewed journals coming.
+> - Every recall entry now carries a source tag visible on the card ("SOURCE · FDA", "SOURCE · CONSUMER ADVOCACY", "SOURCE · FDA + CLASS ACTION") and a Last Updated timestamp the user can rely on. The disclaimer banner explicitly names where the data comes from and explicitly says these are not FloofLife's opinions — we surface what the original source has published. Active class action allegations are labeled as allegations, not as proof of harm. Real-time veterinary medical journal integration (JAVMA, JFMS, JSAP) is signaled as in-development.
+> - Trust is the whole game in pet health. Owners want to know whether something on the list is "the FDA opened an investigation" vs "a vet on Twitter said". Now they can tell at a glance.
+> - Status: code complete on `v1.2-work` (not yet built)
+> - Version: v1.2
+
+> **External link audit infrastructure** — Dead links don't live in the app for long.
+> - A `npm run audit:links` script walks every source file, finds every external URL, probes them with HEAD/GET, and writes a `deadLinks.json` report on any 404 / 410 / DNS failure. Found four real dead links in v1.0/v1.1 and fixed them: the FDA recalls page (which had moved paths and was hitting 404 on every Recalls screen card), the AVDC dental position statement, the Red Cross pet first-aid course, and the LA River reference link. The script is CI-friendly — a v1.3 GitHub Action will run it weekly and open issues for breakage.
+> - Stale links are corrosive — a single dead link from a recall card erodes the user's trust in everything else on the screen.
+> - Status: code complete on `v1.2-work` (not yet built)
+> - Version: v1.2
+
+> **Roadmap: fully automated recall feeds by June 2026** — Documented in the repo so it's not a vague pitch.
+> - v1.3 introduces remote-hosted JSON for recalls (push updates without an App Store version bump) and AI-assisted weekly ingest with manual review. v1.4 swaps in the FDA RSS feed (legal, structured, free) and adds PACER-driven class-action awareness. v1.5+ delivers a fully automated pipeline. Peer-reviewed journal integration is honestly flagged as a permanent manual-curation channel — those are paywalled, scraping isn't legal, and we'll either pay for subscriptions or build partnerships with vet schools.
+> - Lets investors and partners see exactly when each capability lands and what's blocking what.
+> - Status: planning artifact in `V1_REMOVED_FEATURES.md`
+> - Version: planning
+
+> **"My Floofs"** — Distinctive, on-brand replacement for "Your Pets".
+> - Tab bar, screen titles, empty-state copy, and the Add-Another-Floof CTA all flip to the floof framing. Internal route names stay unchanged so the rebrand is purely surface-level — your existing pets, photos, checklists, and Premium status carry through with zero re-onboarding.
+> - "FloofLife" + "My Floofs" reinforce each other and travel better in marketing than the generic "Your Pets".
+> - Status: shipped on `v1.1-work` and `v1.2-work` (cherry-picked to both)
+> - Version: v1.1 hotfix + v1.2
+
+> **Fixed the greyed-out Start-Trial button** — TestFlight build 7 unblocks the purchase flow.
+> - Build 6 of v1.1 rendered prices correctly but the trial button stayed disabled regardless of the user's selection. Root cause: the disabled prop was gated on a `ready` flag from the RevenueCat context that was getting orphaned by a React 18 / RN 0.81 StrictMode double-effect timing window. Fixed by flipping `ready` true synchronously the moment `Purchases.configure()` returns, and dropping `ready` from the button's gate entirely. Now the button lights up the moment a package is selected; offerings continue to populate state in their own time. Diagnostic console logs added for any future repros.
+> - The literal first-paying-customer path can't be flaky. Build 7 fixes it for everyone on the v1.1 channel.
+> - Status: shipped to TestFlight as v1.1 build 7
+> - Version: v1.1 hotfix
+
+
 > **Mixed-breed support** — Pick up to 3 breeds and get a blended care plan.
 > - Owners of Lab/Poodle mixes, Aussie/Border Collie crosses, "DNA-test surprises," and rescue mutts can now select multiple breeds during onboarding. The weekly checklist blends recommendations from each, deduplicates anything they share in common, and tags items so you know whether a guideline came from one breed or all of them. The "Your Pets" screen shows each breed's About card and insider tips side-by-side, and breed-specific risks (IVDD, bloat, escape tendencies) trigger if any of the selected breeds qualify — half-Husky still digs.
 > - Most American dogs are mixed. v1 forced them into a single bucket; v1.2 finally treats them honestly. Existing single-breed pets auto-migrate; nothing to re-enter.
