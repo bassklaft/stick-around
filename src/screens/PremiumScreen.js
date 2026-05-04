@@ -55,6 +55,7 @@ export default function PremiumScreen({ navigation }) {
           <Text style={s.priceMeta}>$3.25/mo · 7-day free trial</Text>
           <View style={s.bestBadge}><Text style={s.bestBadgeText}>SAVE 35%</Text></View>
         </View>
+        {/* TODO: BUG from v0 — monthly button non-clickable, fix during RevenueCat wiring */}
         <View style={s.priceCard}>
           <Text style={s.priceLabel}>MONTHLY</Text>
           <Text style={s.priceAmt}>$4.99<Text style={s.priceUnit}>/mo</Text></Text>
@@ -92,7 +93,7 @@ export default function PremiumScreen({ navigation }) {
           Subscriptions are processed by Apple. Your subscription auto-renews unless canceled at least 24 hours before the end of the current period. Manage or cancel in Settings → Apple ID → Subscriptions.
         </Text>
         <Text style={[s.fineText, { marginTop: 8 }]}>
-          Stick Around guidance is sourced from public veterinary references. It is not a substitute for veterinary advice.
+          FloofLife guidance is sourced from public veterinary references. It is not a substitute for veterinary advice.
         </Text>
       </View>
     </ScrollView>
