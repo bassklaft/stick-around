@@ -53,6 +53,9 @@ export default function AboutScreen() {
         <Text style={[s.body, { marginTop: 10 }]}>
           The age calculator blends AVMA size-adjusted formulas, the Wang et al. 2020 epigenetic clock for dogs, and the AAFP feline life-stage curve for cats.
         </Text>
+        <Text style={[s.body, { marginTop: 10, fontStyle: "italic" }]}>
+          Breed origin information reflects current scholarly consensus where available, and acknowledged debate where it exists. We don't pick a side in academic disputes about ancient lineages.
+        </Text>
       </View>
 
       <Text style={s.sectionHd}>ACKNOWLEDGMENTS</Text>

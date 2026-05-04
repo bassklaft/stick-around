@@ -42,6 +42,13 @@ Entry format:
 > - Status: planning artifact in `V1_REMOVED_FEATURES.md`
 > - Version: planning
 
+> **Breed origin honesty** — Contested origins now framed as contested.
+> - Updated the Chow Chow entry significantly: the origin field flips from "Northern China · ~2,000+ years old" (definitive) to "Northern Asia · ancient lineage (origin actively debated)", and the origin story now lays out the three competing lineage theories — Han Chinese mastiff descent, Tibetan mastiff lineage, and Siberian/Russian spitz descent — rather than picking the popular one. The summary copy flips "ancient Chinese breed" to "ancient Northern Asian breed" so the contested framing carries through everywhere.
+> - Added a small italic footnote anywhere a breed origin shows: "Origin information reflects current scholarly consensus where available, and acknowledged debate where it exists." The About page carries the same line plus an explicit "we don't pick a side in academic disputes about ancient lineages."
+> - Audited the rest of the catalog. The other three breeds with origin fields (Bulldog, French Bulldog, Boston Terrier) have well-documented origins; no softening needed. Other contested-origin breeds (Akita, Basenji, Saluki, Lhasa Apso, Pekingese, Tibetan Mastiff, Pharaoh Hound) aren't in v1.2 yet — they'll get the contested-origin treatment when they're added in the v1.3 breed expansion.
+> - Status: code complete on `v1.1-work` and `v1.2-work`
+> - Version: v1.1 hotfix + v1.2
+
 > **Founder origin story** — Honest framing about how FloofLife came to be.
 > - A short founder paragraph at the bottom of the welcome screen ("Built by a dog dad who wanted the best for his floof — and yours…") plus a fuller Story page reachable from Settings → About FloofLife. The Story page includes the origin paragraph, a "What FloofLife is not" boundary, a Sources section that names where breed and recall data come from, an Acknowledgments line, and the current version.
 > - No outcome claims and no positioning against veterinary care — just the truth about why this app exists, where the data comes from, and what it can and can't do.

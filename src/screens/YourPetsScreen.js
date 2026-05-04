@@ -111,6 +111,11 @@ export default function YourPetsScreen() {
                     {breed.originStory}
                   </Text>
                 )}
+                {(breed.origin || breed.originStory) && (
+                  <Text style={s.originNote}>
+                    Origin information reflects current scholarly consensus where available, and acknowledged debate where it exists.
+                  </Text>
+                )}
                 {Array.isArray(breed.references) && breed.references.length > 0 && (
                   <View style={{ marginTop: 12 }}>
                     <Text style={s.breedRefHd}>SOURCES & DEEP DIVES</Text>
@@ -218,6 +223,7 @@ const s = StyleSheet.create({
   breedCard:     { marginTop: 16, padding: 14, backgroundColor: theme.bg, borderRadius: 12, borderWidth: 1, borderColor: theme.line },
   breedTitle:    { fontWeight: "700", color: theme.fg, fontSize: 16, marginBottom: 4 },
   breedOrigin:   { fontSize: 11, color: theme.muted, fontWeight: "600", marginBottom: 8, letterSpacing: 0.3 },
+  originNote:    { fontSize: 10, color: theme.muted, fontStyle: "italic", marginTop: 8, lineHeight: 14 },
   breedBody:     { fontSize: 13, color: theme.muted, lineHeight: 19 },
   breedRefHd:    { fontSize: 10, fontWeight: "800", color: theme.muted, letterSpacing: 1, marginBottom: 6 },
   breedRefText:  { fontSize: 12, color: theme.accent, fontWeight: "600" },
