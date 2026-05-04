@@ -23,6 +23,8 @@ import RiskScreen from "./src/screens/RiskScreen";
 import EmergencyScreen from "./src/screens/EmergencyScreen";
 import DogAgeScreen from "./src/screens/DogAgeScreen";
 import PremiumScreen from "./src/screens/PremiumScreen";
+import HealthTrackerScreen from "./src/screens/HealthTrackerScreen";
+import AddHealthRecordScreen from "./src/screens/AddHealthRecordScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import { PurchasesProvider } from "./src/lib/purchasesContext";
 import { theme } from "./src/theme";
@@ -144,6 +146,8 @@ export default function App() {
               <RootStack.Screen name="Risk"     component={RiskScreen}     options={{ ...pushScreenOptions, title: "Risk Map" }} />
               <RootStack.Screen name="Emergency" component={EmergencyScreen} options={{ ...pushScreenOptions, title: "Emergency Resources" }} />
               <RootStack.Screen name="DogAge"   component={DogAgeScreen}   options={{ ...pushScreenOptions, title: "Age in Human Years" }} />
+              <RootStack.Screen name="HealthTracker"   component={HealthTrackerScreen}   options={{ ...pushScreenOptions, title: "Health Tracker" }} />
+              <RootStack.Screen name="AddHealthRecord" component={AddHealthRecordScreen} options={{ ...pushScreenOptions, presentation: "modal", title: "Health Record" }} />
               <RootStack.Screen name="AddPet"   options={{ ...pushScreenOptions, presentation: "modal", title: "Add a pet" }}>
                 {(props) => <OnboardingScreen {...props} addMode onDone={() => props.navigation.goBack()} />}
               </RootStack.Screen>
