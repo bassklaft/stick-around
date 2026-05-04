@@ -1,9 +1,16 @@
 // Personalized weekly checklist generator. Inputs: pet profile + current
 // date. Output: a list of items each with {id, title, why, cadence,
-// category}. The generator pulls a generic baseline + breed-specific
-// additions + age-adjusted items + season-aware items.
+// category, sources?}. The generator pulls a generic baseline +
+// breed-specific additions (one or more breeds — see petBreeds.js) +
+// age-adjusted items + season-aware items.
+//
+// For mixed-breed pets each contributing breed adds its own checklist
+// items. Items are deduplicated by id, and `sources` records which
+// breeds contributed (so the UI can label "Common in Lab, Poodle" or
+// "From Labrador" appropriately).
 
 import { breedFacts } from "../data/breeds";
+import { getPetBreeds, shortBreedName } from "./petBreeds";
 
 const SEASONS = {
   spring: [3, 4, 5], summer: [6, 7, 8], fall: [9, 10, 11], winter: [12, 1, 2],
@@ -74,9 +81,40 @@ export function generateChecklist(pet, date = new Date()) {
   const ageAddons = isSenior ? SENIOR_ADDONS : isYoung ? (species === "cat" ? KITTEN_ADDONS : PUPPY_ADDONS) : [];
   const seasonAddons = SEASON_ADDONS[currentSeason(date)] || [];
 
-  // Breed-specific items appended if breed has them
-  const breed = breedFacts[(pet.breed || "").toLowerCase()] || null;
-  const breedAddons = (breed?.checklist || []).map((c, i) => ({ ...c, id: c.id || `breed-${i}` }));
+  // Breed-specific items — blended across every breed on the pet.
+  // Items keyed by id; first breed to contribute wins on title/why,
+  // and `sources` accumulates every breed that includes the same id.
+  const breedItems = new Map();
+  const petBreeds = getPetBreeds(pet);
+  for (const breedKey of petBreeds) {
+    const breed = breedFacts[breedKey];
+    if (!breed?.checklist) continue;
+    breed.checklist.forEach((c, i) => {
+      const id = c.id || `breed-${breedKey}-${i}`;
+      const existing = breedItems.get(id);
+      if (existing) {
+        existing.sources.push(breedKey);
+      } else {
+        breedItems.set(id, { ...c, id, sources: [breedKey] });
+      }
+    });
+  }
+  const breedAddons = Array.from(breedItems.values());
 
   return [...base, ...ageAddons, ...seasonAddons, ...breedAddons];
+}
+
+// UI helper: turn an item's sources[] into a short attribution string.
+// Single-breed pets get null (no need to label). Mixed-breed pets get:
+//   1 source                → "From Labrador"
+//   ≥2 sources, all of pet  → "Common to all breeds"
+//   ≥2 sources, subset      → "Common in Lab, Poodle"
+export function checklistSourceLabel(item, pet) {
+  const sources = item?.sources;
+  if (!Array.isArray(sources) || sources.length === 0) return null;
+  const petBreeds = getPetBreeds(pet);
+  if (petBreeds.length <= 1) return null;
+  if (sources.length >= petBreeds.length) return "Common to all breeds";
+  if (sources.length === 1) return `From ${shortBreedName(sources[0])}`;
+  return "Common in " + sources.map(shortBreedName).join(", ");
 }
