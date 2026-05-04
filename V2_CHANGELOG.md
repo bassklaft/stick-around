@@ -25,10 +25,22 @@ Entry format:
 > - Status: code complete on `v1.2-work` (not yet built)
 > - Version: v1.2
 
-> **Vaccine + preventative tracker** — Never miss rabies, DHPP, flea-and-tick, or heartworm again.
-> - Log each vaccination and preventative with the date given. FloofLife computes the next-due date based on AAHA / AVMA recommended cadences, surfaces overdue alerts on the Home screen, and lets you snooze a reminder if you've already booked the vet visit.
-> - The single most common reason healthy adult dogs end up at an emergency vet is a missed preventative dose. This is a big quality-of-life and avoidance-of-disaster feature.
-> - Status: in development
+> **Health Tracker** — A per-pet log of vaccines, preventatives, and wellness visits with a real next-due date for each one.
+> - Pick from the built-in catalog (Rabies 1y/3y, DHPP, Bordetella, Heartworm, Flea/Tick, Annual Wellness, Dental, Bloodwork, Heartworm Test, Fecal, Weight Check, FVRCP / FeLV for cats) or add your own custom entry. Each record stores the date given, the cadence, your notes (lot number, vet, side effects), and an optional photo or PDF of the actual paperwork. The tracker buckets every record into Overdue / Upcoming (next 12 months) / History with status badges in red, yellow, and green. Free pets get one record; Premium unlocks unlimited entries.
+> - Vaccine and preventative lapses are one of the most common reasons healthy pets end up at an emergency vet. Calendar-style awareness (rather than memory) is a big quality-of-life win — and the safety framing keeps the tracker from sounding like medical advice. We do not parse your documents, transmit them anywhere, or read them. Attachments live on your device.
+> - Status: code complete on `v1.2-work` (not yet built)
+> - Version: v1.2
+
+> **Calendar export (.ics)** — One tap sends every upcoming health entry to Apple Calendar, Google Calendar, or Outlook.
+> - The Health Tracker generates a standards-compliant .ics file with one VEVENT per upcoming record (9 AM local on the next-due date, 1-day VALARM, "Bella: Rabies" summary, your notes in the description) and hands it to the iOS share sheet so the user picks where it lands. We chose calendar export over push notifications deliberately — the user's existing calendar is where their other obligations live, and we don't want to be the app that nags people about pet vaccines from a notification tray.
+> - Lower friction than re-entering due dates manually; uses the system the user already trusts. Vet appointments and pet care end up on the same canvas.
+> - Status: code complete on `v1.2-work` (not yet built)
+> - Version: v1.2
+
+> **Photo & PDF attachments on health records** — Snap a photo of the rabies certificate; attach the PDF the vet emailed.
+> - Tap "Attach photo or PDF" while logging an entry to pull from the photo library or pick a PDF. The file is copied into FloofLife's private storage on your device, the filename is shown in the record list, and tapping View opens it in the system viewer. We do not extract, OCR, summarize, or transmit the contents — what you store is what you store.
+> - Owners hate keeping a folder of vaccine papers. Pinning a photo to the entry replaces that folder with one tap.
+> - Status: code complete on `v1.2-work` (not yet built)
 > - Version: v1.2
 
 > **Vet integration** — Find your vet, save the contact info, schedule from inside the app.
