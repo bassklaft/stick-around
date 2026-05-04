@@ -2,14 +2,17 @@ import React, { useState } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Pet } from "../lib/storage";
+import { Pet, Pets } from "../lib/storage";
 import { breedFacts, dogBreeds, catBreeds, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
-export default function OnboardingScreen({ onDone }) {
+// `addMode` reuses the same form as first-run onboarding to add an
+// additional pet to the household — finish() routes through Pets.add()
+// so existing pets are preserved.
+export default function OnboardingScreen({ onDone, addMode = false }) {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -33,7 +36,7 @@ export default function OnboardingScreen({ onDone }) {
     if (!name.trim()) { Alert.alert("Pick a name", "Your pet needs a name."); return; }
     const ageNum = parseFloat(ageYears);
     const weightNum = parseFloat(weightLbs);
-    await Pet.set({
+    const payload = {
       name: name.trim(),
       species,
       breed: breed || (species === "cat" ? "domestic shorthair" : "mixed"),
@@ -43,15 +46,20 @@ export default function OnboardingScreen({ onDone }) {
       weightLbs: isFinite(weightNum) ? weightNum : null,
       photoUri: photoUri || null,
       createdAt: Date.now(),
-    });
+    };
+    if (addMode) {
+      await Pets.add(payload);
+    } else {
+      await Pet.set(payload);
+    }
     onDone();
   }
 
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: theme.bg }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 32, paddingBottom: 60, paddingHorizontal: 22 }} keyboardShouldPersistTaps="handled">
-        <Text style={s.brand}>FloofLife</Text>
-        <Text style={s.tagline}>Better pet parenting, on autopilot</Text>
+        <Text style={s.brand}>{addMode ? "Add a pet" : "FloofLife"}</Text>
+        <Text style={s.tagline}>{addMode ? "A few quick details about your new floof." : "Better pet parenting, on autopilot"}</Text>
 
         {step === 0 && (
           <View style={s.section}>
@@ -64,6 +72,7 @@ export default function OnboardingScreen({ onDone }) {
               ))}
             </View>
             <PrimaryButton label="Next" onPress={() => setStep(1)} />
+            {addMode && <SecondaryButton label="Cancel" onPress={onDone} />}
           </View>
         )}
 
@@ -153,7 +162,7 @@ export default function OnboardingScreen({ onDone }) {
               </Text>
             </View>
 
-            <PrimaryButton label={`Start with ${name.trim() || "your pet"}`} onPress={finish} />
+            <PrimaryButton label={addMode ? `Add ${name.trim() || "this pet"}` : `Start with ${name.trim() || "your pet"}`} onPress={finish} />
             <SecondaryButton label="Back" onPress={() => setStep(3)} />
           </View>
         )}
