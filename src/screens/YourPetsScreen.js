@@ -2,11 +2,12 @@
 // avatar (tap to set/change photo), name, breed badge, breed summary
 // + insider tips. Tap "Add another pet" to onboard a second.
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl, Linking, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl, Linking, Alert, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pets } from "../lib/storage";
+import { usePurchases } from "../lib/purchasesContext";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { theme } from "../theme";
@@ -19,6 +20,7 @@ export default function YourPetsScreen() {
   const [pets, setPets] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [healthOpen, setHealthOpen] = useState({});
+  const { isPremium } = usePurchases();
 
   const load = useCallback(async () => {
     const list = await Pets.listSortedOldestFirst();
@@ -34,8 +36,20 @@ export default function YourPetsScreen() {
     load();
   }
 
-  // Multi-pet onboarding lands in v1.1. Storage already supports it
-  // (see Pets.add in lib/storage.js); only the UI flow is stubbed.
+  function addAnotherPet() {
+    if (!isPremium) {
+      Alert.alert(
+        "Multi-pet is a Premium feature",
+        "Upgrade to add a second (or third, or fifth) pet to FloofLife. Each gets their own breed-tailored checklist.",
+        [
+          { text: "Maybe later" },
+          { text: "See Premium", onPress: () => navigation.navigate("Premium") },
+        ],
+      );
+      return;
+    }
+    navigation.navigate("AddPet");
+  }
 
   if (pets.length === 0) {
     return (
@@ -166,10 +180,15 @@ export default function YourPetsScreen() {
         );
       })}
 
-      <View style={s.addBtnDisabled}>
-        <MaterialCommunityIcons name="plus-circle-outline" size={22} color={theme.muted} />
-        <Text style={s.addBtnDisabledText}>Multi-pet support coming soon</Text>
-      </View>
+      <TouchableOpacity onPress={addAnotherPet} style={s.addBtn} activeOpacity={0.8}>
+        <MaterialCommunityIcons name="plus-circle-outline" size={22} color={theme.accent} />
+        <Text style={s.addBtnText}>Add another pet</Text>
+        {!isPremium && (
+          <View style={s.premiumBadge}>
+            <Text style={s.premiumBadgeText}>PREMIUM</Text>
+          </View>
+        )}
+      </TouchableOpacity>
 
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
@@ -219,8 +238,10 @@ const s = StyleSheet.create({
   tipRow:        { flexDirection: "row", marginBottom: 8 },
   tipBullet:     { color: theme.accent, fontWeight: "800", marginRight: 8, fontSize: 14, lineHeight: 19 },
   tipBody:       { flex: 1, fontSize: 13, color: theme.fg, lineHeight: 19 },
-  addBtnDisabled:    { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, padding: 16, borderRadius: 12, borderWidth: 1, borderColor: theme.line, borderStyle: "dashed", backgroundColor: theme.bg, marginTop: 4, opacity: 0.55 },
-  addBtnDisabledText:{ color: theme.muted, fontWeight: "600", fontSize: 13 },
+  addBtn:        { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, padding: 16, borderRadius: 12, borderWidth: 2, borderColor: theme.accent, borderStyle: "dashed", backgroundColor: theme.bg, marginTop: 4 },
+  addBtnText:    { color: theme.accent, fontWeight: "700", fontSize: 14 },
+  premiumBadge:  { backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, marginLeft: 4 },
+  premiumBadgeText:{ color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
   disclaimer:    { marginTop: 16, padding: 14, borderRadius: 10, backgroundColor: theme.accentSoft },
   disclaimerText:{ fontSize: 11, color: theme.fg, lineHeight: 17 },
 });

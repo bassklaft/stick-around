@@ -21,11 +21,7 @@ export default function SettingsScreen({ navigation }) {
       navigation.navigate("Premium");
       return;
     }
-    Alert.alert(
-      "Multi-pet support",
-      "Multi-pet onboarding is coming in an upcoming v1.1 update. You're already subscribed — you'll get it as soon as it ships.",
-      [{ text: "OK" }],
-    );
+    navigation.navigate("AddPet");
   }
 
   return (
