@@ -8,7 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, ChecklistState } from "../lib/storage";
-import { generateChecklist } from "../lib/checklist";
+import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { breedFacts } from "../data/breeds";
 import { openMapsSearch } from "../lib/maps";
 import { theme } from "../theme";
@@ -37,7 +37,7 @@ export default function HomeScreen({ navigation }) {
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;
   const breed = breedFacts[(pet.breed || "").toLowerCase()];
-  const completed = items.filter(i => state[i.id]?.status === "done").length;
+  const completed = items.filter(i => effectiveStatus(i, state[i.id]) === "done").length;
   const hasPhoto = !!pet.photoUri;
 
   const cards = [

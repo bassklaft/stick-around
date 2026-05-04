@@ -5,7 +5,7 @@ import { View, Text, ScrollView, TouchableOpacity, RefreshControl, StyleSheet } 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { Pet, ChecklistState } from "../lib/storage";
-import { generateChecklist } from "../lib/checklist";
+import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { theme } from "../theme";
 
 export default function ChecklistScreen() {
@@ -30,7 +30,7 @@ export default function ChecklistScreen() {
   }
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;
-  const completed = items.filter(i => state[i.id]?.status === "done").length;
+  const completed = items.filter(i => effectiveStatus(i, state[i.id]) === "done").length;
 
   return (
     <ScrollView
@@ -44,7 +44,7 @@ export default function ChecklistScreen() {
       </View>
 
       {items.map((it, i) => {
-        const status = state[it.id]?.status;
+        const status = effectiveStatus(it, state[it.id]);
         const done = status === "done";
         const skipped = status === "skipped";
         return (
