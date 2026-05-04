@@ -660,3 +660,91 @@ Tradeoffs to consider before doing this:
 - Need to keep Individual account active during transfer
 - May want to do this once FloofLife has more momentum (so we're transferring something with traction, not a new app)
 - Could combine with v1.1 launch as a clean rebrand moment
+
+
+---
+
+## 2026-05-04 — v1.3 / v1.4 / v1.5 roadmap
+
+### v1.3 (target ship: mid-May 2026)
+
+- **Remote JSON for recalls.** Host the recall list on Cloudflare Pages or GitHub Pages with a stable schema; the app fetches on launch and falls back to the bundled list on network failure. Lets us push recall updates without an App Store version bump.
+- **AI-assisted weekly recall workflow.** Once-a-week scheduled task that uses a Claude API call to scan the FDA recalls/withdrawals page and DogFoodAdvisor for new entries, emit a structured JSON candidate list, hold for ~5 min of manual review by Max, then push to the remote feed. Manual review stays in the loop — no autopublish.
+- **URL audit as a scheduled GitHub Action.** Runs `npm run audit:links` weekly, writes `deadLinks.json` if anything broke, opens an issue. The audit script (Phase 4 deliverable) is already CI-friendly.
+- **Push notifications (local first; remote optional)** for vaccine/preventative reminders. Local-only is sufficient for v1.3 since the Health Tracker already knows the schedule client-side.
+- **Document upload + photo storage for vaccine records.** Already partially landed in Phase 2; v1.3 finishes thumbnail generation + a richer attachment viewer.
+
+### v1.4 (target ship: late May 2026)
+
+- **FDA RSS scraper running on schedule.** The FDA publishes a structured RSS feed for recalls; legal, free, and stable. v1.4 swaps the Claude-assisted ingest for an RSS-driven pipeline. Manual review stays as a safety gate.
+- **Class action lawsuit awareness via PACER.** PACER (federal court records) has a paid API; query for "pet food" / "pet treat" complaints filed and surface high-signal class actions to FloofLife's Recalls list.
+- **DogFoodAdvisor partnership outreach** for a legitimate data-sharing agreement (rather than scraping). DogFoodAdvisor is the most active aggregator outside the FDA; a partnership lets us cite them by name without ToS friction.
+- **Admin UI for Max** — a simple web form to add a recall in 30 seconds (name, severity, source, summary, advice, source URL) without editing JS.
+
+### v1.5+ (target ship: by June 1, 2026)
+
+- **Fully automated recall pipeline.** FDA RSS + DogFoodAdvisor (via partnership or their API if available) + class action awareness, all flowing into the remote JSON. NO user-side app updates required to push a new recall.
+- **Acknowledged limitation:** peer-reviewed veterinary journals (JAVMA, JFMS, JSAP, et al.) require paid subscriptions and CANNOT be legally scraped. Either pay for academic subscriptions and curate manually, or build partnerships with veterinary schools who can republish under license. This is a manual-curation channel for the foreseeable future.
+
+### Other deferred items (no specific version yet)
+
+- Document parsing / AI extraction from vet uploads (OCR + structured field detection on rabies certificates, lab reports, etc.)
+- Vet portal sync integrations (when major chains expose APIs — e.g. VCA, Banfield, MWI)
+- Cross-pet Health Tracker overview ("Health" tab that aggregates upcoming due dates across all of a household's floofs)
+- Mixed-breed percentage editor (UI for setting Lab 50% / Poodle 50% etc., feeding into checklist weighting)
+- Spay/neuter timing guidance (breed + size dependent — there's real evidence early neutering harms some giant breeds)
+- Vaccine reaction logging (a checkbox on each Health Tracker entry: "any reaction?" → free-form notes — useful for catching adjuvant intolerance patterns)
+- DNA test import (Embark / Wisdom Panel / Basepaws JSON or CSV ingest, mapped to FloofLife's breed catalog)
+- iCloud / cloud sync as a paid feature
+
+
+---
+
+## 2026-05-04 — Critical migration constraint: local → cloud (v2.0+)
+
+When FloofLife eventually adds cloud accounts (v2.0+), users who have been
+using the app in local-only mode MUST not lose any data when they:
+
+- create an account for the first time
+- subscribe to Premium for the first time
+- migrate from free local-only to cloud-synced premium
+
+### What MUST migrate seamlessly
+
+- All pets (full pet data: name, species, `breeds[]`, age, weight, photos)
+- All health records (vaccines, preventatives, wellness, attachments)
+- All vet info (saved vet contacts)
+- All checklist progress / completion state
+- All user preferences and settings
+- Pet photos stored in `documentDirectory`
+
+### Implementation approach (when v2.0 lands)
+
+1. On account creation, app reads ALL local AsyncStorage + FileSystem data.
+2. App uploads to cloud-side database under the new account ID.
+3. Local data is preserved (don't delete) until cloud sync confirms successful.
+4. Photos in `documentDirectory` get uploaded to cloud storage with URLs replacing local URIs.
+5. After successful migration, local data is kept as cache for offline-first behavior.
+6. Add a "Restore from local data" option in Settings as a fallback.
+
+### Anti-patterns to avoid
+
+- Don't show a "create account" gate that wipes local data.
+- Don't require account creation just to access existing local data.
+- Don't show a confusing "merge or replace" prompt that scares users into losing data.
+
+### Edge cases to plan for
+
+- User with cloud account on Phone A + local data on Phone B → conflict resolution UI.
+- User who creates account, then signs out → local data should persist.
+- User who deletes app, reinstalls, signs in → cloud data restored, no local-only data lost.
+- Photos that exist locally but not in cloud (older entries) — auto-upload on first sync.
+
+### Test cases (when v2.0 ships)
+
+1. Free user with 3 pets + 20 health records + photos → creates account → all data appears.
+2. Free user with mixed-breed pet → upgrades to Premium → multi-breed data persists.
+3. Free user → premium → adds 4th pet → all four sync to cloud.
+4. User with cloud account on Phone A → installs on Phone B → all data syncs down.
+
+**Status:** constraint documented; implementation deferred to v2.0.

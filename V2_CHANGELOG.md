@@ -49,6 +49,12 @@ Entry format:
 > - Status: code complete on `v1.1-work` and `v1.2-work`
 > - Version: v1.1 hotfix + v1.2
 
+> **Migration constraint documented for v2.0 cloud features** — Local users will never lose data on account creation.
+> - Captured a hard rule in the repo's roadmap: when FloofLife eventually ships cloud accounts (v2.0+), every pet, health record, vet contact, checklist state, preference, and photo a local-only user has built up MUST migrate seamlessly when they create an account or subscribe to Premium for the first time. The doc spells out the implementation approach (read local → upload to cloud → preserve local as cache → never wipe), explicit anti-patterns to avoid (gating, "merge or replace" prompts), edge cases (multi-device sign-in, sign-out, reinstall + sign-in), and test cases that v2.0 must pass before ship.
+> - Trust is the whole product. The moment someone feels their data was eaten by an upgrade, they're gone — and rightly so.
+> - Status: constraint documented in `V1_REMOVED_FEATURES.md`; implementation deferred to v2.0
+> - Version: planning
+
 > **Founder origin story** — Honest framing about how FloofLife came to be.
 > - A short founder paragraph at the bottom of the welcome screen ("Built by a dog dad who wanted the best for his floof — and yours…") plus a fuller Story page reachable from Settings → About FloofLife. The Story page includes the origin paragraph, a "What FloofLife is not" boundary, a Sources section that names where breed and recall data come from, an Acknowledgments line, and the current version.
 > - No outcome claims and no positioning against veterinary care — just the truth about why this app exists, where the data comes from, and what it can and can't do.
