@@ -147,10 +147,10 @@ const dogBreedData = {
   "chow chow": {
     species: "dog", lifespan: "8-12 years", energy: "low-moderate",
     displayName: "Chow Chows",
-    origin: "Northern China · ~2,000+ years old",
-    originStory: "One of the oldest dog breeds in existence — Chinese pottery from the Han Dynasty (206 BC) shows dogs nearly identical to today's Chow. Used historically as guardians, hunting companions, and sled dogs by Chinese nobility. The purple-blue tongue is genetically linked to oral pigmentation that develops at 8-10 weeks; both Chows and Shar-Peis share this trait.",
+    origin: "Northern Asia · ancient lineage (origin actively debated)",
+    originStory: "Chow Chow origin is genuinely contested. Three lineages have been proposed in the literature:\n\n• Han Chinese mastiff/working-dog descent — the most common framing in popular accounts and breed-club histories.\n• Tibetan mastiff lineage — proposed by some genetic studies that show shared markers with Tibetan working dogs.\n• Siberian/Russian spitz descent — proposed by other genetic and morphological studies that group Chows closer to the spitz family of Northern Asia.\n\nModern genetic research suggests connections to multiple ancient dog populations across Northern Asia rather than a single point of origin. The breed's exact lineage remains an active area of canine genetic research. The famous purple-blue tongue is genetically linked to oral pigmentation that develops at 8-10 weeks; both Chows and Shar-Peis share this trait.",
     brachycephalic: true,
-    summary: "Aloof, dignified, ancient Chinese breed with a famous purple-blue tongue. Reserved with strangers, deeply loyal to family. Brachycephalic snout + thick double coat = serious heat risk. Eye and skin issues are breed-specific concerns.",
+    summary: "Aloof, dignified, ancient Northern Asian breed with a famous purple-blue tongue. Reserved with strangers, deeply loyal to family. Brachycephalic snout + thick double coat = serious heat risk. Eye and skin issues are breed-specific concerns.",
     references: [
       { label: "AKC Chow Chow breed standard", url: "https://www.akc.org/dog-breeds/chow-chow/" },
       { label: "Chow Chow Club Inc. (AKC parent club)", url: "https://chowclub.org/" },
