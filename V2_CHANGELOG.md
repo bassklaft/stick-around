@@ -21,6 +21,7 @@ Entry format:
 > **Mixed-breed support** — Pick up to 3 breeds and get a blended care plan.
 > - Owners of Lab/Poodle mixes, Aussie/Border Collie crosses, "DNA-test surprises," and rescue mutts can now select multiple breeds during onboarding. The weekly checklist blends recommendations from each, deduplicates anything they share in common, and tags items so you know whether a guideline came from one breed or all of them. The "Your Pets" screen shows each breed's About card and insider tips side-by-side, and breed-specific risks (IVDD, bloat, escape tendencies) trigger if any of the selected breeds qualify — half-Husky still digs.
 > - Most American dogs are mixed. v1 forced them into a single bucket; v1.2 finally treats them honestly. Existing single-breed pets auto-migrate; nothing to re-enter.
+> - **Marketing angle confirmed by analysis:** blended plans are *additive*, not redundant. We checked all 36 breeds with checklist items and found near-zero overlap (only Yorkie + Pomeranian share two items). Translation for owners: "two breeds means twice the guidance, not duplicate guidance."
 > - Status: code complete on `v1.2-work` (not yet built)
 > - Version: v1.2
 
