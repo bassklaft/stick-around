@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Alert, Linking, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pet } from "../lib/storage";
+import { usePurchases } from "../lib/purchasesContext";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -9,10 +10,23 @@ const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).j
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [pet, setPet] = useState(null);
+  const { isPremium } = usePurchases();
 
   useEffect(() => { Pet.get().then(setPet); }, []);
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;
+
+  function openMultiPet() {
+    if (!isPremium) {
+      navigation.navigate("Premium");
+      return;
+    }
+    Alert.alert(
+      "Multi-pet support",
+      "Multi-pet onboarding is coming in an upcoming v1.1 update. You're already subscribed — you'll get it as soon as it ships.",
+      [{ text: "OK" }],
+    );
+  }
 
   return (
     <ScrollView style={{ backgroundColor: theme.bg }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 60 }}>
@@ -22,9 +36,28 @@ export default function SettingsScreen({ navigation }) {
       </View>
 
       <Text style={s.sectionHd}>SUBSCRIPTION</Text>
-      <TouchableOpacity onPress={() => navigation.navigate("Premium")} style={[s.card, { borderColor: theme.accent }]}>
-        <Text style={[s.body, { fontWeight: "700", color: theme.accent }]}>⭐ Upgrade to Premium</Text>
-        <Text style={[s.sub, { marginTop: 4 }]}>$4.99/mo or $39/yr — multi-pet, expanded breed depth, health & care tracking.</Text>
+      {isPremium ? (
+        <TouchableOpacity onPress={() => navigation.navigate("Premium")} style={[s.card, { borderColor: theme.accent }]}>
+          <Text style={[s.body, { fontWeight: "700", color: theme.accent }]}>⭐ Premium active</Text>
+          <Text style={[s.sub, { marginTop: 4 }]}>Tap to view details or restore on another device.</Text>
+        </TouchableOpacity>
+      ) : (
+        <TouchableOpacity onPress={() => navigation.navigate("Premium")} style={[s.card, { borderColor: theme.accent }]}>
+          <Text style={[s.body, { fontWeight: "700", color: theme.accent }]}>⭐ Upgrade to Premium</Text>
+          <Text style={[s.sub, { marginTop: 4 }]}>$4.99/mo or $39/yr — multi-pet, expanded breed depth, health & care tracking.</Text>
+        </TouchableOpacity>
+      )}
+
+      <Text style={s.sectionHd}>FEATURES</Text>
+      <TouchableOpacity onPress={openMultiPet} style={s.row}>
+        <Text style={s.rowLabel}>Multi-pet support</Text>
+        {isPremium ? (
+          <Text style={{ color: theme.muted }}>›</Text>
+        ) : (
+          <View style={s.premiumBadge}>
+            <Text style={s.premiumBadgeText}>PREMIUM</Text>
+          </View>
+        )}
       </TouchableOpacity>
 
       <Text style={s.sectionHd}>HELP</Text>
@@ -66,4 +99,6 @@ const s = StyleSheet.create({
   rowLabel:     { fontSize: 14, color: theme.fg },
   disclaimer:   { marginTop: 24, padding: 14, borderRadius: 10, backgroundColor: theme.accentSoft },
   disclaimerText:{ fontSize: 11, color: theme.fg, lineHeight: 17 },
+  premiumBadge: { backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  premiumBadgeText:{ color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
 });
