@@ -1,28 +1,50 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { normalizePetBreeds } from "./petBreeds";
 
 // Multi-pet storage with auto-migration from the legacy single-pet key.
 // All UI flows read through `Pets`. The legacy `Pet` object is kept so
 // existing screens continue to work — it returns the active (or first)
 // pet from the list.
+//
+// v1.2 adds an inline migration: pets that only have `breed: string`
+// get a mirrored `breeds: [breed]` populated on read. We persist the
+// migrated shape on first write so it sticks.
 
 const KEY_LIST   = "pawrent_pets_v2";
 const KEY_LEGACY = "pawrent_pet";
 
 function newId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
+// Apply the v1.2 breeds-array migration to a list of pets. Pure — does
+// not write to AsyncStorage; callers decide when to persist.
+function migrateBreeds(arr) {
+  let changed = false;
+  const out = arr.map((p) => {
+    const next = normalizePetBreeds(p);
+    if (next !== p && JSON.stringify(next) !== JSON.stringify(p)) changed = true;
+    return next;
+  });
+  return { pets: out, changed };
+}
+
 export const Pets = {
   async list() {
     // Prefer the v2 array
     const s = await AsyncStorage.getItem(KEY_LIST);
     if (s) {
-      try { return JSON.parse(s); } catch { /* fall through */ }
+      try {
+        const raw = JSON.parse(s);
+        const { pets, changed } = migrateBreeds(raw);
+        if (changed) await AsyncStorage.setItem(KEY_LIST, JSON.stringify(pets));
+        return pets;
+      } catch { /* fall through */ }
     }
     // Migrate from legacy single-pet store
     const legacy = await AsyncStorage.getItem(KEY_LEGACY);
     if (legacy) {
       try {
         const pet = JSON.parse(legacy);
-        const arr = [{ ...pet, id: pet.id || newId() }];
+        const arr = [normalizePetBreeds({ ...pet, id: pet.id || newId() })];
         await AsyncStorage.setItem(KEY_LIST, JSON.stringify(arr));
         return arr;
       } catch { /* */ }
@@ -37,7 +59,7 @@ export const Pets = {
   },
   async add(pet) {
     const arr = await this.list();
-    const withId = { ...pet, id: pet.id || newId(), createdAt: pet.createdAt || Date.now() };
+    const withId = normalizePetBreeds({ ...pet, id: pet.id || newId(), createdAt: pet.createdAt || Date.now() });
     arr.push(withId);
     await this.setAll(arr);
     return withId;
@@ -46,7 +68,7 @@ export const Pets = {
     const arr = await this.list();
     const idx = arr.findIndex(p => p.id === id);
     if (idx >= 0) {
-      arr[idx] = { ...arr[idx], ...updates };
+      arr[idx] = normalizePetBreeds({ ...arr[idx], ...updates });
       await this.setAll(arr);
       return arr[idx];
     }
