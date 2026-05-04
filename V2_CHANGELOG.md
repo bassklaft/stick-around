@@ -49,6 +49,24 @@ Entry format:
 > - Status: code complete on `v1.2-work` (and cherry-picked to `v1.1-work`)
 > - Version: v1.1 hotfix + v1.2
 
+> **Checklist items reset on their own cadence** — Daily items unchecked next day, weekly next week, etc.
+> - Until now, once you ticked off "brush teeth (or dental chew)" the green checkmark stayed forever — there was no signal that the next 3x/week cycle had started. Items now stay checked only for their cadence window: a daily item resets after 24 hours, weekly after 7 days, "3x/week" after about 56 hours, monthly after 30 days. Ambient cadences ("before walks", "after walks", "always") never auto-reset since they're situational reminders rather than recurring obligations.
+> - Pure read-side derivation: nothing in storage changes, we just check the timestamp on each render against the item's cadence window. So the rule is portable — it'll continue to apply correctly when a checklist item's cadence is later edited or imported from a different source.
+> - Status: code complete on `v1.2-work` (also cherry-picked to `v1.1-work`)
+> - Version: v1.1 hotfix + v1.2
+
+> **Pet photos persist across app updates** — No more vanishing dog face after every TestFlight install.
+> - Pre-fix, the picker handed back URIs under iOS temp / app-cache directories that get wiped on app reinstall — so when you updated FloofLife, your pet's photo silently disappeared. Now the moment you pick a photo it's copied into FileSystem.documentDirectory under pets/<id>/, which iOS preserves through every reinstall, and the persistent URI is what we save on the pet record. Health-record photo / PDF attachments were already going to documentDirectory; this fix just brings the main pet portrait onto the same footing.
+> - The single most emotionally-charged piece of data in the app, finally treated like it.
+> - Status: code complete on `v1.2-work` (also cherry-picked to `v1.1-work`)
+> - Version: v1.1 hotfix + v1.2
+
+> **Robust RevenueCat package resolution** — The "Start 7-day free trial" button now finds the right SKU regardless of dashboard naming.
+> - The TestFlight build-7 button looked enabled but tapping fired nothing. Cause: RevenueCat's PurchasesOffering.annual / .monthly convenience getters only resolve when the package identifier is the canonical "$rc_annual" / "$rc_monthly". Custom identifiers — which the dashboard prompts you to use — returned null, leaving selectedPkg null and silently disabling the press. Fix: a resolver that scans the offering's availablePackages by packageType, then by identifier substring, so the button finds its target whatever the package was named in the dashboard.
+> - The literal first-paying-customer path was broken. Now it works no matter how the dashboard was set up.
+> - Status: code complete on `v1.2-work` (also cherry-picked to `v1.1-work`)
+> - Version: v1.1 hotfix + v1.2
+
 > **Migration constraint documented for v2.0 cloud features** — Local users will never lose data on account creation.
 > - Captured a hard rule in the repo's roadmap: when FloofLife eventually ships cloud accounts (v2.0+), every pet, health record, vet contact, checklist state, preference, and photo a local-only user has built up MUST migrate seamlessly when they create an account or subscribe to Premium for the first time. The doc spells out the implementation approach (read local → upload to cloud → preserve local as cache → never wipe), explicit anti-patterns to avoid (gating, "merge or replace" prompts), edge cases (multi-device sign-in, sign-out, reinstall + sign-in), and test cases that v2.0 must pass before ship.
 > - Trust is the whole product. The moment someone feels their data was eaten by an upgrade, they're gone — and rightly so.

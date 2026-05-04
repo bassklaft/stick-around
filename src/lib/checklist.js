@@ -104,6 +104,51 @@ export function generateChecklist(pet, date = new Date()) {
   return [...base, ...ageAddons, ...seasonAddons, ...breedAddons];
 }
 
+// How long a "done"/"skipped" check stays valid for an item, in
+// milliseconds. After this window elapses since the user marked the
+// item, effectiveStatus() returns null so the UI treats the item as
+// un-checked again. Cadences are intentionally generous — "weekly"
+// uses a full 7-day window so a Monday check stays satisfied through
+// the following Sunday, etc.
+//
+// Returns null for ambient cadences ("always", "before walks", etc.)
+// — those are situational reminders, not recurring obligations, so
+// once you've done one walk's pre-walk paw-balm check the badge
+// should stick until the next time you tell us you did it.
+export function cadenceResetMs(cadence) {
+  if (!cadence) return null;
+  const c = String(cadence).trim().toLowerCase();
+  const DAY = 24 * 60 * 60 * 1000;
+  if (c === "daily" || c === "every day") return DAY;
+  if (c === "weekly" || c === "every week") return 7 * DAY;
+  if (c === "monthly" || c === "every month") return 30 * DAY;
+  // "Nx/week" form — divide a week by N.
+  const perWeek = c.match(/^(\d+)\s*x\s*\/?\s*week$/);
+  if (perWeek) {
+    const n = parseInt(perWeek[1], 10);
+    if (n > 0) return Math.round((7 * DAY) / n);
+  }
+  // "Nx/day" form — short window, divide a day.
+  const perDay = c.match(/^(\d+)\s*x\s*\/?\s*day$/);
+  if (perDay) {
+    const n = parseInt(perDay[1], 10);
+    if (n > 0) return Math.round(DAY / n);
+  }
+  // Ambient / situational — never auto-expires.
+  return null;
+}
+
+// Returns the effective status of a checklist item given the raw
+// stored state and the current time. If the stored timestamp is older
+// than the cadence window, returns null (item should render as un-checked).
+export function effectiveStatus(item, stateEntry, now = Date.now()) {
+  if (!stateEntry || !stateEntry.status) return null;
+  const window = cadenceResetMs(item?.cadence);
+  if (window == null) return stateEntry.status;
+  if ((now - (stateEntry.ts || 0)) > window) return null;
+  return stateEntry.status;
+}
+
 // UI helper: turn an item's sources[] into a short attribution string.
 // Single-breed pets get null (no need to label). Mixed-breed pets get:
 //   1 source                → "From Labrador"
