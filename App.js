@@ -24,6 +24,7 @@ import EmergencyScreen from "./src/screens/EmergencyScreen";
 import DogAgeScreen from "./src/screens/DogAgeScreen";
 import PremiumScreen from "./src/screens/PremiumScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
+import { PurchasesProvider } from "./src/lib/purchasesContext";
 import { theme } from "./src/theme";
 
 const RootStack = createNativeStackNavigator();
@@ -124,6 +125,7 @@ export default function App() {
   return (
     <SafeAreaProvider>
       <StatusBar style="dark" />
+      <PurchasesProvider>
       <NavigationContainer>
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {!onboarded ? (
@@ -152,6 +154,7 @@ export default function App() {
           )}
         </RootStack.Navigator>
       </NavigationContainer>
+      </PurchasesProvider>
     </SafeAreaProvider>
   );
 }
