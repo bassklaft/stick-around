@@ -68,10 +68,10 @@ export default function HomeScreen({ navigation }) {
 
   const cards = [
     { key: "pets",     title: "Your Pets",            subtitle: `${pet.name} · ${breedDisplay}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
-    { key: "age",      title: "Age in Human Years",   subtitle: `${pet.name}'s real human-equivalent age — beyond "1 yr = 7 yr"`, icon: "calendar-heart", tint: "#7A4F0A", onPress: () => navigation.navigate("DogAge") },
     { key: "diet",     title: "Diet & Care",          subtitle: "Supplements, fresh foods, grooming products",     icon: "food-apple",     tint: "#3F8E5C",    onPress: () => navigation.navigate("Diet") },
     { key: "health",   title: "Health Tracker",       subtitle: healthSubtitle, icon: "clipboard-pulse-outline", tint: "#3F8E5C", onPress: () => navigation.navigate("HealthTracker", { petId: pet.id }), badge: overdueCount > 0 ? overdueCount : null },
     { key: "toxic",    title: "Toxic Foods & Plants", subtitle: "Quick reference — what to keep away",             icon: "leaf",           tint: theme.green,  onPress: () => navigation.navigate("Toxic") },
+    { key: "age",      title: "Age Calculator",       subtitle: `${pet.name}'s human-equivalent age — multi-factor, not "1 yr = 7"`, icon: "calendar-heart", tint: "#7A4F0A", onPress: () => navigation.navigate("DogAge") },
     { key: "risk",     title: "Risk Map",             subtitle: "Hazards near you · breed-specific risks · rules of thumb", icon: "map-marker-alert", tint: "#9C2A0F", onPress: () => navigation.navigate("Risk") },
     { key: "training", title: "Training Exercises",   subtitle: "Behavioral, physical, mental — and how often",     icon: "school",         tint: "#7A4F0A",    onPress: () => navigation.navigate("Training") },
     { key: "trip",     title: "Trip Planning",        subtitle: "Packing, transit safety, tick prep",                icon: "bag-suitcase",   tint: "#3F5A30",    onPress: () => navigation.navigate("Trip") },
