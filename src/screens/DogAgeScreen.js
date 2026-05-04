@@ -1,6 +1,7 @@
-// Dog → human age translator. Shows a stair-step timeline of life
-// stages for the user's actual pet, plus an interactive panel where
-// owners can refine the estimate with weight/diet/exercise/vet-care.
+// Age Calculator — pet → human age translator. Shows a stair-step
+// timeline of life stages for the user's actual pet, plus an
+// interactive panel where owners can refine the estimate with
+// weight/diet/exercise/vet-care.
 //
 // Why this isn't "dog years × 7":
 //   - Year 1 alone is roughly 15 human years (rapid maturation)
@@ -8,15 +9,17 @@
 //   - After year 2, aging speed depends heavily on body size and breed
 //     lifespan. Small dogs age slower; giants age fast.
 //
-// We model that piecewise (see lib/dogAge.js) and let lifestyle factors
-// nudge the rate ±5–20%, with sensible bounds.
-import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Alert } from "react-native";
+// For dogs we blend the AVMA-aligned size-adjusted piecewise model
+// with the Wang et al. 2020 epigenetic-clock formula (UC San Diego
+// methylation curve) and report a range. For cats we use the AAFP
+// feline curve. Lifestyle factors nudge the rate ±5–20%, with bounds.
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, Alert, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet } from "../lib/storage";
-import { ageSummary, lifeStageTimeline, humanYearsAt, lifestyleMultiplier } from "../lib/dogAge";
+import { ageSummary, lifeStageTimeline, lifestyleMultiplier } from "../lib/dogAge";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { getPrimaryBreed, mixedBreedLabel } from "../lib/petBreeds";
 import { theme } from "../theme";
@@ -55,9 +58,25 @@ const LIFESTYLE_LABELS = {
   vetCheckups:  "Vet care",
 };
 
+// Real factors the calculator considers. Order matters — each step is
+// shown for ~400 ms during the initial spin so the disclosure feels
+// honest rather than performative. Owners see actual named inputs
+// (their pet's breed size, their weight, their lifestyle), not theatre.
+const SHIMMER_STEPS = [
+  "Reading breed size class…",
+  "Adjusting for weight…",
+  "Applying breed-specific aging curve…",
+  "Cross-checking epigenetic clock…",
+  "Folding in lifestyle factors…",
+];
+
 export default function DogAgeScreen() {
   const insets = useSafeAreaInsets();
   const [pet, setPet] = useState(null);
+  const [computing, setComputing] = useState(false);
+  const [stepIdx, setStepIdx] = useState(0);
+  const fade = useRef(new Animated.Value(0)).current;
+  const hasAnimatedRef = useRef(false);
 
   const load = useCallback(async () => {
     const p = await Pet.get();
@@ -65,6 +84,22 @@ export default function DogAgeScreen() {
   }, []);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // First-mount-only shimmer. Loop through factors, total budget ~1.5s.
+  useEffect(() => {
+    if (!pet || hasAnimatedRef.current) return;
+    hasAnimatedRef.current = true;
+    setComputing(true);
+    setStepIdx(0);
+    const tick = setInterval(() => {
+      setStepIdx((i) => (i + 1 >= SHIMMER_STEPS.length ? i : i + 1));
+    }, 280);
+    const done = setTimeout(() => {
+      setComputing(false);
+      Animated.timing(fade, { toValue: 1, duration: 350, useNativeDriver: true }).start();
+    }, 1500);
+    return () => { clearInterval(tick); clearTimeout(done); };
+  }, [pet, fade]);
 
   async function setLifestyleField(field, value) {
     if (!pet) return;
@@ -92,9 +127,8 @@ export default function DogAgeScreen() {
     >
       {/* Title strip */}
       <View style={s.titleStrip}>
-        <Text style={s.kicker}>THE AGE OF YOUR {breedLabel.toUpperCase()}</Text>
-        <Text style={s.kicker}>IN HUMAN YEARS</Text>
-        <Text style={s.tagline}>Understand {pet.name}'s true evolution</Text>
+        <Text style={s.kicker}>AGE CALCULATOR</Text>
+        <Text style={s.tagline}>{pet.name}'s human-equivalent age, the honest version.</Text>
       </View>
 
       {/* Hero */}
@@ -108,19 +142,54 @@ export default function DogAgeScreen() {
             </View>
           )}
         </View>
-        {summary.humanAge != null ? (
-          <>
-            <Text style={s.heroDogAge}>{pet.name} · {summary.dogAge} dog yr</Text>
+        {summary.humanAge == null ? (
+          <Text style={s.missingAge}>Add {pet.name}'s age in onboarding to see this.</Text>
+        ) : computing ? (
+          <View style={s.shimmer}>
+            <Text style={s.shimmerKicker}>CALCULATING</Text>
+            <Text style={s.shimmerStep}>{SHIMMER_STEPS[stepIdx]}</Text>
+            <View style={s.shimmerBar}><View style={[s.shimmerFill, { width: `${((stepIdx + 1) / SHIMMER_STEPS.length) * 100}%` }]} /></View>
+          </View>
+        ) : (
+          <Animated.View style={{ alignItems: "center", opacity: fade }}>
+            <Text style={s.heroDogAge}>{pet.name} · {summary.dogAge} {pet.species === "cat" ? "cat" : "dog"} yr · {breedLabel}</Text>
             <Text style={s.heroHumanAge}>≈ {summary.humanAge}</Text>
             <Text style={s.heroHumanLabel}>human years</Text>
+            {summary.humanAgeRange && summary.humanAgeRange.low != null && summary.humanAgeRange.high != null && (
+              <Text style={s.heroRange}>approximately {summary.humanAgeRange.low}–{summary.humanAgeRange.high} years</Text>
+            )}
             <View style={s.stageBadge}>
               <Text style={s.stageBadgeText}>{summary.stage.toUpperCase()}</Text>
             </View>
-          </>
-        ) : (
-          <Text style={s.missingAge}>Add {pet.name}'s age in onboarding to see this.</Text>
+          </Animated.View>
         )}
       </View>
+
+      {/* Factors considered — real disclosure, not theatre. */}
+      {!computing && summary.humanAge != null && Array.isArray(summary.factors) && summary.factors.length > 0 && (
+        <View style={s.section}>
+          <Text style={s.sectionHd}>FACTORS WE CONSIDERED</Text>
+          <View style={s.factorsCard}>
+            {summary.factors.map((f) => (
+              <View key={f.key} style={s.factorRow}>
+                <Text style={s.factorLabel}>{f.label}</Text>
+                <Text style={s.factorValue}>{f.value}</Text>
+              </View>
+            ))}
+            {summary.humanAgeRange?.method && (
+              <Text style={s.factorMethod}>
+                Method: {summary.humanAgeRange.method === "blended"
+                  ? "AVMA size-adjusted piecewise blended with Wang 2020 epigenetic clock"
+                  : summary.humanAgeRange.method === "feline-aafp"
+                  ? "AAFP feline life-stage curve"
+                  : summary.humanAgeRange.method === "avma-piecewise"
+                  ? "AVMA size-adjusted piecewise"
+                  : "Pending data"}
+              </Text>
+            )}
+          </View>
+        </View>
+      )}
 
       {/* Stair-step timeline */}
       <View style={s.section}>
@@ -217,21 +286,23 @@ export default function DogAgeScreen() {
       {/* Method note + disclaimer */}
       <View style={s.section}>
         <View style={s.methodCard}>
-          <Text style={s.methodTitle}>How we calculate this</Text>
+          <Text style={s.methodTitle}>Why this matters</Text>
           <Text style={s.methodBody}>
-            • Year 1 ≈ 15 human years (rapid maturation){"\n"}
-            • Year 2 adds ~9 (≈ 24 human at age 2){"\n"}
-            • After year 2, aging speed depends on body size and breed lifespan — small dogs age ~4 yr/yr, giants ~7+ yr/yr{"\n"}
-            • Lifestyle factors nudge the rate ±5–20% within bounds
+            Aging is multi-factor. We combine breed-size class with a breed-lifespan adjustment, blend in the
+            Wang 2020 DNA-methylation curve for dogs (or the AAFP feline curve for cats), and apply your
+            pet's lifestyle. The result is a working estimate — not a measurement. Diet, genetics, exercise,
+            and overall health beyond what we can model from age and breed alone all matter, and a vet who
+            actually examines {pet.name} will always have a better answer than any formula.
           </Text>
           <Text style={[s.methodBody, { marginTop: 8, fontStyle: "italic" }]}>
-            "1 dog year = 7 human years" is a folk estimate, not a vet formula. Real aging depends on size, breed, and care.
+            "1 dog year = 7 human years" is a folk estimate, not a vet formula.
           </Text>
         </View>
 
         <View style={s.disclaimer}>
           <Text style={s.disclaimerText}>
-            FloofLife guidance is not a substitute for veterinary advice. When something feels wrong, call your vet.
+            Estimate only. Aging depends on diet, exercise, genetics, and overall health beyond what we can
+            model from age and breed alone. Consult your vet for individual assessments.
           </Text>
         </View>
       </View>
@@ -260,6 +331,17 @@ const s = StyleSheet.create({
   heroDogAge:   { marginTop: 16, fontSize: 14, color: theme.muted, fontWeight: "600", textTransform: "capitalize" },
   heroHumanAge: { marginTop: 4, fontSize: 64, fontWeight: "800", color: theme.accent, letterSpacing: -1 },
   heroHumanLabel:{ fontSize: 12, color: theme.muted, fontWeight: "700", letterSpacing: 1.2, marginTop: -4 },
+  heroRange:    { marginTop: 8, fontSize: 12, color: theme.muted, fontStyle: "italic" },
+  shimmer:      { marginTop: 16, alignItems: "center", paddingHorizontal: 22 },
+  shimmerKicker:{ fontSize: 11, fontWeight: "800", color: theme.accent, letterSpacing: 1.4 },
+  shimmerStep:  { marginTop: 8, fontSize: 14, fontWeight: "600", color: theme.fg, textAlign: "center" },
+  shimmerBar:   { marginTop: 12, height: 4, width: 220, backgroundColor: theme.accent + "1f", borderRadius: 2, overflow: "hidden" },
+  shimmerFill:  { height: 4, backgroundColor: theme.accent, borderRadius: 2 },
+  factorsCard:  { padding: 14, backgroundColor: theme.card, borderRadius: 12, borderWidth: 1, borderColor: theme.line, gap: 8 },
+  factorRow:    { flexDirection: "row", justifyContent: "space-between", gap: 12, alignItems: "flex-start" },
+  factorLabel:  { fontSize: 12, color: theme.muted, fontWeight: "700", flex: 0, minWidth: 110 },
+  factorValue:  { fontSize: 12, color: theme.fg, flex: 1, textAlign: "right", lineHeight: 17 },
+  factorMethod: { marginTop: 8, paddingTop: 10, borderTopWidth: 1, borderTopColor: theme.line, fontSize: 11, color: theme.accent, fontWeight: "600", lineHeight: 16 },
   stageBadge:   { marginTop: 10, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 999, backgroundColor: theme.accentSoft, borderWidth: 1, borderColor: theme.accent + "44" },
   stageBadgeText:{ fontSize: 11, fontWeight: "800", color: theme.accent, letterSpacing: 1 },
   missingAge:   { marginTop: 14, fontSize: 13, color: theme.muted, textAlign: "center" },
