@@ -81,7 +81,7 @@ function resolvePkg(offering, type) {
 
 export default function PremiumScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { offerings, isPremium, ready, refresh } = usePurchases();
+  const { offerings, isPremium, ready, refresh, customerInfo } = usePurchases();
   const [selected, setSelected] = useState("annual");
   const [working, setWorking] = useState(false);
 
@@ -104,11 +104,28 @@ export default function PremiumScreen({ navigation }) {
   // the diagnostics being in the binary. An on-screen alert cannot be
   // missed.
   useEffect(() => {
-    console.warn("[premium] mount · purchase fn type=" + typeof purchase + " · restore fn type=" + typeof restore);
-    Alert.alert(
-      "SCREEN MOUNTED",
-      "ready: " + ready + " offerings: " + (offerings ? "loaded (" + (offerings.availablePackages?.length ?? 0) + " pkgs)" : "null"),
-    );
+    (async () => {
+      let pkgIds = "n/a";
+      try {
+        const offers = await Purchases.getOfferings();
+        const keys = Object.keys(offers?.all ?? {});
+        const current = offers?.current?.identifier ?? "none";
+        const chosenId = offerings?.identifier ?? "none";
+        const chosenPkgs = offerings?.availablePackages?.length ?? 0;
+        pkgIds = (offerings?.availablePackages || []).map((p) => p.identifier + ":" + (p.product?.identifier ?? "?")).join(", ") || "(none)";
+        Alert.alert(
+          "SCREEN MOUNTED",
+          "ready: " + ready +
+            "\noffering keys: [" + keys.join(", ") + "]" +
+            "\ncurrent: " + current +
+            "\nchose: " + chosenId + " (" + chosenPkgs + " pkgs)" +
+            "\npackages: " + pkgIds +
+            "\ncustomerInfo: " + (customerInfo ? "loaded" : "null"),
+        );
+      } catch (e) {
+        Alert.alert("SCREEN MOUNTED · ERROR", "getOfferings threw: " + (e?.message ?? e));
+      }
+    })();
     return () => { console.warn("[premium] unmount"); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -143,13 +160,54 @@ export default function PremiumScreen({ navigation }) {
     }
 
     if (!pkg) {
+      // Last-ditch fallback: bypass offerings entirely and try to
+      // purchase by raw App Store Connect product ID. This works as
+      // long as the product is in "Ready to Submit" state in ASC and
+      // mapped to the "premium" entitlement in RevenueCat.
+      const targetProductId = selected === "monthly"
+        ? "flooflife_premium_monthly"
+        : "flooflife_premium_annual";
+      try {
+        Alert.alert("TRYING DIRECT PRODUCT", "Offering missing — falling back to getProducts(['" + targetProductId + "'])");
+        const products = await Purchases.getProducts([targetProductId]);
+        Alert.alert("DIRECT PRODUCT RESULT",
+          "products.length=" + (products?.length ?? 0) +
+            (products?.[0] ? "\nproduct=" + products[0].identifier + " " + products[0].priceString : "")
+        );
+        if (products && products.length > 0) {
+          setWorking(true);
+          try {
+            const result = await Purchases.purchaseStoreProduct(products[0]);
+            await refresh();
+            const nowPremium = !!result?.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
+            Alert.alert(
+              nowPremium ? "Welcome to Premium" : "PURCHASE OK BUT NOT ENTITLED",
+              nowPremium
+                ? "Thanks for supporting FloofLife. Your premium features are unlocked."
+                : "Apple charged the card but the '" + PREMIUM_ENTITLEMENT_ID + "' entitlement isn't active. Check the dashboard mapping.",
+              [{ text: "OK", onPress: () => nowPremium && navigation.goBack() }],
+            );
+          } catch (err) {
+            Alert.alert("DIRECT PRODUCT ERROR",
+              (err?.code ?? "?") + " - " + (err?.message ?? "?") +
+                (err?.userCancelled ? " (userCancelled)" : "")
+            );
+          } finally {
+            setWorking(false);
+          }
+          return;
+        }
+      } catch (e) {
+        Alert.alert("DIRECT PRODUCT THREW", e?.message ?? String(e));
+      }
+
       const offState = offerings
         ? "offering=" + (offerings.identifier ?? "?") + " pkgs=" + (offerings.availablePackages?.length ?? 0)
         : "offerings=null";
       Alert.alert(
         "NO PACKAGE FOUND",
         "Cannot start a purchase — " + offState +
-          ". This usually means the RevenueCat 'default' offering is empty or the products aren't attached. Tap Reload to try fetching offerings again.",
+          ". RevenueCat returned no products and no offering. Open the RevenueCat dashboard and confirm: (1) products imported from App Store Connect, (2) entitlement 'premium' exists, (3) offering 'default' has packages mapped to those products, (4) the offering is marked Current.",
         [
           { text: "Reload", onPress: async () => { await refresh(); Alert.alert("Reloaded", "Re-pull customer info"); } },
           { text: "OK" },

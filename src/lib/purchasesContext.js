@@ -72,9 +72,22 @@ export function PurchasesProvider({ children }) {
         ]);
         if (cancelled) return;
         setCustomerInfo(info);
-        const offering = offers?.all?.[DEFAULT_OFFERING_ID] ?? offers?.current ?? null;
+        // Resolve in this order:
+        //   1. The offering literally named "default"
+        //   2. The "current" offering as the dashboard reports it
+        //   3. ANY offering that has at least one package — better
+        //      than null even if the dashboard is misconfigured
+        const allOfferings = offers?.all ?? {};
+        const allKeys = Object.keys(allOfferings);
+        const offering =
+          allOfferings[DEFAULT_OFFERING_ID] ??
+          offers?.current ??
+          Object.values(allOfferings).find((o) => (o?.availablePackages?.length ?? 0) > 0) ??
+          null;
         setOfferings(offering);
-        console.warn("[purchases] init OK · offering=" + (offering?.identifier ?? "none") +
+        console.warn("[purchases] init OK · offeringKeys=[" + allKeys.join(",") + "]" +
+          " · current=" + (offers?.current?.identifier ?? "none") +
+          " · chose=" + (offering?.identifier ?? "none") +
           " · packages=" + (offering?.availablePackages?.length ?? 0) +
           " · entitled=" + entitled(info));
       } catch (err) {
