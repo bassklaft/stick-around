@@ -73,6 +73,20 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
             </View>
             <PrimaryButton label="Next" onPress={() => setStep(1)} />
             {addMode && <SecondaryButton label="Cancel" onPress={onDone} />}
+
+            {!addMode && (
+              <View style={s.founder}>
+                <Text style={s.founderText}>
+                  Built by a dog dad who wanted the best for his floof — and yours.
+                </Text>
+                <Text style={s.founderText}>
+                  Even with great vets and specialists, generic advice didn't always fit. So he dug into the peer-reviewed research, breed-specific clinical literature, and consumer health data to build customized care suited to his floof's specific breed — the do's, the don'ts, the things other dogs don't need to worry about.
+                </Text>
+                <Text style={s.founderText}>
+                  Now that guide is here for you, too.
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -215,4 +229,6 @@ const s = StyleSheet.create({
   primaryBtnText:   { color: "#fff", fontWeight: "700", fontSize: 16, letterSpacing: 0.4 },
   secondaryBtn:     { paddingVertical: 14, alignItems: "center", marginTop: 4 },
   secondaryBtnText: { color: theme.muted, fontSize: 14 },
+  founder:          { marginTop: 36, paddingTop: 20, borderTopWidth: 1, borderTopColor: theme.line, gap: 10 },
+  founderText:      { fontSize: 12, color: theme.muted, lineHeight: 18, fontStyle: "italic" },
 });
