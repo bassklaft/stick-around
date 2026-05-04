@@ -54,13 +54,29 @@ function resolvePkg(offering, type) {
   const direct = type === "annual" ? offering.annual : offering.monthly;
   if (direct) return direct;
   const pkgs = offering.availablePackages || [];
+  if (pkgs.length === 0) return null;
   const wanted = type === "annual" ? "ANNUAL" : "MONTHLY";
   const wordRe = type === "annual" ? /annual|yearly|year/i : /monthly|month/i;
-  return pkgs.find((p) =>
+  const periodRe = type === "annual" ? /^p1?y$/i : /^p1?m$/i;
+  // First pass — exact package-type / word match in identifiers.
+  const named = pkgs.find((p) =>
     p.packageType === wanted ||
     wordRe.test(p.identifier || "") ||
     wordRe.test(p.product?.identifier || "")
-  ) || null;
+  );
+  if (named) return named;
+  // Second pass — match by ISO 8601 subscription period if RevenueCat
+  // exposes it on the product (P1Y / P1M).
+  const byPeriod = pkgs.find((p) => periodRe.test(p.product?.subscriptionPeriod || ""));
+  if (byPeriod) return byPeriod;
+  // Third pass — if there are exactly two packages, assume the first
+  // (often longer-term in RevenueCat's standard config) is annual and
+  // the second is monthly.
+  if (pkgs.length === 2) return type === "annual" ? pkgs[0] : pkgs[1];
+  // Last resort for the user's specific dashboard config — single
+  // package becomes the offer regardless of which type was requested.
+  if (pkgs.length === 1) return pkgs[0];
+  return null;
 }
 
 export default function PremiumScreen({ navigation }) {
@@ -83,19 +99,27 @@ export default function PremiumScreen({ navigation }) {
     " selected=" + selected + " selectedPkg=" + (selectedPkg?.identifier ?? "none") +
     " isPremium=" + isPremium + " working=" + working);
 
-  // One-shot mount diagnostic so we know the component instantiated
-  // and we can sanity-check the handler bound at mount time.
+  // One-shot mount diagnostic. Alert.alert is the source of truth here
+  // because Console.app has been showing zero [premium] warns despite
+  // the diagnostics being in the binary. An on-screen alert cannot be
+  // missed.
   useEffect(() => {
     console.warn("[premium] mount · purchase fn type=" + typeof purchase + " · restore fn type=" + typeof restore);
+    Alert.alert(
+      "SCREEN MOUNTED",
+      "ready: " + ready + " offerings: " + (offerings ? "loaded (" + (offerings.availablePackages?.length ?? 0) + " pkgs)" : "null"),
+    );
     return () => { console.warn("[premium] unmount"); };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function purchase() {
-    // Aggressive top-of-handler logging. If we never see this in
-    // Console.app on tap, the press isn't reaching JS at all and the
-    // bug is in the touch surface (TouchableOpacity child layout,
-    // pointerEvents, modal-sheet gesture intercept, etc.).
+    // FIRST line — proves the press reached JS. If this alert doesn't
+    // fire when the user taps the trial button, the press isn't
+    // reaching the handler and the issue is the touch surface, not
+    // the SDK. console.warn kept too in case a future build can read
+    // them, but the Alert is the source of truth tonight.
+    Alert.alert("TAP DETECTED", "Trial button onPress fired");
     console.warn("[premium] TRIAL TAPPED " + new Date().toISOString());
     console.warn("[premium] SELECTED PKG " + (selectedPkg ? JSON.stringify({
       id: selectedPkg.identifier,
@@ -104,18 +128,45 @@ export default function PremiumScreen({ navigation }) {
       offering: selectedPkg.offeringIdentifier,
     }) : "null"));
 
-    if (!selectedPkg) {
-      console.warn("[premium] PURCHASE EARLY EXIT — no selectedPkg");
+    // Try-anyway fallback: if the resolver couldn't pin annual/monthly
+    // by name or packageType, take the FIRST available package on the
+    // offering rather than gating the user. Better to attempt a
+    // purchase with whatever's there than silently disable the button.
+    let pkg = selectedPkg;
+    if (!pkg && offerings?.availablePackages?.length > 0) {
+      pkg = offerings.availablePackages[0];
       Alert.alert(
-        "Subscriptions unavailable",
-        "We couldn't load subscription options. Check your connection and try again.",
+        "Using fallback package",
+        "annual/monthly resolver missed; falling back to: " + (pkg?.identifier ?? "unknown") +
+          " (" + (pkg?.product?.identifier ?? "?") + ", " + (pkg?.product?.priceString ?? "?") + ")",
+      );
+    }
+
+    if (!pkg) {
+      const offState = offerings
+        ? "offering=" + (offerings.identifier ?? "?") + " pkgs=" + (offerings.availablePackages?.length ?? 0)
+        : "offerings=null";
+      Alert.alert(
+        "NO PACKAGE FOUND",
+        "Cannot start a purchase — " + offState +
+          ". This usually means the RevenueCat 'default' offering is empty or the products aren't attached. Tap Reload to try fetching offerings again.",
+        [
+          { text: "Reload", onPress: async () => { await refresh(); Alert.alert("Reloaded", "Re-pull customer info"); } },
+          { text: "OK" },
+        ],
       );
       return;
     }
     setWorking(true);
     try {
+      Alert.alert("CALLING SDK", "About to call purchasePackage. selectedPkg: " +
+        JSON.stringify({ id: pkg.identifier, productId: pkg.product?.identifier, priceString: pkg.product?.priceString }));
       console.warn("[premium] CALLING Purchases.purchasePackage…");
-      const result = await Purchases.purchasePackage(selectedPkg);
+      const result = await Purchases.purchasePackage(pkg);
+      Alert.alert("RESOLVED",
+        "productId=" + (result?.productIdentifier ?? "?") +
+          " entitlements=" + Object.keys(result?.customerInfo?.entitlements?.active ?? {}).join(",")
+      );
       console.warn("[premium] PURCHASE RESOLVED entitlements=" +
         Object.keys(result?.customerInfo?.entitlements?.active ?? {}).join(",") +
         " productId=" + result?.productIdentifier);
@@ -128,20 +179,22 @@ export default function PremiumScreen({ navigation }) {
           [{ text: "OK", onPress: () => navigation.goBack() }],
         );
       } else {
-        console.warn("[premium] PURCHASE OK BUT ENTITLEMENT NOT ACTIVE — RevenueCat product/entitlement mapping may be off");
+        Alert.alert(
+          "PURCHASE OK BUT NOT ENTITLED",
+          "Apple charged the card but the '" + PREMIUM_ENTITLEMENT_ID + "' entitlement isn't active. Check that the product is mapped to this entitlement in RevenueCat dashboard.",
+        );
       }
     } catch (err) {
+      Alert.alert("ERROR",
+        (err?.code ?? "no-code") + " - " + (err?.message ?? "no message") +
+          (err?.userCancelled ? " (userCancelled)" : "") +
+          (err?.underlyingErrorMessage ? "\nunderlying: " + err.underlyingErrorMessage : "")
+      );
       console.warn("[premium] PURCHASE ERROR code=" + (err?.code ?? "?") +
         " userCancelled=" + !!err?.userCancelled +
         " message=" + (err?.message ?? "?") +
         " underlyingError=" + (err?.underlyingErrorMessage ?? "?"));
       if (err?.userCancelled) return;
-      const msg = err?.message ?? "";
-      if (/network|connection|offline/i.test(msg)) {
-        Alert.alert("Network error", "Couldn't reach the App Store. Try again on a stable connection.");
-      } else {
-        Alert.alert("Purchase failed", msg || "Apple couldn't process the payment. Please try again.");
-      }
     } finally {
       setWorking(false);
     }
@@ -249,9 +302,9 @@ export default function PremiumScreen({ navigation }) {
               console.warn("[premium] CTA Pressable onPress fired " + new Date().toISOString());
               purchase().catch((e) => console.warn("[premium] purchase() rejected outside try " + (e?.message ?? e)));
             }}
-            disabled={working || !selectedPkg}
+            disabled={working}
             hitSlop={12}
-            style={({ pressed }) => [s.cta, pressed && { opacity: 0.85 }, (working || !selectedPkg) && s.ctaDisabled]}
+            style={({ pressed }) => [s.cta, pressed && { opacity: 0.85 }, working && s.ctaDisabled]}
           >
             {working ? (
               <ActivityIndicator color="#fff" />
