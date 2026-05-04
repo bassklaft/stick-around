@@ -9,11 +9,52 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pets } from "../lib/storage";
 import { usePurchases } from "../lib/purchasesContext";
 import { getPetBreeds, getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
+import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { theme } from "../theme";
 
 const titleCase = s => (s || "").split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
+
+function HealthTrackerRow({ pet, navigation }) {
+  const [records, setRecords] = useState([]);
+  useEffect(() => {
+    let mounted = true;
+    Pets.listHealthRecords(pet.id).then((r) => { if (mounted) setRecords(r); });
+    return () => { mounted = false; };
+  }, [pet.id]);
+  const overdue = records.filter((r) => statusFor(r) === "overdue").length;
+  const next = records
+    .filter((r) => r?.nextDue && statusFor(r) !== "overdue")
+    .sort((a, b) => new Date(a.nextDue) - new Date(b.nextDue))[0];
+  const subtitle = (() => {
+    if (records.length === 0) return "No records yet — tap to add";
+    if (next) {
+      const days = daysUntilDue(next);
+      const t = findType(next.type);
+      const label = next.customLabel || t?.label || "Next";
+      if (days != null && days >= 0) {
+        return `${label} due in ${days === 0 ? "today" : `${days} day${days === 1 ? "" : "s"}`}`;
+      }
+    }
+    return overdue > 0 ? `${overdue} overdue · tap to review` : "Up to date";
+  })();
+  return (
+    <TouchableOpacity onPress={() => navigation.navigate("HealthTracker", { petId: pet.id })} style={s.healthRow} activeOpacity={0.7}>
+      <View style={s.healthRowIcon}>
+        <MaterialCommunityIcons name="clipboard-pulse-outline" size={18} color={theme.green} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={s.healthRowTitle}>Health Tracker</Text>
+        <Text style={s.healthRowSubtitle}>{subtitle}</Text>
+      </View>
+      {overdue > 0 && (
+        <View style={s.healthRowBadge}><Text style={s.healthRowBadgeText}>{overdue}</Text></View>
+      )}
+      <MaterialCommunityIcons name="chevron-right" size={20} color={theme.muted} />
+    </TouchableOpacity>
+  );
+}
 
 export default function YourPetsScreen() {
   const insets = useSafeAreaInsets();
@@ -104,6 +145,8 @@ export default function YourPetsScreen() {
               {mixLabel || titleCase(primary)} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
             </Text>
             {pet.mixOf && <Text style={s.mixMeta}>Mix of: {pet.mixOf}</Text>}
+
+            <HealthTrackerRow pet={pet} navigation={navigation} />
 
             {breedKeys.map((breedKey) => {
               const breed = breedFacts[breedKey];
@@ -264,6 +307,12 @@ const s = StyleSheet.create({
   addBtnText:    { color: theme.accent, fontWeight: "700", fontSize: 14 },
   premiumBadge:  { backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4, marginLeft: 4 },
   premiumBadgeText:{ color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
+  healthRow:     { flexDirection: "row", alignItems: "center", gap: 10, padding: 12, marginTop: 14, borderRadius: 12, backgroundColor: theme.bg, borderWidth: 1, borderColor: theme.line },
+  healthRowIcon: { width: 32, height: 32, borderRadius: 16, alignItems: "center", justifyContent: "center", backgroundColor: theme.green + "1f" },
+  healthRowTitle:{ fontSize: 14, fontWeight: "700", color: theme.fg },
+  healthRowSubtitle:{ fontSize: 11, color: theme.muted, marginTop: 2 },
+  healthRowBadge:{ backgroundColor: theme.red, minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, alignItems: "center", justifyContent: "center", marginRight: 4 },
+  healthRowBadgeText:{ color: "#fff", fontSize: 11, fontWeight: "800" },
   disclaimer:    { marginTop: 16, padding: 14, borderRadius: 10, backgroundColor: theme.accentSoft },
   disclaimerText:{ fontSize: 11, color: theme.fg, lineHeight: 17 },
 });

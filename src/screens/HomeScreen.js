@@ -7,10 +7,11 @@ import { View, Text, ScrollView, TouchableOpacity, ImageBackground, RefreshContr
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Pet, ChecklistState } from "../lib/storage";
+import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { generateChecklist } from "../lib/checklist";
 import { breedFacts } from "../data/breeds";
 import { getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
+import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
 import { openMapsSearch } from "../lib/maps";
 import { theme } from "../theme";
 
@@ -22,12 +23,16 @@ export default function HomeScreen({ navigation }) {
   const [items, setItems] = useState([]);
   const [state, setState] = useState({});
   const [refreshing, setRefreshing] = useState(false);
+  const [healthRecords, setHealthRecords] = useState([]);
 
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
     setItems(generateChecklist(p));
     setState(await ChecklistState.get());
+    if (p?.id) {
+      setHealthRecords(await Pets.listHealthRecords(p.id));
+    }
   }, []);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -43,10 +48,29 @@ export default function HomeScreen({ navigation }) {
   const completed = items.filter(i => state[i.id]?.status === "done").length;
   const hasPhoto = !!pet.photoUri;
 
+  // Health tracker preview: nearest upcoming + overdue count
+  const overdueCount = healthRecords.filter((r) => statusFor(r) === "overdue").length;
+  const nextUpcoming = healthRecords
+    .filter((r) => r?.nextDue && statusFor(r) !== "overdue")
+    .sort((a, b) => new Date(a.nextDue) - new Date(b.nextDue))[0] || null;
+  const healthSubtitle = (() => {
+    if (healthRecords.length === 0) return "No records yet — tap to add vaccines, preventatives, more";
+    if (nextUpcoming) {
+      const days = daysUntilDue(nextUpcoming);
+      const t = findType(nextUpcoming.type);
+      const label = nextUpcoming.customLabel || t?.label || "Next";
+      if (days != null && days >= 0 && days <= 365) {
+        return `${label} due in ${days === 0 ? "today" : `${days} day${days === 1 ? "" : "s"}`}`;
+      }
+    }
+    return overdueCount > 0 ? `${overdueCount} overdue · tap to review` : "Up to date — review your log";
+  })();
+
   const cards = [
     { key: "pets",     title: "Your Pets",            subtitle: `${pet.name} · ${breedDisplay}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
     { key: "age",      title: "Age in Human Years",   subtitle: `${pet.name}'s real human-equivalent age — beyond "1 yr = 7 yr"`, icon: "calendar-heart", tint: "#7A4F0A", onPress: () => navigation.navigate("DogAge") },
     { key: "diet",     title: "Diet & Care",          subtitle: "Supplements, fresh foods, grooming products",     icon: "food-apple",     tint: "#3F8E5C",    onPress: () => navigation.navigate("Diet") },
+    { key: "health",   title: "Health Tracker",       subtitle: healthSubtitle, icon: "clipboard-pulse-outline", tint: "#3F8E5C", onPress: () => navigation.navigate("HealthTracker", { petId: pet.id }), badge: overdueCount > 0 ? overdueCount : null },
     { key: "toxic",    title: "Toxic Foods & Plants", subtitle: "Quick reference — what to keep away",             icon: "leaf",           tint: theme.green,  onPress: () => navigation.navigate("Toxic") },
     { key: "risk",     title: "Risk Map",             subtitle: "Hazards near you · breed-specific risks · rules of thumb", icon: "map-marker-alert", tint: "#9C2A0F", onPress: () => navigation.navigate("Risk") },
     { key: "training", title: "Training Exercises",   subtitle: "Behavioral, physical, mental — and how often",     icon: "school",         tint: "#7A4F0A",    onPress: () => navigation.navigate("Training") },
@@ -108,6 +132,9 @@ export default function HomeScreen({ navigation }) {
               <Text style={s.cardTitle}>{c.title}</Text>
               <Text style={s.cardSubtitle}>{c.subtitle}</Text>
             </View>
+            {c.badge ? (
+              <View style={s.cardBadge}><Text style={s.cardBadgeText}>{c.badge}</Text></View>
+            ) : null}
             <MaterialCommunityIcons name="chevron-right" size={22} color={theme.muted} />
           </TouchableOpacity>
         ))}
@@ -162,6 +189,8 @@ const s = StyleSheet.create({
   emergencyTitle:   { fontSize: 14, fontWeight: "800", color: "#fff", letterSpacing: 0.5 },
   emergencySubtitle:{ fontSize: 11, color: "rgba(255,255,255,0.9)", marginTop: 3, lineHeight: 15 },
   card:         { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: theme.card, borderRadius: 14, borderWidth: 1, borderColor: theme.line, marginBottom: 10, gap: 14 },
+  cardBadge:    { backgroundColor: theme.red, minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, alignItems: "center", justifyContent: "center", marginRight: 4 },
+  cardBadgeText:{ color: "#fff", fontSize: 11, fontWeight: "800" },
   iconCircle:   { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },
   cardTitle:    { fontSize: 16, fontWeight: "700", color: theme.fg },
   cardSubtitle: { fontSize: 12, color: theme.muted, marginTop: 2, lineHeight: 17 },
