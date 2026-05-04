@@ -41,13 +41,13 @@ export default function SettingsScreen({ navigation }) {
       ) : (
         <TouchableOpacity onPress={() => navigation.navigate("Premium")} style={[s.card, { borderColor: theme.accent }]}>
           <Text style={[s.body, { fontWeight: "700", color: theme.accent }]}>⭐ Upgrade to Premium</Text>
-          <Text style={[s.sub, { marginTop: 4 }]}>$4.99/mo or $39/yr — multi-pet, expanded breed depth, health & care tracking.</Text>
+          <Text style={[s.sub, { marginTop: 4 }]}>$4.99/mo or $39/yr — multi-floof, expanded breed depth, health & care tracking.</Text>
         </TouchableOpacity>
       )}
 
       <Text style={s.sectionHd}>FEATURES</Text>
       <TouchableOpacity onPress={openMultiPet} style={s.row}>
-        <Text style={s.rowLabel}>Multi-pet support</Text>
+        <Text style={s.rowLabel}>Multi-floof support</Text>
         {isPremium ? (
           <Text style={{ color: theme.muted }}>›</Text>
         ) : (

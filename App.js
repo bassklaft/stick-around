@@ -90,7 +90,7 @@ function MainTabs({ navigation }) {
       <Tabs.Screen name="Home"      component={HomeScreen}
         options={{ title: "FloofLife", tabBarLabel: "Home" }} />
       <Tabs.Screen name="YourPets"  component={YourPetsScreen}
-        options={{ title: "Your Pets", tabBarLabel: "Your Pets" }} />
+        options={{ title: "My Floofs", tabBarLabel: "My Floofs" }} />
     </Tabs.Navigator>
   );
 }
@@ -148,7 +148,7 @@ export default function App() {
               <RootStack.Screen name="DogAge"   component={DogAgeScreen}   options={{ ...pushScreenOptions, title: "Age Calculator" }} />
               <RootStack.Screen name="HealthTracker"   component={HealthTrackerScreen}   options={{ ...pushScreenOptions, title: "Health Tracker" }} />
               <RootStack.Screen name="AddHealthRecord" component={AddHealthRecordScreen} options={{ ...pushScreenOptions, presentation: "modal", title: "Health Record" }} />
-              <RootStack.Screen name="AddPet"   options={{ ...pushScreenOptions, presentation: "modal", title: "Add a pet" }}>
+              <RootStack.Screen name="AddPet"   options={{ ...pushScreenOptions, presentation: "modal", title: "Add a floof" }}>
                 {(props) => <OnboardingScreen {...props} addMode onDone={() => props.navigation.goBack()} />}
               </RootStack.Screen>
               <RootStack.Screen name="Premium"  component={PremiumScreen}  options={{ ...pushScreenOptions, presentation: "modal", title: "Premium" }} />

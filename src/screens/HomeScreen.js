@@ -67,7 +67,7 @@ export default function HomeScreen({ navigation }) {
   })();
 
   const cards = [
-    { key: "pets",     title: "Your Pets",            subtitle: `${pet.name} · ${breedDisplay}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
+    { key: "pets",     title: "My Floofs",            subtitle: `${pet.name} · ${breedDisplay}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
     { key: "diet",     title: "Diet & Care",          subtitle: "Supplements, fresh foods, grooming products",     icon: "food-apple",     tint: "#3F8E5C",    onPress: () => navigation.navigate("Diet") },
     { key: "health",   title: "Health Tracker",       subtitle: healthSubtitle, icon: "clipboard-pulse-outline", tint: "#3F8E5C", onPress: () => navigation.navigate("HealthTracker", { petId: pet.id }), badge: overdueCount > 0 ? overdueCount : null },
     { key: "toxic",    title: "Toxic Foods & Plants", subtitle: "Quick reference — what to keep away",             icon: "leaf",           tint: theme.green,  onPress: () => navigation.navigate("Toxic") },
