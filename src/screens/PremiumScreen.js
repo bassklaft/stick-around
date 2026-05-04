@@ -47,6 +47,15 @@ export default function PremiumScreen({ navigation }) {
   const monthly = offerings?.monthly ?? null;
   const selectedPkg = selected === "annual" ? annual : monthly;
 
+  // One-time diagnostic on each render — visible in TestFlight via
+  // Mac's Console.app. Helps catch "everything looks right but the
+  // button is dead" cases like the v1.1 build-6 bug.
+  console.warn("[premium] render ready=" + ready +
+    " offering=" + (offerings?.identifier ?? "none") +
+    " annual=" + (!!annual) + " monthly=" + (!!monthly) +
+    " selected=" + selected + " selectedPkg=" + (selectedPkg?.identifier ?? "none") +
+    " isPremium=" + isPremium);
+
   async function purchase() {
     if (!selectedPkg) {
       Alert.alert(
@@ -166,7 +175,7 @@ export default function PremiumScreen({ navigation }) {
 
       {!isPremium && (
         <>
-          <TouchableOpacity onPress={purchase} disabled={working || !ready || !selectedPkg} style={[s.cta, (working || !ready || !selectedPkg) && s.ctaDisabled]}>
+          <TouchableOpacity onPress={purchase} disabled={working || !selectedPkg} style={[s.cta, (working || !selectedPkg) && s.ctaDisabled]}>
             {working ? (
               <ActivityIndicator color="#fff" />
             ) : (

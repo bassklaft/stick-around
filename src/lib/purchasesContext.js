@@ -58,6 +58,12 @@ export function PurchasesProvider({ children }) {
         Purchases.configure({ apiKey: key });
         configured = true;
       }
+      // Flip ready=true the moment the SDK is configured. The
+      // CustomerInfo + offerings fetches that follow can settle in their
+      // own time; gating UI on them caused the v1.1 build-6 bug where
+      // the trial button stayed disabled even though offerings had
+      // loaded (timing race when the StrictMode double-effect ran).
+      if (!cancelled) setReady(true);
 
       try {
         const [info, offers] = await Promise.all([
@@ -66,11 +72,13 @@ export function PurchasesProvider({ children }) {
         ]);
         if (cancelled) return;
         setCustomerInfo(info);
-        setOfferings(offers?.all?.[DEFAULT_OFFERING_ID] ?? offers?.current ?? null);
+        const offering = offers?.all?.[DEFAULT_OFFERING_ID] ?? offers?.current ?? null;
+        setOfferings(offering);
+        console.warn("[purchases] init OK · offering=" + (offering?.identifier ?? "none") +
+          " · packages=" + (offering?.availablePackages?.length ?? 0) +
+          " · entitled=" + entitled(info));
       } catch (err) {
         console.warn("[purchases] init fetch failed:", err?.message ?? err);
-      } finally {
-        if (!cancelled) setReady(true);
       }
     }
 
