@@ -42,6 +42,12 @@ Entry format:
 > - Status: planning artifact in `V1_REMOVED_FEATURES.md`
 > - Version: planning
 
+> **Founder origin story** — Honest framing about how FloofLife came to be.
+> - A short founder paragraph at the bottom of the welcome screen ("Built by a dog dad who wanted the best for his floof — and yours…") plus a fuller Story page reachable from Settings → About FloofLife. The Story page includes the origin paragraph, a "What FloofLife is not" boundary, a Sources section that names where breed and recall data come from, an Acknowledgments line, and the current version.
+> - No outcome claims and no positioning against veterinary care — just the truth about why this app exists, where the data comes from, and what it can and can't do.
+> - Status: code complete on `v1.2-work` (also cherry-picked to `v1.1-work`)
+> - Version: v1.1 hotfix + v1.2
+
 > **"My Floofs"** — Distinctive, on-brand replacement for "Your Pets".
 > - Tab bar, screen titles, empty-state copy, and the Add-Another-Floof CTA all flip to the floof framing. Internal route names stay unchanged so the rebrand is purely surface-level — your existing pets, photos, checklists, and Premium status carry through with zero re-onboarding.
 > - "FloofLife" + "My Floofs" reinforce each other and travel better in marketing than the generic "Your Pets".

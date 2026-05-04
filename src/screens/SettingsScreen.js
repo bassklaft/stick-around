@@ -57,6 +57,9 @@ export default function SettingsScreen({ navigation }) {
         )}
       </TouchableOpacity>
 
+      <Text style={s.sectionHd}>FLOOFLIFE</Text>
+      <Row label="Story · About this app" onPress={() => navigation.navigate("About")} />
+
       <Text style={s.sectionHd}>HELP</Text>
       <Row label="Contact support"   onPress={() => Linking.openURL("mailto:hello@stickaround.app")} />
       <Row label="Privacy policy"    onPress={() => Alert.alert("Privacy", "FloofLife stores all data on your device. We do not collect, transmit, or sell your data.")} />
