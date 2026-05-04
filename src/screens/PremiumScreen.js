@@ -37,14 +37,40 @@ function priceMetaFor(pkg, fallback) {
   return pkg?.product?.priceString ?? fallback;
 }
 
+// RevenueCat's PurchasesOffering exposes `.annual` and `.monthly`
+// convenience getters, but they ONLY return a package if its
+// identifier matches the canonical "$rc_annual" / "$rc_monthly"
+// names. If the dashboard set up custom identifiers (e.g.
+// "annual_premium" or whatever the App Store product ID is), the
+// convenience getters return null — which is what made the v1.1
+// build-7 trial button look enabled (fallback prices) but tap to
+// nothing (selectedPkg was null and disabled gated the press).
+//
+// Fall back to scanning availablePackages by packageType, then by
+// identifier substring, so we work no matter how the user named
+// things in the RevenueCat dashboard.
+function resolvePkg(offering, type) {
+  if (!offering) return null;
+  const direct = type === "annual" ? offering.annual : offering.monthly;
+  if (direct) return direct;
+  const pkgs = offering.availablePackages || [];
+  const wanted = type === "annual" ? "ANNUAL" : "MONTHLY";
+  const wordRe = type === "annual" ? /annual|yearly|year/i : /monthly|month/i;
+  return pkgs.find((p) =>
+    p.packageType === wanted ||
+    wordRe.test(p.identifier || "") ||
+    wordRe.test(p.product?.identifier || "")
+  ) || null;
+}
+
 export default function PremiumScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const { offerings, isPremium, ready, refresh } = usePurchases();
   const [selected, setSelected] = useState("annual");
   const [working, setWorking] = useState(false);
 
-  const annual = offerings?.annual ?? null;
-  const monthly = offerings?.monthly ?? null;
+  const annual = resolvePkg(offerings, "annual");
+  const monthly = resolvePkg(offerings, "monthly");
   const selectedPkg = selected === "annual" ? annual : monthly;
 
   // Render-time diagnostic — visible in Mac Console.app when device is

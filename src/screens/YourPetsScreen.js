@@ -30,7 +30,7 @@ export default function YourPetsScreen() {
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   async function changePhoto(petId) {
-    const uri = await pickPetPhoto();
+    const uri = await pickPetPhoto({ petId });
     if (!uri) return;
     await Pets.update(petId, { photoUri: uri });
     load();
