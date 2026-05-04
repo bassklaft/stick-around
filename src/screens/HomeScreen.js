@@ -10,6 +10,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, ChecklistState } from "../lib/storage";
 import { generateChecklist } from "../lib/checklist";
 import { breedFacts } from "../data/breeds";
+import { getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
 import { openMapsSearch } from "../lib/maps";
 import { theme } from "../theme";
 
@@ -36,12 +37,14 @@ export default function HomeScreen({ navigation }) {
   }
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;
-  const breed = breedFacts[(pet.breed || "").toLowerCase()];
+  const primaryBreed = getPrimaryBreed(pet);
+  const breed = breedFacts[primaryBreed];
+  const breedDisplay = mixedBreedLabel(pet) || titleCase(primaryBreed);
   const completed = items.filter(i => state[i.id]?.status === "done").length;
   const hasPhoto = !!pet.photoUri;
 
   const cards = [
-    { key: "pets",     title: "Your Pets",            subtitle: `${pet.name} · ${titleCase(pet.breed || "")}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
+    { key: "pets",     title: "Your Pets",            subtitle: `${pet.name} · ${breedDisplay}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
     { key: "age",      title: "Age in Human Years",   subtitle: `${pet.name}'s real human-equivalent age — beyond "1 yr = 7 yr"`, icon: "calendar-heart", tint: "#7A4F0A", onPress: () => navigation.navigate("DogAge") },
     { key: "diet",     title: "Diet & Care",          subtitle: "Supplements, fresh foods, grooming products",     icon: "food-apple",     tint: "#3F8E5C",    onPress: () => navigation.navigate("Diet") },
     { key: "toxic",    title: "Toxic Foods & Plants", subtitle: "Quick reference — what to keep away",             icon: "leaf",           tint: theme.green,  onPress: () => navigation.navigate("Toxic") },
@@ -66,14 +69,14 @@ export default function HomeScreen({ navigation }) {
             <Text style={s.heroEyebrow}>FOR</Text>
             <Text style={s.heroName}>{pet.name}</Text>
             <Text style={s.heroMeta}>
-              {titleCase(pet.breed || "")} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
+              {breedDisplay} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
             </Text>
           </View>
         </ImageBackground>
       ) : (
         <View style={s.heroFallback}>
           <Text style={s.greet}>Hi, {pet.name}'s human 👋</Text>
-          <Text style={s.species}>{titleCase(pet.breed || "")} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
+          <Text style={s.species}>{breedDisplay} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
         </View>
       )}
 
@@ -111,7 +114,7 @@ export default function HomeScreen({ navigation }) {
 
         {Array.isArray(breed?.tips) && breed.tips.length > 0 && (
           <>
-            <Text style={s.sectionHd}>INSIDER TIPS · {titleCase(pet.breed)}</Text>
+            <Text style={s.sectionHd}>INSIDER TIPS · {isMixedBreed(pet) ? shortBreedName(primaryBreed).toUpperCase() : titleCase(primaryBreed)}</Text>
             <View style={s.tipsCard}>
               <Text style={s.tipsSub}>From owner communities, breed clubs, and vet references.</Text>
               {breed.tips.slice(0, 3).map((tip, i) => (

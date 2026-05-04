@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Alert, Linking, StyleSheet } 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pet } from "../lib/storage";
 import { usePurchases } from "../lib/purchasesContext";
+import { mixedBreedLabel, getPrimaryBreed } from "../lib/petBreeds";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -28,7 +29,7 @@ export default function SettingsScreen({ navigation }) {
     <ScrollView style={{ backgroundColor: theme.bg }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 60 }}>
       <View style={s.card}>
         <Text style={s.h2}>{pet.name}</Text>
-        <Text style={s.sub}>{titleCase(pet.breed || "")} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
+        <Text style={s.sub}>{mixedBreedLabel(pet) || titleCase(getPrimaryBreed(pet))} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
       </View>
 
       <Text style={s.sectionHd}>SUBSCRIPTION</Text>

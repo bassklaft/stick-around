@@ -8,6 +8,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pets } from "../lib/storage";
 import { usePurchases } from "../lib/purchasesContext";
+import { getPetBreeds, getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { theme } from "../theme";
@@ -72,7 +73,10 @@ export default function YourPetsScreen() {
       </Text>
 
       {pets.map((pet, idx) => {
-        const breed = breedFacts[(pet.breed || "").toLowerCase()];
+        const breedKeys = getPetBreeds(pet);
+        const primary = getPrimaryBreed(pet);
+        const isMix = isMixedBreed(pet);
+        const mixLabel = mixedBreedLabel(pet);
         return (
           <View key={pet.id || idx} style={s.petCard}>
             {idx === 0 && pets.length > 1 && (
@@ -85,7 +89,7 @@ export default function YourPetsScreen() {
                   <Image source={{ uri: pet.photoUri }} style={s.avatar} />
                 ) : (
                   <View style={s.avatarFallback}>
-                    <Text style={{ fontSize: 44 }}>{breedEmoji(pet.breed)}</Text>
+                    <Text style={{ fontSize: 44 }}>{breedEmoji(primary)}</Text>
                   </View>
                 )}
                 <View style={s.avatarBadge}>
@@ -97,85 +101,100 @@ export default function YourPetsScreen() {
 
             <Text style={s.petName}>{pet.name}</Text>
             <Text style={s.petMeta}>
-              {titleCase(pet.breed || "")} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
+              {mixLabel || titleCase(primary)} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
             </Text>
             {pet.mixOf && <Text style={s.mixMeta}>Mix of: {pet.mixOf}</Text>}
 
-            {breed?.summary && (
-              <View style={s.breedCard}>
-                <Text style={s.breedTitle}>About {breedDisplayName(pet.breed)}</Text>
-                {breed.origin && <Text style={s.breedOrigin}>📍 {breed.origin}</Text>}
-                <Text style={s.breedBody}>{breed.summary}</Text>
-                {breed.originStory && (
-                  <Text style={[s.breedBody, { marginTop: 10, fontStyle: "italic" }]}>
-                    {breed.originStory}
-                  </Text>
-                )}
-                {Array.isArray(breed.references) && breed.references.length > 0 && (
-                  <View style={{ marginTop: 12 }}>
-                    <Text style={s.breedRefHd}>SOURCES & DEEP DIVES</Text>
-                    {breed.references.map((r, i) => (
-                      <TouchableOpacity key={i} onPress={() => Linking.openURL(r.url)} style={{ paddingVertical: 4 }}>
-                        <Text style={s.breedRefText}>↗ {r.label}</Text>
-                      </TouchableOpacity>
-                    ))}
-                  </View>
-                )}
-                {breed.brachycephalic && (
-                  <View style={s.brachyWarn}>
-                    <Text style={s.brachyText}>
-                      ⚠ Short-snout (brachycephalic) breed. Most airlines refuse them as cargo, heat above 80°F is dangerous, and BOAS surgery is a common breed-specific intervention.
+            {breedKeys.map((breedKey) => {
+              const breed = breedFacts[breedKey];
+              if (!breed?.summary) return null;
+              const sectionId = `${pet.id}:${breedKey}`;
+              return (
+                <View key={breedKey} style={s.breedCard}>
+                  {isMix && (
+                    <View style={s.breedSectionHd}>
+                      <Text style={s.breedChipEmoji}>{breedEmoji(breedKey)}</Text>
+                      <Text style={s.breedSectionLabel}>{shortBreedName(breedKey).toUpperCase()}</Text>
+                    </View>
+                  )}
+                  <Text style={s.breedTitle}>About {breedDisplayName(breedKey)}</Text>
+                  {breed.origin && <Text style={s.breedOrigin}>📍 {breed.origin}</Text>}
+                  <Text style={s.breedBody}>{breed.summary}</Text>
+                  {breed.originStory && (
+                    <Text style={[s.breedBody, { marginTop: 10, fontStyle: "italic" }]}>
+                      {breed.originStory}
                     </Text>
-                  </View>
-                )}
-
-                {Array.isArray(breed.health) && breed.health.length > 0 && (
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => setHealthOpen(prev => ({ ...prev, [pet.id]: !prev[pet.id] }))}
-                    style={s.healthDisclosure}
-                  >
-                    <View style={s.healthHeader}>
-                      <Text style={s.healthHeaderText}>
-                        💛 Health considerations to know
-                      </Text>
-                      <Text style={s.healthHeaderHint}>
-                        {healthOpen[pet.id] ? "Tap to hide" : "Tap to learn more"}
+                  )}
+                  {Array.isArray(breed.references) && breed.references.length > 0 && (
+                    <View style={{ marginTop: 12 }}>
+                      <Text style={s.breedRefHd}>SOURCES & DEEP DIVES</Text>
+                      {breed.references.map((r, i) => (
+                        <TouchableOpacity key={i} onPress={() => Linking.openURL(r.url)} style={{ paddingVertical: 4 }}>
+                          <Text style={s.breedRefText}>↗ {r.label}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                  {breed.brachycephalic && (
+                    <View style={s.brachyWarn}>
+                      <Text style={s.brachyText}>
+                        ⚠ Short-snout (brachycephalic) breed. Most airlines refuse them as cargo, heat above 80°F is dangerous, and BOAS surgery is a common breed-specific intervention.
                       </Text>
                     </View>
-                    {healthOpen[pet.id] && (
-                      <View style={{ marginTop: 10 }}>
-                        <Text style={s.healthIntro}>
-                          Every breed has health patterns worth knowing — being aware lets you screen early and stay ahead of issues.
+                  )}
+
+                  {Array.isArray(breed.health) && breed.health.length > 0 && (
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => setHealthOpen(prev => ({ ...prev, [sectionId]: !prev[sectionId] }))}
+                      style={s.healthDisclosure}
+                    >
+                      <View style={s.healthHeader}>
+                        <Text style={s.healthHeaderText}>
+                          💛 Health considerations to know
                         </Text>
-                        {breed.health.map((h, i) => (
-                          <View key={i} style={s.healthRow}>
-                            <Text style={s.healthBullet}>›</Text>
-                            <Text style={s.healthBody}>{h}</Text>
-                          </View>
-                        ))}
-                        <Text style={s.healthFooter}>
-                          Discuss screening cadence with your vet — most of these are catchable early.
+                        <Text style={s.healthHeaderHint}>
+                          {healthOpen[sectionId] ? "Tap to hide" : "Tap to learn more"}
                         </Text>
                       </View>
-                    )}
-                  </TouchableOpacity>
-                )}
-              </View>
-            )}
+                      {healthOpen[sectionId] && (
+                        <View style={{ marginTop: 10 }}>
+                          <Text style={s.healthIntro}>
+                            Every breed has health patterns worth knowing — being aware lets you screen early and stay ahead of issues.
+                          </Text>
+                          {breed.health.map((h, i) => (
+                            <View key={i} style={s.healthRow}>
+                              <Text style={s.healthBullet}>›</Text>
+                              <Text style={s.healthBody}>{h}</Text>
+                            </View>
+                          ))}
+                          <Text style={s.healthFooter}>
+                            Discuss screening cadence with your vet — most of these are catchable early.
+                          </Text>
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            })}
 
-            {Array.isArray(breed?.tips) && breed.tips.length > 0 && (
-              <View style={s.tipsCard}>
-                <Text style={s.tipsTitle}>💡 Insider tips for {breedDisplayName(pet.breed)}</Text>
-                <Text style={s.tipsSub}>From owner communities, breed clubs, and vet references.</Text>
-                {breed.tips.map((tip, i) => (
-                  <View key={i} style={s.tipRow}>
-                    <Text style={s.tipBullet}>›</Text>
-                    <Text style={s.tipBody}>{tip}</Text>
-                  </View>
-                ))}
-              </View>
-            )}
+            {breedKeys.map((breedKey) => {
+              const breed = breedFacts[breedKey];
+              if (!Array.isArray(breed?.tips) || breed.tips.length === 0) return null;
+              return (
+                <View key={`tips-${breedKey}`} style={s.tipsCard}>
+                  <Text style={s.tipsTitle}>💡 Insider tips for {breedDisplayName(breedKey)}</Text>
+                  <Text style={s.tipsSub}>From owner communities, breed clubs, and vet references.</Text>
+                  {breed.tips.map((tip, i) => (
+                    <View key={i} style={s.tipRow}>
+                      <Text style={s.tipBullet}>›</Text>
+                      <Text style={s.tipBody}>{tip}</Text>
+                    </View>
+                  ))}
+                </View>
+              );
+            })}
           </View>
         );
       })}
@@ -216,6 +235,9 @@ const s = StyleSheet.create({
   petMeta:       { fontSize: 13, color: theme.muted, marginTop: 4, textAlign: "center", textTransform: "capitalize" },
   mixMeta:       { fontSize: 12, color: theme.accent, marginTop: 4, textAlign: "center", fontStyle: "italic" },
   breedCard:     { marginTop: 16, padding: 14, backgroundColor: theme.bg, borderRadius: 12, borderWidth: 1, borderColor: theme.line },
+  breedSectionHd:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
+  breedSectionLabel:{ fontSize: 10, fontWeight: "800", color: theme.accent, letterSpacing: 1.4 },
+  breedChipEmoji:{ fontSize: 14 },
   breedTitle:    { fontWeight: "700", color: theme.fg, fontSize: 16, marginBottom: 4 },
   breedOrigin:   { fontSize: 11, color: theme.muted, fontWeight: "600", marginBottom: 8, letterSpacing: 0.3 },
   breedBody:     { fontSize: 13, color: theme.muted, lineHeight: 19 },

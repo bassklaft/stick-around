@@ -18,6 +18,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet } from "../lib/storage";
 import { ageSummary, lifeStageTimeline, humanYearsAt, lifestyleMultiplier } from "../lib/dogAge";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
+import { getPrimaryBreed, mixedBreedLabel } from "../lib/petBreeds";
 import { theme } from "../theme";
 
 const titleCase = s => (s || "").split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -77,8 +78,9 @@ export default function DogAgeScreen() {
 
   const summary = ageSummary(pet);
   const timeline = lifeStageTimeline(pet);
-  const breed = breedFacts[(pet.breed || "").toLowerCase()];
-  const breedLabel = titleCase(pet.breed || "Mixed");
+  const primaryBreed = getPrimaryBreed(pet);
+  const breed = breedFacts[primaryBreed];
+  const breedLabel = mixedBreedLabel(pet) || titleCase(primaryBreed) || "Mixed";
   const lifestyle = pet.lifestyle || {};
   const adjustment = lifestyleMultiplier(lifestyle);
   const adjPct = Math.round((adjustment - 1) * 100);
@@ -102,7 +104,7 @@ export default function DogAgeScreen() {
             <Image source={{ uri: pet.photoUri }} style={s.heroPhoto} />
           ) : (
             <View style={[s.heroPhoto, s.heroFallback]}>
-              <Text style={{ fontSize: 64 }}>{breedEmoji(pet.breed)}</Text>
+              <Text style={{ fontSize: 64 }}>{breedEmoji(primaryBreed)}</Text>
             </View>
           )}
         </View>
@@ -139,7 +141,7 @@ export default function DogAgeScreen() {
                     />
                   ) : (
                     <View style={[s.stepPhoto, s.heroFallback, !pt.isCurrent && { opacity: 0.55 }]}>
-                      <Text style={{ fontSize: 26 }}>{breedEmoji(pet.breed)}</Text>
+                      <Text style={{ fontSize: 26 }}>{breedEmoji(primaryBreed)}</Text>
                     </View>
                   )}
                 </View>

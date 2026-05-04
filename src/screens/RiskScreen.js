@@ -11,6 +11,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { Pet } from "../lib/storage";
 import { breedFacts } from "../data/breeds";
+import { getPetBreeds } from "../lib/petBreeds";
 import { findHazards, findRegional } from "../data/hazardSites";
 import { RULES_OF_THUMB } from "../data/rulesOfThumb";
 import { theme } from "../theme";
@@ -59,7 +60,10 @@ export default function RiskScreen() {
     setLoading(false);
   }
 
-  const breed = pet ? breedFacts[(pet.breed || "").toLowerCase()] : null;
+  const breedKeys = getPetBreeds(pet);
+  const anyBrachy = breedKeys.some((k) => breedFacts[k]?.brachycephalic);
+  const breed = breedKeys[0] ? breedFacts[breedKeys[0]] : null;
+  const has = (...needles) => breedKeys.some((k) => needles.includes(k));
 
   // Build the location-aware risk list
   const locationRisks = [];
@@ -69,7 +73,7 @@ export default function RiskScreen() {
       locationRisks.push({
         icon: "thermometer-high", sev: t >= 95 ? "high" : "moderate",
         title: `Pavement is ${t.toFixed(0)}°F right now`,
-        body: `Asphalt at this air temperature can hit 130-150°F. Skip walks 11am-5pm or use boots. ${breed?.brachycephalic ? "Your brachycephalic breed is at extra heat-stroke risk." : ""}`,
+        body: `Asphalt at this air temperature can hit 130-150°F. Skip walks 11am-5pm or use boots. ${anyBrachy ? "Your brachycephalic breed is at extra heat-stroke risk." : ""}`,
       });
     }
     if (t <= 35) {
@@ -114,9 +118,11 @@ export default function RiskScreen() {
     }
   }
 
-  // Breed/pet-specific risks
+  // Breed/pet-specific risks. For mixed-breed pets, any contributing
+  // breed can trigger a risk — bloat, IVDD, and escape-prone tendencies
+  // don't get diluted by being half-something-else.
   const petRisks = [];
-  if (breed?.brachycephalic) {
+  if (anyBrachy) {
     petRisks.push({
       icon: "weather-sunny", sev: "high",
       title: "Heat is genuinely dangerous",
@@ -128,15 +134,14 @@ export default function RiskScreen() {
       body: "United, Delta, American, and most international carriers ban brachycephalic breeds in cargo due to in-flight death rates. In-cabin only — confirm policy before booking.",
     });
   }
-  if (pet?.species === "dog" && pet?.breed) {
-    const b = pet.breed.toLowerCase();
-    if (b === "siberian husky") {
+  if (pet?.species === "dog" && breedKeys.length > 0) {
+    if (has("siberian husky")) {
       petRisks.push({ icon: "fence", sev: "high", title: "Top breed for escape + lost-dog stats", body: "Huskies dig under fences, jump 6+ ft, and roam if not contained. GPS tag the collar; concrete-base fence; never trust 'reliable recall'." });
     }
-    if (b === "dachshund" || b === "pembroke welsh corgi") {
+    if (has("dachshund", "pembroke welsh corgi")) {
       petRisks.push({ icon: "stairs-down", sev: "high", title: "Spinal injury risk", body: "Long-backed breeds: 1 in 4 Dachshunds + many Corgis have an IVDD episode. Use ramps, not stairs/jumps from couch/bed." });
     }
-    if (b === "great dane" || b === "bernese mountain dog" || b === "rottweiler" || b === "doberman pinscher" || b === "german shepherd") {
+    if (has("great dane", "bernese mountain dog", "rottweiler", "doberman pinscher", "german shepherd")) {
       petRisks.push({ icon: "stomach", sev: "moderate", title: "Bloat (GDV) risk", body: "Deep-chested breeds: feed 2-3 small meals, no exercise within 1 hour of eating. Discuss prophylactic gastropexy with your vet at spay/neuter." });
     }
   }
