@@ -696,3 +696,55 @@ Tradeoffs to consider before doing this:
 - Vaccine reaction logging (a checkbox on each Health Tracker entry: "any reaction?" → free-form notes — useful for catching adjuvant intolerance patterns)
 - DNA test import (Embark / Wisdom Panel / Basepaws JSON or CSV ingest, mapped to FloofLife's breed catalog)
 - iCloud / cloud sync as a paid feature
+
+
+---
+
+## 2026-05-04 — Critical migration constraint: local → cloud (v2.0+)
+
+When FloofLife eventually adds cloud accounts (v2.0+), users who have been
+using the app in local-only mode MUST not lose any data when they:
+
+- create an account for the first time
+- subscribe to Premium for the first time
+- migrate from free local-only to cloud-synced premium
+
+### What MUST migrate seamlessly
+
+- All pets (full pet data: name, species, `breeds[]`, age, weight, photos)
+- All health records (vaccines, preventatives, wellness, attachments)
+- All vet info (saved vet contacts)
+- All checklist progress / completion state
+- All user preferences and settings
+- Pet photos stored in `documentDirectory`
+
+### Implementation approach (when v2.0 lands)
+
+1. On account creation, app reads ALL local AsyncStorage + FileSystem data.
+2. App uploads to cloud-side database under the new account ID.
+3. Local data is preserved (don't delete) until cloud sync confirms successful.
+4. Photos in `documentDirectory` get uploaded to cloud storage with URLs replacing local URIs.
+5. After successful migration, local data is kept as cache for offline-first behavior.
+6. Add a "Restore from local data" option in Settings as a fallback.
+
+### Anti-patterns to avoid
+
+- Don't show a "create account" gate that wipes local data.
+- Don't require account creation just to access existing local data.
+- Don't show a confusing "merge or replace" prompt that scares users into losing data.
+
+### Edge cases to plan for
+
+- User with cloud account on Phone A + local data on Phone B → conflict resolution UI.
+- User who creates account, then signs out → local data should persist.
+- User who deletes app, reinstalls, signs in → cloud data restored, no local-only data lost.
+- Photos that exist locally but not in cloud (older entries) — auto-upload on first sync.
+
+### Test cases (when v2.0 ships)
+
+1. Free user with 3 pets + 20 health records + photos → creates account → all data appears.
+2. Free user with mixed-breed pet → upgrades to Premium → multi-breed data persists.
+3. Free user → premium → adds 4th pet → all four sync to cloud.
+4. User with cloud account on Phone A → installs on Phone B → all data syncs down.
+
+**Status:** constraint documented; implementation deferred to v2.0.
