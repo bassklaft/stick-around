@@ -78,6 +78,63 @@ export const Pets = {
     const arr = (await this.list()).filter(p => p.id !== id);
     await this.setAll(arr);
   },
+
+  // ─────────────── Health records (v1.2) ─────────────────────────
+  // Each pet carries `healthRecords: [{ id, type, dateGiven, durationMonths,
+  // nextDue, notes?, attachmentUri?, attachmentFilename?, customLabel? }]`.
+  // Stored inline on the pet object to keep the storage layout flat;
+  // attachments themselves live on the filesystem (caller manages those).
+  async listHealthRecords(petId) {
+    const arr = await this.list();
+    const pet = arr.find((p) => p.id === petId);
+    return Array.isArray(pet?.healthRecords) ? pet.healthRecords : [];
+  },
+  async addHealthRecord(petId, record) {
+    const arr = await this.list();
+    const idx = arr.findIndex((p) => p.id === petId);
+    if (idx < 0) return null;
+    const existing = Array.isArray(arr[idx].healthRecords) ? arr[idx].healthRecords : [];
+    const withId = {
+      ...record,
+      id: record.id || ("hr" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6)),
+      createdAt: record.createdAt || Date.now(),
+    };
+    arr[idx] = { ...arr[idx], healthRecords: [...existing, withId] };
+    await this.setAll(arr);
+    return withId;
+  },
+  async updateHealthRecord(petId, recordId, patch) {
+    const arr = await this.list();
+    const idx = arr.findIndex((p) => p.id === petId);
+    if (idx < 0) return null;
+    const records = Array.isArray(arr[idx].healthRecords) ? arr[idx].healthRecords : [];
+    const ridx = records.findIndex((r) => r.id === recordId);
+    if (ridx < 0) return null;
+    const updated = { ...records[ridx], ...patch };
+    const next = records.slice();
+    next[ridx] = updated;
+    arr[idx] = { ...arr[idx], healthRecords: next };
+    await this.setAll(arr);
+    return updated;
+  },
+  async removeHealthRecord(petId, recordId) {
+    const arr = await this.list();
+    const idx = arr.findIndex((p) => p.id === petId);
+    if (idx < 0) return false;
+    const records = Array.isArray(arr[idx].healthRecords) ? arr[idx].healthRecords : [];
+    arr[idx] = { ...arr[idx], healthRecords: records.filter((r) => r.id !== recordId) };
+    await this.setAll(arr);
+    return true;
+  },
+  // Has the user dismissed the first-run health-tracker disclaimer for
+  // this pet? Stored as a flag on the pet object.
+  async hasAckedHealthDisclaimer(petId) {
+    const arr = await this.list();
+    return !!arr.find((p) => p.id === petId)?.healthDisclaimerAcked;
+  },
+  async ackHealthDisclaimer(petId) {
+    return this.update(petId, { healthDisclaimerAcked: true });
+  },
   // Sort oldest pet first (highest age, then earliest createdAt as tiebreaker).
   // Pets without an age fall to the bottom.
   async listSortedOldestFirst() {
