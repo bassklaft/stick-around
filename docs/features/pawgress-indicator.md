@@ -1,4 +1,4 @@
-# Pawprint Tracker — Feature Brief
+# Pawgress Indicator — Feature Brief
 
 **Target version:** v1.3
 **Status:** Spec
@@ -80,7 +80,7 @@ When a paw closes (all 5 pads full), trigger:
 ## Data Model
 
 ```
-PawprintEntry {
+PawgressEntry {
   id: UUID
   petId: UUID
   date: Date (UTC start of day)
@@ -109,8 +109,8 @@ Badge {
 
 ## UI Components
 
-- `PawprintView` — animated SVG paw, fills proportionally
-- `PawprintScreen` — main feature screen, time horizon toggle
+- `PawgressView` — animated SVG paw, fills proportionally
+- `PawgressScreen` — main feature screen, time horizon toggle
 - `BadgeGallery` — grid of earned + locked badges
 - `CelebrationOverlay` — confetti + message on paw close
 - `ShareCardGenerator` — auto-generates Instagram square images (Premium)
@@ -141,7 +141,7 @@ Notifications respect quiet hours and per-pet preferences.
 
 ## Marketing Hook
 
-> "Track your good parenting. The Pawprint fills as you care for your pet. Celebrate every win with Falafel."
+> "Watch your Pawgress fill as you care for your pet. Celebrate every win — because being a good Floof Parent deserves more than a checklist."
 
 App Store What's New copy:
-> "🐾 Introducing the Pawprint Tracker. Watch your daily care fill the paw, earn Floof Parent badges, and celebrate every win. Because being a good pet parent deserves more than a checklist."
+> "🐾 Introducing the Pawgress Indicator. Watch your daily care fill the paw, earn Floof Parent badges, and celebrate every win. Because being a good pet parent deserves more than a checklist."
