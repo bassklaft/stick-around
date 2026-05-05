@@ -666,6 +666,12 @@ Tradeoffs to consider before doing this:
 
 ## 2026-05-04 — v1.3 / v1.4 / v1.5 roadmap
 
+### v1.2 polish (in flight)
+
+- **Collapsible breed cards.** "About" / origin / sources sections start collapsed on the YourPets/MyFloofs breed cards; tap to expand. Reduces wall-of-text intimidation for first-time owners while keeping the depth available for engaged ones.
+- **Sources / citations footer.** A small, persistent "Sources" footer on the breed page, Diet & Care, Recalls, and Toxic Foods screens — a tap-to-open block listing every reference used (AKC, AAHA, FDA URL, AVMA, peer-reviewed paper DOIs where applicable). Builds reviewer/vet trust and undercuts "this app is just guessing" objections.
+- **"Update available" prompt.** On launch, fetch the latest App Store version (via `https://itunes.apple.com/lookup?id=6764378399`) and compare to the running build's `Constants.expoConfig.version`. If newer is live, show a soft modal: "An update is available — tap to install." Doesn't block the user; one-tap deep-links to the App Store listing.
+
 ### v1.3 (target ship: mid-May 2026)
 
 - **Remote JSON for recalls.** Host the recall list on Cloudflare Pages or GitHub Pages with a stable schema; the app fetches on launch and falls back to the bundled list on network failure. Lets us push recall updates without an App Store version bump.
@@ -673,6 +679,16 @@ Tradeoffs to consider before doing this:
 - **URL audit as a scheduled GitHub Action.** Runs `npm run audit:links` weekly, writes `deadLinks.json` if anything broke, opens an issue. The audit script (Phase 4 deliverable) is already CI-friendly.
 - **Push notifications (local first; remote optional)** for vaccine/preventative reminders. Local-only is sufficient for v1.3 since the Health Tracker already knows the schedule client-side.
 - **Document upload + photo storage for vaccine records.** Already partially landed in Phase 2; v1.3 finishes thumbnail generation + a richer attachment viewer.
+
+#### v1.3 — Health logging expansion (separate sub-track)
+
+The Health Tracker covers scheduled care (vaccines, preventatives, wellness). Health logging covers acute / observational data — the things owners notice between vet visits that matter clinically. Both feed the same "Health" surface but have different UX requirements.
+
+- **Poop logger.** Per-pet stool log with: Bristol Stool Scale (1–7 with reference photos), color (brown / yellow / green / black / red / gray / white), volume (small / normal / large), and flags for mucus, blood, parasites/worms, foreign material. Each entry can attach a photo. Timestamp + notes. List view sortable by date.
+- **Vet-trigger thresholds.** Hard-coded clinical thresholds that escalate from a passive log to an explicit "see a vet now" banner: black tarry stool (digested blood — upper GI bleed), bright red stool (lower GI bleed), gray stool (bile-duct or liver issue), watery diarrhea >2 episodes in 24h, vomiting + diarrhea together, blood in vomit. The banner offers one-tap deep-link to Emergency Resources screen.
+- **Export GI history to vet.** "Share" button on the poop log generates a 7-day or 30-day summary as a PDF or text block formatted for vet handoff: Bristol average, color anomalies count, vet-trigger events with dates, photo attachments. Vets get useful clinical data; owners don't have to summarize from memory at the appointment.
+- **Turgor / hydration test walkthrough.** Step-by-step with illustrations: where to pinch (between shoulder blades), how long the skin should take to snap back (<1 second healthy, 2-4 seconds dehydrated, >4 seconds severely dehydrated → vet now), gum-color check (pink + moist healthy, dry/sticky/pale = dehydrated, blue/gray = emergency). Lives under either the Emergency screen or the Health Tracker — TBD which surface. Repeatable as a logged check.
+- **Vomit / regurgitation logger.** Companion to the poop logger: type (vomiting vs regurgitation — clinically distinct: vomiting is active retching with abdominal contractions, regurgitation is passive expulsion of undigested food and points to esophageal issues), frequency, content (food / bile / foam / blood / foreign body / grass), photo. Same vet-trigger thresholds (blood in vomit → vet now; >3 episodes in a day → vet within 24h).
 
 ### v1.4 (target ship: late May 2026)
 
