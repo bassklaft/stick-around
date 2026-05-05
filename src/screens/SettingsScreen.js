@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Pet } from "../lib/storage";
 import { usePurchases } from "../lib/purchasesContext";
 import { mixedBreedLabel, getPrimaryBreed } from "../lib/petBreeds";
+import { getDeviceId } from "../lib/founderOverride";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -11,9 +12,22 @@ const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).j
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [pet, setPet] = useState(null);
-  const { isPremium } = usePurchases();
+  const [deviceId, setDeviceId] = useState("");
+  const { isPremium, isFounderDevice } = usePurchases();
 
   useEffect(() => { Pet.get().then(setPet); }, []);
+  useEffect(() => { getDeviceId().then(setDeviceId); }, []);
+
+  function showDeviceId() {
+    Alert.alert(
+      isFounderDevice ? "Device ID (founder override active)" : "Device ID",
+      (deviceId || "(unavailable)") +
+        (isFounderDevice
+          ? "\n\n✅ This device is on the founder list — Premium is unlocked locally."
+          : "\n\nCopy and send to Max to add this device to the founder list."),
+      [{ text: "OK" }],
+    );
+  }
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;
 
@@ -59,6 +73,14 @@ export default function SettingsScreen({ navigation }) {
 
       <Text style={s.sectionHd}>FLOOFLIFE</Text>
       <Row label="Story · About this app" onPress={() => navigation.navigate("About")} />
+
+      <Text style={s.sectionHd}>DEBUG</Text>
+      <TouchableOpacity onPress={showDeviceId} style={s.row}>
+        <Text style={s.rowLabel}>My Device ID</Text>
+        <Text style={[s.sub, { textTransform: "none", maxWidth: 180 }]} numberOfLines={1} ellipsizeMode="middle">
+          {deviceId || "—"}
+        </Text>
+      </TouchableOpacity>
 
       <Text style={s.sectionHd}>HELP</Text>
       <Row label="Contact support"   onPress={() => Linking.openURL("mailto:hello@stickaround.app")} />
