@@ -7,7 +7,7 @@ import { View, Text, ScrollView, TouchableOpacity, ImageBackground, RefreshContr
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Pet, ChecklistState } from "../lib/storage";
+import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { breedFacts } from "../data/breeds";
 import { openMapsSearch } from "../lib/maps";
@@ -18,6 +18,7 @@ const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).j
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [pet, setPet] = useState(null);
+  const [petsCount, setPetsCount] = useState(0);
   const [items, setItems] = useState([]);
   const [state, setState] = useState({});
   const [refreshing, setRefreshing] = useState(false);
@@ -25,8 +26,10 @@ export default function HomeScreen({ navigation }) {
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
+    const all = await Pets.list();
+    setPetsCount(all.length);
     setItems(generateChecklist(p));
-    setState(await ChecklistState.get());
+    setState(await ChecklistState.get(p?.id));
   }, []);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -59,23 +62,37 @@ export default function HomeScreen({ navigation }) {
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
       {/* Hero — pet photo background with darkening gradient + overlay text */}
-      {hasPhoto ? (
-        <ImageBackground source={{ uri: pet.photoUri }} style={s.hero} imageStyle={s.heroImage}>
-          <View style={s.heroOverlay} />
-          <View style={s.heroContent}>
-            <Text style={s.heroEyebrow}>FOR</Text>
-            <Text style={s.heroName}>{pet.name}</Text>
-            <Text style={s.heroMeta}>
-              {titleCase(pet.breed || "")} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
-            </Text>
-          </View>
-        </ImageBackground>
-      ) : (
-        <View style={s.heroFallback}>
-          <Text style={s.greet}>Hi, {pet.name}'s human 👋</Text>
-          <Text style={s.species}>{titleCase(pet.breed || "")} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
-        </View>
-      )}
+      {(() => {
+        const isMultiPet = petsCount > 1;
+        const HeroWrap = isMultiPet ? TouchableOpacity : View;
+        const wrapProps = isMultiPet
+          ? { onPress: () => navigation.navigate("Main", { screen: "YourPets" }), activeOpacity: 0.85 }
+          : {};
+        if (hasPhoto) {
+          return (
+            <HeroWrap {...wrapProps}>
+              <ImageBackground source={{ uri: pet.photoUri }} style={s.hero} imageStyle={s.heroImage}>
+                <View style={s.heroOverlay} />
+                <View style={s.heroContent}>
+                  <Text style={s.heroEyebrow}>FOR</Text>
+                  <Text style={s.heroName}>{pet.name}</Text>
+                  <Text style={s.heroMeta}>
+                    {titleCase(pet.breed || "")} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
+                  </Text>
+                  {isMultiPet && <Text style={s.heroSwitch}>Tap to switch floof ↓</Text>}
+                </View>
+              </ImageBackground>
+            </HeroWrap>
+          );
+        }
+        return (
+          <HeroWrap {...wrapProps} style={s.heroFallback}>
+            <Text style={s.greet}>Hi, {pet.name}'s human 👋</Text>
+            <Text style={s.species}>{titleCase(pet.breed || "")} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
+            {isMultiPet && <Text style={[s.heroSwitch, { color: theme.accent, marginTop: 6 }]}>Tap to switch floof ↓</Text>}
+          </HeroWrap>
+        );
+      })()}
 
       <View style={{ paddingHorizontal: 20, marginTop: 16 }}>
         <TouchableOpacity onPress={() => navigation.navigate("Main", { screen: "Checklist" })} style={s.progress}>
@@ -148,9 +165,10 @@ const s = StyleSheet.create({
   heroName:     { fontSize: 38, fontWeight: "800", color: "#fff", letterSpacing: -0.5, textShadowColor: "rgba(0,0,0,0.4)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   heroMeta:     { fontSize: 14, color: "#fff", marginTop: 2, opacity: 0.95, textTransform: "capitalize" },
   heroFallback: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 },
+  heroSwitch:   { fontSize: 11, fontWeight: "700", color: "#fff", opacity: 0.95, marginTop: 6, letterSpacing: 0.6, textShadowColor: "rgba(0,0,0,0.4)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
   greet:        { fontSize: 22, fontWeight: "700", color: theme.fg, marginTop: 4 },
   species:      { fontSize: 13, color: theme.muted, marginTop: 4, textTransform: "capitalize" },
-  progress:     { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.accentSoft, borderRadius: 12 },
+  progress:     { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.accentSoft, borderRadius: 12, gap: 12 },
   progressLabel:{ color: theme.fg, fontWeight: "700", fontSize: 14, letterSpacing: 0.5 },
   progressCount:{ color: theme.accent, fontWeight: "800", fontSize: 16 },
   sectionHd:    { marginTop: 22, marginBottom: 10, fontSize: 11, fontWeight: "700", color: theme.muted, letterSpacing: 1.2 },

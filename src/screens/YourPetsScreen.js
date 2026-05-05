@@ -18,6 +18,7 @@ export default function YourPetsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [pets, setPets] = useState([]);
+  const [activeId, setActiveId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [healthOpen, setHealthOpen] = useState({});
   const { isPremium } = usePurchases();
@@ -25,6 +26,13 @@ export default function YourPetsScreen() {
   const load = useCallback(async () => {
     const list = await Pets.listSortedOldestFirst();
     setPets(list);
+    let active = await Pets.getActiveId();
+    // If active id is missing or stale, fall back to the oldest pet so
+    // the visual indicator matches what Pet.get() would resolve to.
+    if (!active || !list.find(p => p.id === active)) {
+      active = list[0]?.id || null;
+    }
+    setActiveId(active);
   }, []);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -34,6 +42,12 @@ export default function YourPetsScreen() {
     if (!uri) return;
     await Pets.update(petId, { photoUri: uri });
     load();
+  }
+
+  async function activatePet(petId) {
+    await Pets.setActive(petId);
+    setActiveId(petId);
+    navigation.navigate("Main", { screen: "Home" });
   }
 
   function addAnotherPet() {
@@ -73,10 +87,26 @@ export default function YourPetsScreen() {
 
       {pets.map((pet, idx) => {
         const breed = breedFacts[(pet.breed || "").toLowerCase()];
+        const isMultiPet = pets.length > 1;
+        const isActive = isMultiPet && activeId === pet.id;
+        const CardWrapper = isMultiPet ? TouchableOpacity : View;
+        const cardProps = isMultiPet
+          ? { onPress: () => activatePet(pet.id), activeOpacity: 0.9 }
+          : {};
         return (
-          <View key={pet.id || idx} style={s.petCard}>
-            {idx === 0 && pets.length > 1 && (
+          <CardWrapper
+            key={pet.id || idx}
+            {...cardProps}
+            style={[s.petCard, isActive && s.petCardActive]}
+          >
+            {isActive && (
+              <View style={s.activeBadge}><Text style={s.activeBadgeText}>✓ ACTIVE</Text></View>
+            )}
+            {idx === 0 && isMultiPet && (
               <View style={s.eldestBadge}><Text style={s.eldestBadgeText}>👑 ELDEST</Text></View>
+            )}
+            {isMultiPet && (
+              <Text style={s.tapHint}>{isActive ? "Currently active — tap any other floof to switch" : "Tap card to make active"}</Text>
             )}
 
             <View style={{ alignItems: "center", marginTop: 4 }}>
@@ -181,7 +211,7 @@ export default function YourPetsScreen() {
                 ))}
               </View>
             )}
-          </View>
+          </CardWrapper>
         );
       })}
 
@@ -210,6 +240,10 @@ const s = StyleSheet.create({
   emptyBody:    { fontSize: 13, color: theme.muted, marginTop: 6, textAlign: "center" },
   intro:        { fontSize: 13, color: theme.muted, marginBottom: 14, lineHeight: 19 },
   petCard:      { backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.line, padding: 18, marginBottom: 16, position: "relative" },
+  petCardActive:{ borderColor: theme.accent, borderWidth: 2 },
+  activeBadge:  { position: "absolute", top: 12, left: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  activeBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 0.6 },
+  tapHint:      { fontSize: 10, color: theme.muted, fontStyle: "italic", textAlign: "center", marginTop: 28, marginBottom: -4, letterSpacing: 0.3 },
   eldestBadge:  { position: "absolute", top: 12, right: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   eldestBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 0.6 },
   avatarWrap:    { position: "relative" },
@@ -230,9 +264,9 @@ const s = StyleSheet.create({
   brachyWarn:    { marginTop: 12, padding: 10, backgroundColor: "#FCE9C8", borderRadius: 8, borderWidth: 1, borderColor: "#E0A82E" },
   brachyText:    { fontSize: 12, color: "#5A3F0A", lineHeight: 18 },
   healthDisclosure:{ marginTop: 12, padding: 12, backgroundColor: theme.bg, borderRadius: 10, borderWidth: 1, borderColor: theme.line },
-  healthHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  healthHeaderText:{ fontSize: 13, fontWeight: "700", color: theme.fg },
-  healthHeaderHint:{ fontSize: 11, color: theme.accent, fontWeight: "600" },
+  healthHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
+  healthHeaderText:{ flex: 1, fontSize: 13, fontWeight: "700", color: theme.fg },
+  healthHeaderHint:{ flexShrink: 0, fontSize: 11, color: theme.accent, fontWeight: "600" },
   healthIntro:     { fontSize: 12, color: theme.muted, lineHeight: 17, marginBottom: 8 },
   healthRow:       { flexDirection: "row", marginBottom: 6 },
   healthBullet:    { color: theme.accent, fontWeight: "800", marginRight: 8, fontSize: 14, lineHeight: 19 },

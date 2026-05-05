@@ -120,10 +120,10 @@ const s = StyleSheet.create({
   body:         { fontSize: 14, color: theme.fg, lineHeight: 20 },
   card:         { padding: 14, backgroundColor: theme.card, borderRadius: 12, borderWidth: 1, borderColor: theme.line, marginBottom: 8 },
   sectionHd:    { marginTop: 18, marginBottom: 8, fontSize: 11, fontWeight: "700", color: theme.muted, letterSpacing: 1.2 },
-  row:          { flexDirection: "row", justifyContent: "space-between", padding: 14, backgroundColor: theme.card, borderRadius: 10, borderWidth: 1, borderColor: theme.line, marginBottom: 6, alignItems: "center" },
-  rowLabel:     { fontSize: 14, color: theme.fg },
+  row:          { flexDirection: "row", justifyContent: "space-between", padding: 14, backgroundColor: theme.card, borderRadius: 10, borderWidth: 1, borderColor: theme.line, marginBottom: 6, alignItems: "center", gap: 12 },
+  rowLabel:     { flex: 1, fontSize: 14, color: theme.fg },
   disclaimer:   { marginTop: 24, padding: 14, borderRadius: 10, backgroundColor: theme.accentSoft },
   disclaimerText:{ fontSize: 11, color: theme.fg, lineHeight: 17 },
-  premiumBadge: { backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  premiumBadge: { flexShrink: 0, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
   premiumBadgeText:{ color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
 });

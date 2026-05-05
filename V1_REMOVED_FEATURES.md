@@ -748,3 +748,52 @@ using the app in local-only mode MUST not lose any data when they:
 4. User with cloud account on Phone A → installs on Phone B → all data syncs down.
 
 **Status:** constraint documented; implementation deferred to v2.0.
+
+
+---
+
+## 2026-05-05 — v1.1.1 patch backlog (post-build-15 polish)
+
+Build 15 is the v1.1 production submission. The items below are queued for a follow-up v1.1.1 patch — code-complete on `v1.1-work` working tree but **uncommitted, unbuilt, and not yet visually verified** at the time of build 15 submission.
+
+### 1. Per-pet checklist state (correctness fix from multi-pet rollout)
+
+**Bug:** When v1.1 introduced multi-pet, `ChecklistState` was left as a flat global map keyed by item id (`pawrent_checklist_state` → `{ [itemId]: { status, ts } }`). Pets sharing item ids (most common breeds share at least 8–10 default items) saw each other's checkmarks. Checking off "brush teeth" on Bella also showed it checked on Max.
+
+**Fix landed on `v1.1-work` (uncommitted):**
+
+- `src/lib/storage.js` — `ChecklistState` now reads/writes a pet-scoped map under a new key `pawrent_checklist_state_v2`, shape `{ [petId]: { [itemId]: { status, ts } } }`. The legacy single-pet map is migrated under the currently-active pet's id on first read after upgrade and the old key is deleted. If there is no active pet yet (fresh install / mid-onboarding), the legacy key is left untouched and migration retries on the next read. `Pet.clear()` now also wipes the v2 key.
+- `src/screens/ChecklistScreen.js` — passes `pet.id` to `ChecklistState.get(petId)` and `ChecklistState.setItem(petId, key, status)`. Guards against `pet?.id` being missing.
+- `src/screens/HomeScreen.js` — same `pet?.id` guard on the home-tab progress-bar read.
+
+**What this fix covers:** the "active" pet (which is still defined as `Pets.list()[0]`) sees its own independent checklist state, and existing single-pet users have their existing checks preserved under that pet.
+
+**What this fix does NOT cover (pushed to a later version):**
+
+- A user-facing "switch active pet" UI. Today the active pet is the first item in the `Pets` array (oldest pet wins per `listSortedOldestFirst`); there is no "tap a pet card to make it active" interaction. Per-pet checklists won't truly feel per-pet until a switcher exists. Likely v1.2 work — track alongside the multi-pet UX polish.
+- Per-pet completion counts on a multi-pet aggregate view ("3 of 12 done across all your floofs"). Out of scope for v1.1.1.
+
+### 2. Layout collision sweep — visual polish
+
+A `flexDirection: "row"` + `justifyContent: "space-between"` audit caught seven row layouts where titles, badges, and severity pills could touch when content grows. The pattern applied: `gap` (10–12) on the container, `flex: 1` on the growable side, `flexShrink: 0` on the fixed side (badges, chevrons, pills).
+
+Files touched on `v1.1-work` (uncommitted):
+
+- `src/screens/YourPetsScreen.js` — `healthHeader` ("💛 Health considerations to know" + "Tap to learn more" hint colliding) — the collision the user actually flagged on-device.
+- `src/screens/SettingsScreen.js` — `row` (label vs PREMIUM badge / chevron), `premiumBadge`.
+- `src/screens/TrainingScreen.js` — `cardHd` (category chip vs cadence text), `catChip`, `cadence`.
+- `src/screens/RecallsScreen.js` — `sevBadge`.
+- `src/screens/ChecklistScreen.js` — `progress` (label vs count).
+- `src/screens/HomeScreen.js` — `progress` (label vs "X of Y done →" count).
+- `src/screens/RiskScreen.js` — `sevBadge` (RiskCard).
+
+LOW-severity items the audit flagged (emoji adjacency, `→` arrows, fragile-but-currently-fine bullets) were skipped — most already have spacing or `marginRight` and aren't actually crowded.
+
+### Visual verification
+
+Visual pass via simulator was attempted but blocked: no iOS simulator runtime is installed on the dev machine. Options when picking v1.1.1 back up: (a) install an iOS 18 runtime in Xcode (~6–7 GB, 10 min) for a true pixel-level pass, (b) use `expo start --web` as a rough flexbox proxy, or (c) trust the diff and verify on the next physical-device build. The fixes are mechanical (`gap` / `flex: 1` / `flexShrink: 0`) so regression risk is low, but neither path has been exercised yet.
+
+### Build pipeline status (as of 2026-05-05)
+
+- Build 15 (v1.1.0): on TestFlight via Transporter upload, on Max's iPhone, awaiting "Add for Review" on App Store Connect.
+- Build 16 (v1.1.1): not started. Will bundle the two items above plus anything else flagged before submission. Branch: continue on `v1.1-work` and bump `expo.ios.buildNumber`, OR cut a fresh `v1.1.1-work` branch — TBD.
