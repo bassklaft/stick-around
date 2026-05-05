@@ -795,5 +795,27 @@ Visual pass via simulator was attempted but blocked: no iOS simulator runtime is
 
 ### Build pipeline status (as of 2026-05-05)
 
-- Build 15 (v1.1.0): on TestFlight via Transporter upload, on Max's iPhone, awaiting "Add for Review" on App Store Connect.
-- Build 16 (v1.1.1): not started. Will bundle the two items above plus anything else flagged before submission. Branch: continue on `v1.1-work` and bump `expo.ios.buildNumber`, OR cut a fresh `v1.1.1-work` branch — TBD.
+- Build 15 (v1.1.0): on TestFlight via Transporter, on Max's iPhone, awaiting "Add for Review" on App Store Connect.
+- Build 16 (v1.1.1): **shipped** — bundled the per-pet checklist + active pet switcher (added mid-cycle as Option B) + the layout collision sweep. IPA at https://expo.dev/artifacts/eas/2WQx7myWSsk2mS4Kteiyhd.ipa. Transportered to App Store Connect.
+
+---
+
+## 2026-05-05 — v1.1.2 patch backlog (post-build-16 polish)
+
+Items flagged after build 16 was already in flight. Queued for the next build.
+
+### 1. Collapsible "About {breed}" card (My Floofs)
+
+**Today:** the About-breed card on My Floofs always renders fully expanded — origin, summary, origin story, sources/references, brachycephalic warning, plus the Health-considerations sub-section. With the v1.2 breed-health audit landing soon, each card will get longer, not shorter.
+
+**Fix:** mirror the existing `healthOpen[pet.id]` toggle pattern. Add `aboutOpen[pet.id]` state, default collapsed. The header (breed title + tap hint) stays visible; the body (origin + summary + originStory + originNote + references + brachy warning + healthDisclosure) only renders when expanded.
+
+**Implementation sketch:**
+- `src/screens/YourPetsScreen.js` — add `aboutOpen` state, replace the breedCard `<View>` opener with a header `<TouchableOpacity>` (only the header toggles, not the whole card — so inner reference-link tappables still work). Conditionally render the expanded body. Reuse the gap/flex/flexShrink pattern from `healthHeader` for the new `breedHeader`.
+- ~20 lines of code; should not require new style additions beyond a `breedHeader` row + a `breedHeaderHint` text style.
+
+**Why deferred from build 16:** flagged after build 16 was uploaded via Transporter; user explicitly chose to ship build 16 and bundle this with the next patch rather than re-build.
+
+### Build pipeline status (next)
+
+- Build 17 (v1.1.2): not started. Bundles the collapsible About card plus anything else that surfaces. Branch: continue on `v1.1-work`.
