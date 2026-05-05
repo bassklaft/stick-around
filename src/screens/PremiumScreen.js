@@ -2,7 +2,7 @@
 // drives real StoreKit purchases. Annual is selected by default since
 // it's where the trial lives; the monthly card is now a real toggle
 // (the v0 "monthly button non-clickable" bug is fixed here).
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Pressable, ActivityIndicator, Alert, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -81,7 +81,7 @@ function resolvePkg(offering, type) {
 
 export default function PremiumScreen({ navigation }) {
   const insets = useSafeAreaInsets();
-  const { offerings, isPremium, ready, refresh, customerInfo } = usePurchases();
+  const { offerings, isPremium, ready, refresh } = usePurchases();
   const [selected, setSelected] = useState("annual");
   const [working, setWorking] = useState(false);
 
@@ -89,145 +89,61 @@ export default function PremiumScreen({ navigation }) {
   const monthly = resolvePkg(offerings, "monthly");
   const selectedPkg = selected === "annual" ? annual : monthly;
 
-  // Render-time diagnostic — visible in Mac Console.app when device is
-  // tethered. Build 6 had a greyed button; build 7 fixed the gating
-  // but the tap fired silently; this lands every render so we see the
-  // exact state the next time something fires (or doesn't).
-  console.warn("[premium] render ready=" + ready +
-    " offering=" + (offerings?.identifier ?? "none") +
-    " annual=" + (!!annual) + " monthly=" + (!!monthly) +
-    " selected=" + selected + " selectedPkg=" + (selectedPkg?.identifier ?? "none") +
-    " isPremium=" + isPremium + " working=" + working);
-
-  // One-shot mount diagnostic. Alert.alert is the source of truth here
-  // because Console.app has been showing zero [premium] warns despite
-  // the diagnostics being in the binary. An on-screen alert cannot be
-  // missed.
-  useEffect(() => {
-    (async () => {
-      let pkgIds = "n/a";
-      try {
-        const offers = await Purchases.getOfferings();
-        const keys = Object.keys(offers?.all ?? {});
-        const current = offers?.current?.identifier ?? "none";
-        const chosenId = offerings?.identifier ?? "none";
-        const chosenPkgs = offerings?.availablePackages?.length ?? 0;
-        pkgIds = (offerings?.availablePackages || []).map((p) => p.identifier + ":" + (p.product?.identifier ?? "?")).join(", ") || "(none)";
-        Alert.alert(
-          "SCREEN MOUNTED",
-          "ready: " + ready +
-            "\noffering keys: [" + keys.join(", ") + "]" +
-            "\ncurrent: " + current +
-            "\nchose: " + chosenId + " (" + chosenPkgs + " pkgs)" +
-            "\npackages: " + pkgIds +
-            "\ncustomerInfo: " + (customerInfo ? "loaded" : "null"),
-        );
-      } catch (e) {
-        Alert.alert("SCREEN MOUNTED · ERROR", "getOfferings threw: " + (e?.message ?? e));
-      }
-    })();
-    return () => { console.warn("[premium] unmount"); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   async function purchase() {
-    // FIRST line — proves the press reached JS. If this alert doesn't
-    // fire when the user taps the trial button, the press isn't
-    // reaching the handler and the issue is the touch surface, not
-    // the SDK. console.warn kept too in case a future build can read
-    // them, but the Alert is the source of truth tonight.
-    Alert.alert("TAP DETECTED", "Trial button onPress fired");
-    console.warn("[premium] TRIAL TAPPED " + new Date().toISOString());
-    console.warn("[premium] SELECTED PKG " + (selectedPkg ? JSON.stringify({
-      id: selectedPkg.identifier,
-      productId: selectedPkg.product?.identifier,
-      priceString: selectedPkg.product?.priceString,
-      offering: selectedPkg.offeringIdentifier,
-    }) : "null"));
-
-    // Try-anyway fallback: if the resolver couldn't pin annual/monthly
-    // by name or packageType, take the FIRST available package on the
-    // offering rather than gating the user. Better to attempt a
-    // purchase with whatever's there than silently disable the button.
+    // Resolution chain (silent — no diagnostic alerts):
+    //   1. selectedPkg from resolvePkg() against the offering
+    //   2. fallback to first availablePackage if resolver missed
+    //   3. fallback to direct-product purchase via getProducts() —
+    //      bypasses offerings entirely. Works as long as the product
+    //      is fetchable from App Store Connect, even if RevenueCat's
+    //      offering is empty.
     let pkg = selectedPkg;
     if (!pkg && offerings?.availablePackages?.length > 0) {
       pkg = offerings.availablePackages[0];
-      Alert.alert(
-        "Using fallback package",
-        "annual/monthly resolver missed; falling back to: " + (pkg?.identifier ?? "unknown") +
-          " (" + (pkg?.product?.identifier ?? "?") + ", " + (pkg?.product?.priceString ?? "?") + ")",
-      );
     }
 
     if (!pkg) {
-      // Last-ditch fallback: bypass offerings entirely and try to
-      // purchase by raw App Store Connect product ID. This works as
-      // long as the product is in "Ready to Submit" state in ASC and
-      // mapped to the "premium" entitlement in RevenueCat.
       const targetProductId = selected === "monthly"
         ? "flooflife_premium_monthly"
         : "flooflife_premium_annual";
       try {
-        Alert.alert("TRYING DIRECT PRODUCT", "Offering missing — falling back to getProducts(['" + targetProductId + "'])");
         const products = await Purchases.getProducts([targetProductId]);
-        Alert.alert("DIRECT PRODUCT RESULT",
-          "products.length=" + (products?.length ?? 0) +
-            (products?.[0] ? "\nproduct=" + products[0].identifier + " " + products[0].priceString : "")
-        );
         if (products && products.length > 0) {
           setWorking(true);
           try {
             const result = await Purchases.purchaseStoreProduct(products[0]);
             await refresh();
             const nowPremium = !!result?.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
-            Alert.alert(
-              nowPremium ? "Welcome to Premium" : "PURCHASE OK BUT NOT ENTITLED",
-              nowPremium
-                ? "Thanks for supporting FloofLife. Your premium features are unlocked."
-                : "Apple charged the card but the '" + PREMIUM_ENTITLEMENT_ID + "' entitlement isn't active. Check the dashboard mapping.",
-              [{ text: "OK", onPress: () => nowPremium && navigation.goBack() }],
-            );
+            if (nowPremium) {
+              Alert.alert(
+                "Welcome to Premium",
+                "Thanks for supporting FloofLife. Your premium features are unlocked.",
+                [{ text: "OK", onPress: () => navigation.goBack() }],
+              );
+            }
           } catch (err) {
-            Alert.alert("DIRECT PRODUCT ERROR",
-              (err?.code ?? "?") + " - " + (err?.message ?? "?") +
-                (err?.userCancelled ? " (userCancelled)" : "")
-            );
+            if (!err?.userCancelled) {
+              Alert.alert("Purchase failed", err?.message ?? "Apple couldn't process the payment. Please try again.");
+            }
           } finally {
             setWorking(false);
           }
           return;
         }
       } catch (e) {
-        Alert.alert("DIRECT PRODUCT THREW", e?.message ?? String(e));
+        // Direct fetch threw — fall through to the unavailable alert below.
       }
 
-      const offState = offerings
-        ? "offering=" + (offerings.identifier ?? "?") + " pkgs=" + (offerings.availablePackages?.length ?? 0)
-        : "offerings=null";
       Alert.alert(
-        "NO PACKAGE FOUND",
-        "Cannot start a purchase — " + offState +
-          ". RevenueCat returned no products and no offering. Open the RevenueCat dashboard and confirm: (1) products imported from App Store Connect, (2) entitlement 'premium' exists, (3) offering 'default' has packages mapped to those products, (4) the offering is marked Current.",
-        [
-          { text: "Reload", onPress: async () => { await refresh(); Alert.alert("Reloaded", "Re-pull customer info"); } },
-          { text: "OK" },
-        ],
+        "Subscriptions unavailable",
+        "We couldn't load subscription options right now. Check your connection and try again, or tap Restore Purchases if you've subscribed before.",
       );
       return;
     }
+
     setWorking(true);
     try {
-      Alert.alert("CALLING SDK", "About to call purchasePackage. selectedPkg: " +
-        JSON.stringify({ id: pkg.identifier, productId: pkg.product?.identifier, priceString: pkg.product?.priceString }));
-      console.warn("[premium] CALLING Purchases.purchasePackage…");
       const result = await Purchases.purchasePackage(pkg);
-      Alert.alert("RESOLVED",
-        "productId=" + (result?.productIdentifier ?? "?") +
-          " entitlements=" + Object.keys(result?.customerInfo?.entitlements?.active ?? {}).join(",")
-      );
-      console.warn("[premium] PURCHASE RESOLVED entitlements=" +
-        Object.keys(result?.customerInfo?.entitlements?.active ?? {}).join(",") +
-        " productId=" + result?.productIdentifier);
       await refresh();
       const nowPremium = !!result?.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
       if (nowPremium) {
@@ -236,35 +152,24 @@ export default function PremiumScreen({ navigation }) {
           "Thanks for supporting FloofLife. Your premium features are unlocked.",
           [{ text: "OK", onPress: () => navigation.goBack() }],
         );
-      } else {
-        Alert.alert(
-          "PURCHASE OK BUT NOT ENTITLED",
-          "Apple charged the card but the '" + PREMIUM_ENTITLEMENT_ID + "' entitlement isn't active. Check that the product is mapped to this entitlement in RevenueCat dashboard.",
-        );
       }
     } catch (err) {
-      Alert.alert("ERROR",
-        (err?.code ?? "no-code") + " - " + (err?.message ?? "no message") +
-          (err?.userCancelled ? " (userCancelled)" : "") +
-          (err?.underlyingErrorMessage ? "\nunderlying: " + err.underlyingErrorMessage : "")
-      );
-      console.warn("[premium] PURCHASE ERROR code=" + (err?.code ?? "?") +
-        " userCancelled=" + !!err?.userCancelled +
-        " message=" + (err?.message ?? "?") +
-        " underlyingError=" + (err?.underlyingErrorMessage ?? "?"));
       if (err?.userCancelled) return;
+      const msg = err?.message ?? "";
+      if (/network|connection|offline/i.test(msg)) {
+        Alert.alert("Network error", "Couldn't reach the App Store. Try again on a stable connection.");
+      } else {
+        Alert.alert("Purchase failed", msg || "Apple couldn't process the payment. Please try again.");
+      }
     } finally {
       setWorking(false);
     }
   }
 
   async function restore() {
-    console.warn("[premium] RESTORE TAPPED " + new Date().toISOString());
     setWorking(true);
     try {
       const info = await Purchases.restorePurchases();
-      console.warn("[premium] RESTORE RESOLVED entitlements=" +
-        Object.keys(info?.entitlements?.active ?? {}).join(","));
       await refresh();
       const restored = !!info?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
       Alert.alert(
@@ -275,8 +180,6 @@ export default function PremiumScreen({ navigation }) {
         [{ text: "OK", onPress: () => restored && navigation.goBack() }],
       );
     } catch (err) {
-      console.warn("[premium] RESTORE ERROR code=" + (err?.code ?? "?") +
-        " message=" + (err?.message ?? "?"));
       if (err?.userCancelled) return;
       Alert.alert("Restore failed", err?.message ?? "Please try again.");
     } finally {
@@ -349,17 +252,11 @@ export default function PremiumScreen({ navigation }) {
 
       {!isPremium && (
         <>
-          {/* Pressable instead of TouchableOpacity — rules out a
-              TouchableOpacity-specific touch-surface bug as the cause
-              of the silent build-7 tap. hitSlop adds 12 px on every
-              side so a near-miss still fires. The synchronous log in
-              onPress fires before any state change so we can confirm
-              the press reached JS even if `purchase()` errors. */}
+          {/* Pressable + hitSlop=12 so the press surface is robust;
+              outer try/catch in onPress catches any rejection that
+              escapes purchase()'s own try/catch. */}
           <Pressable
-            onPress={() => {
-              console.warn("[premium] CTA Pressable onPress fired " + new Date().toISOString());
-              purchase().catch((e) => console.warn("[premium] purchase() rejected outside try " + (e?.message ?? e)));
-            }}
+            onPress={() => { purchase().catch(() => {}); }}
             disabled={working}
             hitSlop={12}
             style={({ pressed }) => [s.cta, pressed && { opacity: 0.85 }, working && s.ctaDisabled]}
@@ -379,10 +276,7 @@ export default function PremiumScreen({ navigation }) {
           </Pressable>
 
           <Pressable
-            onPress={() => {
-              console.warn("[premium] RESTORE Pressable onPress fired " + new Date().toISOString());
-              restore().catch((e) => console.warn("[premium] restore() rejected outside try " + (e?.message ?? e)));
-            }}
+            onPress={() => { restore().catch(() => {}); }}
             disabled={working}
             hitSlop={12}
             style={({ pressed }) => [s.restoreLink, pressed && { opacity: 0.7 }]}
