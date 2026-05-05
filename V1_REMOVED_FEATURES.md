@@ -819,3 +819,39 @@ Items flagged after build 16 was already in flight. Queued for the next build.
 ### Build pipeline status (next)
 
 - Build 17 (v1.1.2): not started. Bundles the collapsible About card plus anything else that surfaces. Branch: continue on `v1.1-work`.
+
+
+---
+
+## 2026-05-05 — v1.1 ship day (massive solo founder push)
+
+Closing log for May 5, 2026 — the day v1.1 went from "still rebuilding the paywall" to build 16 submitted for App Store Review, plus a full v1.2 breed-health audit landed, plus the LLC paperwork that's been sitting around finally moved.
+
+### Personal / business milestones
+
+- EIN issued for TenTenths LLC (42-2335903)
+- Amex Business Checking application submitted
+- D&B documentation sent for D-U-N-S verification
+- LLC publication confirmed done from 2022 — no remediation needed
+- NY DOS address change deferred to a future Brooklyn batch
+
+### v1.1 shipped
+
+- Builds 12 → 16: iterations through paywall debugging (greyed-out trial button → custom-package-id resolver → empty RC offering → direct-product fallback), founder override (IDFV allowlist), and photo persistence (documentDirectory copy on pick)
+- Switched to Apple Transporter to bypass jammed EAS Submit Free Tier queue — direct .ipa upload to App Store Connect
+- Build 16 submitted to App Store Review at end of day
+- Includes: Premium subscription via RevenueCat ($4.99/mo or $39/yr with 7-day annual trial), multi-pet support with active pet switcher (tap any My Floofs card → that pet becomes active + jumps to Home; tap Home hero or Checklist header to switch back), per-pet checklist data (state now keyed by pet id with one-time legacy-map migration), pet photo persistence across TestFlight/App Store updates, layout collision sweep across 7 screens, "My Floofs" rebrand
+- App Store metadata cleaned up — Klafter typo fixed, manual release toggle set, sign-in unchecked
+- Founder override active for Max's iPhone (IDFV `981F7B5B-46DF-4B89-AF5D-49B812EB939D`)
+
+### v1.2 work started
+
+- Pawgress Indicator and Tummy Tracker feature briefs committed under `docs/features/`
+- Breed-health content audit COMPLETE across 47 named breeds — roughly 270 new health bullets, 210 new references citing AKC, parent breed clubs, peer-reviewed literature (Cooley 2002 on early-spay osteosarcoma, Raffan 2016 on Lab POMC, Keene 2019 ACVIM consensus on canine MVD), Washington State VCGL + UC Davis VGL for genetic tests, Berner-Garde, RVC, Cornell Feline, ACVO/OFA, BVA + International Cat Care for Scottish Fold welfare position, Merck Vet Manual
+- Audit format locked to: editorial tone (never prescriptive), sourced citations per claim cluster, per-condition checklist items with cadence + category, practical owner-level tips
+- Skipped intentionally: 4 generic catch-alls (mixed dog, other dog, mixed cat, other cat) and 10 designer mixes (already at audit-quality depth from prior v1.2-work content)
+
+### Deferred to v1.1.1 patch
+
+- Collapsible "About {breed}" card on My Floofs (mirror the existing `healthOpen` toggle pattern; ~20 lines of code)
+- Any post-launch issues that surface from v1.1 users in TestFlight or App Store Review feedback
