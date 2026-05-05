@@ -764,3 +764,33 @@ using the app in local-only mode MUST not lose any data when they:
 4. User with cloud account on Phone A → installs on Phone B → all data syncs down.
 
 **Status:** constraint documented; implementation deferred to v2.0.
+
+
+---
+
+## 2026-05-05 — v2.0 plan: cloud sync + Android launch (target: late summer / early fall 2026)
+
+The v1.x line stays local-first iOS-only. v2.0 is the cross-device, cross-platform expansion.
+
+### Cloud sync (paid feature)
+
+- **Optional account creation** — email + password (or Sign in with Apple / Google for onboarding speed). Account is opt-in; the local-only experience stays available.
+- **Cross-device sync** of pets, health records, checklist progress, vet contacts, preferences, and pet photos. Conflict resolution favors most-recent-write per record.
+- **Free local-only tier remains.** No forced migration. Users who never want cloud get the same v1.x experience forever.
+- **Migration constraint** (already documented in this file's earlier section): never lose existing local data when a user upgrades to a cloud account.
+
+### Android launch
+
+- **Replace `MKLocalSearch` (iOS-only) → Google Places API** for the vet-search feature. Google Cloud project, $200/mo free tier covers expected v2.0 traffic.
+- **Google Play Console setup** — developer account ($25 one-time), app config, signing keys, review submission flow.
+- **Google Play Billing** integration via RevenueCat — Android API key from RevenueCat dashboard, product import, internal/closed/open testing tracks.
+- **FCM (Firebase Cloud Messaging)** for push notifications (vaccine reminders, recall alerts).
+- **Privacy policy update** for Google's data-collection disclosures (different schema than Apple's nutrition labels).
+- **Launch regions:** US, UK, Canada, Australia, Germany. Other regions added once we see install patterns.
+
+### Architecture work (v1.6–v1.9 prep — between v1.5 ship and v2.0)
+
+- **Modularize platform-specific code** — vet search, calendar export, photo picker, and any other native-API surface gets a thin abstraction so the platform-specific impls can be swapped in cleanly.
+- **Remote recall infrastructure** — already on the v1.3–v1.5 roadmap above; gets reused for cloud-sync's recall-update channel.
+- **Account-creation prep** — email collection (newsletter opt-in already in v1.5), push-token storage (ready for FCM/APNS), session token plumbing.
+- **Test cross-platform** with Android Emulator + at least 1 physical Pixel and 1 physical Samsung. Android fragmentation is real; emulator isn't enough.
