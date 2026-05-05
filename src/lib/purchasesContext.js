@@ -11,7 +11,7 @@
 // stable shape, and we can swap the implementation (StoreKit-only fallback,
 // mocks for testing) without touching every call site.
 import React, { createContext, useContext, useEffect, useState, useCallback } from "react";
-import { Platform, Alert } from "react-native";
+import { Platform } from "react-native";
 import Purchases from "react-native-purchases";
 import { revenueCatKey, PREMIUM_ENTITLEMENT_ID, DEFAULT_OFFERING_ID } from "./config";
 import { getDeviceId, isFounderDevice } from "./founderOverride";
@@ -51,38 +51,20 @@ export function PurchasesProvider({ children }) {
     let cancelled = false;
 
     async function init() {
-      // Diagnostic: prove SDK init runs in production. Each step alerts
-      // on-screen because Console.app filtering has been unreliable.
-      // First-call protection (`configured` module-level flag) prevents
-      // duplicate alerts when the provider re-mounts.
       if (configured) {
-        // Already initialized in a prior provider mount this session —
-        // don't re-run the diagnostics or re-call configure.
         if (!cancelled) setReady(true);
         return;
       }
 
-      // Surface the device's IDFV first thing so Max can copy it from
-      // the alert and add it to FOUNDER_DEVICE_IDS for future builds.
-      // Also flips the founder-override state if the running device
-      // is already on the list.
-      const deviceId = await getDeviceId();
+      // Resolve founder-override status as early as possible so the
+      // UI can flip to Premium immediately for whitelisted devices.
       const isFounder = await isFounderDevice();
       if (!cancelled) setFounderOverride(isFounder);
-      Alert.alert(
-        isFounder ? "DEVICE ID (founder override active)" : "DEVICE ID",
-        (deviceId || "(unavailable)") +
-          (isFounder
-            ? "\n\n✅ This device is on the founder list — Premium is unlocked locally."
-            : "\n\n(Copy this ID and paste into FOUNDER_DEVICE_IDS to grant a device Premium.)"),
-      );
 
       const key = revenueCatKey();
-      const keyPreview = key ? key.slice(0, 14) + "…" : "(empty)";
-      Alert.alert("RC INIT START", "Platform: " + Platform.OS + "\nKey prefix: " + keyPreview);
-
       if (!key) {
-        Alert.alert("RC INIT FAILED", "No EXPO_PUBLIC_REVENUECAT_IOS_KEY in this build. Configure cannot run.");
+        // No API key in this build — silent skip; founder override
+        // (if any) still works, RC features just won't.
         if (!cancelled) setReady(true);
         return;
       }
@@ -91,24 +73,11 @@ export function PurchasesProvider({ children }) {
         Purchases.configure({ apiKey: key });
         configured = true;
       } catch (configErr) {
-        Alert.alert("RC INIT FAILED", "Purchases.configure threw: " +
-          (configErr?.message ?? String(configErr)) +
-          (configErr?.code ? "\ncode=" + configErr.code : ""));
+        // Configure failed — silent. Premium falls back to founder
+        // override only.
         if (!cancelled) setReady(true);
         return;
       }
-
-      // configure() is synchronous in react-native-purchases — if we got
-      // here it returned successfully. Pull the user ID right away so we
-      // can confirm the SDK created (or matched) a customer record.
-      let appUserId = "(unknown)";
-      try {
-        appUserId = await Purchases.getAppUserID();
-      } catch (idErr) {
-        Alert.alert("RC GET USER ID FAILED", idErr?.message ?? String(idErr));
-      }
-      Alert.alert("RC INIT OK", "appUserId: " + appUserId +
-        "\nThis ID should appear in app.revenuecat.com → Customers within ~30 sec.");
 
       // Flip ready=true the moment the SDK is configured. CustomerInfo +
       // offerings fetches that follow can settle in their own time.
@@ -118,26 +87,10 @@ export function PurchasesProvider({ children }) {
         const info = await Purchases.getCustomerInfo();
         if (cancelled) return;
         setCustomerInfo(info);
-        const activeKeys = Object.keys(info?.entitlements?.active ?? {});
-        const allKeys = Object.keys(info?.entitlements?.all ?? {});
-        Alert.alert("RC GET INFO OK",
-          "appUserId: " + (info?.originalAppUserId ?? appUserId) +
-          "\nentitlements active: [" + activeKeys.join(", ") + "]" +
-          "\nentitlements all: [" + allKeys.join(", ") + "]" +
-          "\nfirstSeen: " + (info?.firstSeen ?? "?") +
-          "\nlatestExpiration: " + (info?.latestExpirationDate ?? "(none)")
-        );
       } catch (err) {
-        Alert.alert("RC GET INFO FAILED",
-          "code: " + (err?.code ?? "?") +
-          "\nmessage: " + (err?.message ?? String(err)) +
-          "\nunderlying: " + (err?.underlyingErrorMessage ?? "(none)")
-        );
+        // Network blip or RC outage — leave previous state, surface
+        // through normal UI paths if needed.
       }
-
-      // Offerings fetch — kept silent here since it's already covered
-      // by the existing PremiumScreen diagnostics + may legitimately
-      // be empty if the dashboard isn't configured.
       try {
         const offers = await Purchases.getOfferings();
         if (cancelled) return;
@@ -149,7 +102,8 @@ export function PurchasesProvider({ children }) {
           null;
         setOfferings(offering);
       } catch (err) {
-        // Already loud enough via PremiumScreen — silent here.
+        // RC offering fetch failed — silent. PremiumScreen surfaces
+        // user-facing errors when the user actually taps the button.
       }
     }
 

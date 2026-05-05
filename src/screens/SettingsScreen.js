@@ -73,13 +73,17 @@ export default function SettingsScreen({ navigation }) {
       <Text style={s.sectionHd}>FLOOFLIFE</Text>
       <Row label="Story · About this app" onPress={() => navigation.navigate("About")} />
 
-      <Text style={s.sectionHd}>DEBUG</Text>
-      <TouchableOpacity onPress={showDeviceId} style={s.row}>
-        <Text style={s.rowLabel}>My Device ID</Text>
-        <Text style={[s.sub, { textTransform: "none", maxWidth: 180 }]} numberOfLines={1} ellipsizeMode="middle">
-          {deviceId || "—"}
-        </Text>
-      </TouchableOpacity>
+      {isFounderDevice && (
+        <>
+          <Text style={s.sectionHd}>DEBUG</Text>
+          <TouchableOpacity onPress={showDeviceId} style={s.row}>
+            <Text style={s.rowLabel}>My Device ID</Text>
+            <Text style={[s.sub, { textTransform: "none", maxWidth: 180 }]} numberOfLines={1} ellipsizeMode="middle">
+              {deviceId || "—"}
+            </Text>
+          </TouchableOpacity>
+        </>
+      )}
 
       <Text style={s.sectionHd}>HELP</Text>
       <Row label="Contact support"   onPress={() => Linking.openURL("mailto:hello@stickaround.app")} />

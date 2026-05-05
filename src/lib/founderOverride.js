@@ -34,13 +34,11 @@
 import * as Application from "expo-application";
 
 export const FOUNDER_DEVICE_IDS = [
-  // Add IDFV strings here, one per line, with a trailing comment
-  // explaining who the device belongs to. Format:
-  //   "ABCDEF12-3456-...",  // Max — iPhone 15 Pro (personal)
-  //   "FEDCBA98-7654-...",  // [teammate name] — [device]
-  // ---
-  // (no entries yet — Max's IDFV needs to be captured from build 14
-  //  via the "DEVICE ID" alert and pasted in here for build 15.)
+  // IDFV strings, one per line, with a trailing comment explaining
+  // who the device belongs to. To add a teammate later: append their
+  // IDFV here, ship a build, install on their device. The override
+  // fires on next launch.
+  "981F7B5B-46DF-4B89-AF5D-49B812EB939D", // Max — personal iPhone (founder)
 ];
 
 // Cache the device ID across calls so we don't hit the native bridge
