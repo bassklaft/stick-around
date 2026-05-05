@@ -14,11 +14,13 @@ import React, { createContext, useContext, useEffect, useState, useCallback } fr
 import { Platform, Alert } from "react-native";
 import Purchases from "react-native-purchases";
 import { revenueCatKey, PREMIUM_ENTITLEMENT_ID, DEFAULT_OFFERING_ID } from "./config";
+import { getDeviceId, isFounderDevice } from "./founderOverride";
 
 const PurchasesContext = createContext({
   customerInfo: null,
   offerings: null,
   isPremium: false,
+  isFounderDevice: false,
   ready: false,
   refresh: async () => {},
 });
@@ -33,6 +35,7 @@ export function PurchasesProvider({ children }) {
   const [customerInfo, setCustomerInfo] = useState(null);
   const [offerings, setOfferings] = useState(null);
   const [ready, setReady] = useState(false);
+  const [founderOverride, setFounderOverride] = useState(false);
 
   const refresh = useCallback(async () => {
     try {
@@ -58,6 +61,21 @@ export function PurchasesProvider({ children }) {
         if (!cancelled) setReady(true);
         return;
       }
+
+      // Surface the device's IDFV first thing so Max can copy it from
+      // the alert and add it to FOUNDER_DEVICE_IDS for future builds.
+      // Also flips the founder-override state if the running device
+      // is already on the list.
+      const deviceId = await getDeviceId();
+      const isFounder = await isFounderDevice();
+      if (!cancelled) setFounderOverride(isFounder);
+      Alert.alert(
+        isFounder ? "DEVICE ID (founder override active)" : "DEVICE ID",
+        (deviceId || "(unavailable)") +
+          (isFounder
+            ? "\n\n✅ This device is on the founder list — Premium is unlocked locally."
+            : "\n\n(Copy this ID and paste into FOUNDER_DEVICE_IDS to grant a device Premium.)"),
+      );
 
       const key = revenueCatKey();
       const keyPreview = key ? key.slice(0, 14) + "…" : "(empty)";
@@ -151,7 +169,12 @@ export function PurchasesProvider({ children }) {
   const value = {
     customerInfo,
     offerings,
-    isPremium: entitled(customerInfo),
+    // Premium is granted via either the RevenueCat entitlement OR a
+    // matching IDFV in FOUNDER_DEVICE_IDS. The override is intentional
+    // and ships in production so the founder + trusted teammates have
+    // Premium without an active subscription.
+    isPremium: founderOverride || entitled(customerInfo),
+    isFounderDevice: founderOverride,
     ready,
     refresh,
   };
