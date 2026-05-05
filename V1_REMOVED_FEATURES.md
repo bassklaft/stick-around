@@ -855,3 +855,48 @@ Closing log for May 5, 2026 — the day v1.1 went from "still rebuilding the pay
 
 - Collapsible "About {breed}" card on My Floofs (mirror the existing `healthOpen` toggle pattern; ~20 lines of code)
 - Any post-launch issues that surface from v1.1 users in TestFlight or App Store Review feedback
+
+
+---
+
+## 2026-05-05 — paywall placement roadmap (post-v1.1 monetization)
+
+v1.1 ships Premium with multi-pet, expanded breed depth, and health/care tracking as the headline gates. A user with a single pet on v1.1 has no concrete reason to upgrade — the free tier is too generous. v1.2+ needs more touchpoints across the user journey that surface Premium at moments when users are demonstrably engaged and getting recurring value.
+
+### 1. Checklist weekly refresh paywall (priority — high)
+
+**Today:** `generateChecklist()` produces a derived list from breed/age/season that's effectively static for the pet's lifetime. Items cycle by cadence (the v1.2 cadence-reset rule unchecks them on schedule), but the underlying list doesn't refresh week to week with new tailored items. Single-pet free users see the same items forever.
+
+**The change:**
+- Each week, the checklist generates a fresh tailored refresh of new items keyed to the pet's current life stage, season, and recent care history. Some carry over (the breed-fundamentals); some are new (e.g., a senior-cat-specific oral exam reminder appears in week 8 if the cat is 7+).
+- Free tier sees their first week's list (the current behavior).
+- Week 2+ refresh requires Premium.
+
+**The paywall surface:** at the bottom of the Checklist tab once the free user enters week 2, a CTA card reading something like:
+
+> **Want next week's tailored list?**
+> Floof Parents on Premium get a fresh, breed-tailored refresh every week — new items keyed to the season, your pet's age, and what you've already done.
+> [Upgrade to Premium →]
+
+CTA links directly to `PremiumScreen` modal, same surface the Settings → Upgrade flow uses today.
+
+**Implementation notes:**
+- New field on the pet record: `checklistWeekStart: Date` (set on first generation; week index = `floor((now - start) / 7days)`).
+- Free tier gates by `weekIndex > 0 && !isPremium`.
+- Existing free users from v1.0 / v1.1 should be grandfathered — don't yank weekly refreshes from people who already have them. Set a `grandfatheredFreeWeekly: true` flag on any pet whose `checklistWeekStart` predates the v1.2 ship date.
+- Paywall copy must lead with what they're getting (a tailored next-week refresh), not just "go Premium". Apple's review guidelines also prefer specific value framing over generic upsell.
+- Show the CTA at the end-of-week moment, not after every checklist tap. One nag, in context, is far better than a persistent banner.
+
+**Why it matters:** this is the first recurring, value-aligned Premium touchpoint in the app. Multi-pet is one-time (you have multiple pets or you don't). Weekly refresh is a continual reason to upgrade because the value compounds week over week.
+
+### 2. Future paywall touchpoints (seeds — flesh out as the product evolves)
+
+- Health Tracker history beyond 30 days (free tier truncates).
+- Recall alert push notifications (free tier sees recalls in-app; Premium gets the push).
+- Multi-pet aggregate views ("3 of 12 done across all your floofs" on the home tab).
+- Photo storage beyond a free-tier cap (e.g., 1 pet portrait + 5 health-record attachments free; unlimited Premium).
+- Tummy Tracker PDF vet export (already specified in the v1.4 brief — Premium-gated).
+- Pawgress Indicator weekly / monthly / yearly views (already specified in the brief — Daily is free; longer horizons are Premium).
+- Vet integration "Schedule appointment" deep-link (already in v1.2 plan; consider gating advanced multi-vet contact storage).
+
+Each of these gets the same treatment when its underlying feature lands: specific value framing, in-context CTA, grandfathering rules for v1.0 / v1.1 users, no nag-spam.
