@@ -900,3 +900,138 @@ CTA links directly to `PremiumScreen` modal, same surface the Settings → Upgra
 - Vet integration "Schedule appointment" deep-link (already in v1.2 plan; consider gating advanced multi-vet contact storage).
 
 Each of these gets the same treatment when its underlying feature lands: specific value framing, in-context CTA, grandfathering rules for v1.0 / v1.1 users, no nag-spam.
+
+
+---
+
+## 2026-05-06 — Weather-aware notifications (target v1.3)
+
+A small, useful, non-creepy use of location data. Two distinct notification flows tied to local weather forecasts:
+
+### 1. Walk-now nudges (dogs only)
+
+If rain, snow, or storm is predicted within the next 1-2 hours, push a local notification suggesting the user get the walk in before it starts. Disabled for cats (no walk semantics).
+
+### 2. Supply prep alerts (all species)
+
+3-5 days before severe weather (storm, blizzard, heat wave) is forecast in the user's area, push a "do you have enough food, litter, meds?" prompt. Frames the app as a gentle ally during weather events without requiring user action.
+
+### Implementation notes
+
+- **Weather source:** Apple WeatherKit. Free tier is sufficient for iOS apps and requires no API key beyond developer entitlement. Includes hourly + daily forecast, severe weather alerts, and reasonable accuracy globally.
+- **Fetch cadence:** on app open + once per day in the background (iOS background fetch). Don't poll continuously.
+- **Notifications:** scheduled local notifications keyed off the forecast + the user's pet species. Local-only — no backend, no push server, no PII transmission.
+- **Location use:** lat/long fetched in-the-moment for each WeatherKit call, then discarded. Never stored on device beyond the active fetch. Permission string in app.json should explicitly mention weather alerts as a use case.
+- **Settings toggle:** new row in Settings → Notifications (or under FLOOFLIFE) to disable weather alerts globally. Per-pet toggles probably overkill for v1.3 — single global on/off ships.
+- **Quiet hours:** respect the user's iOS Focus / Do Not Disturb settings; don't fire at 3 AM regardless of weather.
+- **Privacy disclosure:** Privacy Policy needs an additional clause covering WeatherKit use ("location is used at fetch time only and not retained").
+
+
+---
+
+## 2026-05-06 — New home / relocation support (target v1.4 or v2.0)
+
+Pets stress significantly during relocations and many owners underestimate the timeline for adjustment. This is real lived founder experience: the founder's own dog took 5 weeks to feel fully settled after a move. There's genuine demand for structured guidance during this transition.
+
+### Onboarding question
+
+A new optional question during pet onboarding (and editable later in My Floofs settings):
+
+> "Have you recently moved or are you about to move?"
+
+If yes, ask for the move date (past or future). Store on the pet record as `relocationDate: ISODate?`.
+
+### 30-day species-specific transition checklist
+
+Day-by-day care tasks for the first 30 days post-move, branched by species. Cat tactics differ significantly from dog tactics — separate flows, not a generic checklist.
+
+- **Cats:** start in a single small "safe room" with food, water, litter, and a hiding spot; expand territory progressively over days 3-10; minimal forced interaction; familiar smells (old bedding, owner's worn shirt) carry through; pheromone diffusers (Feliway) optional.
+- **Dogs:** maintain previous routine timing as much as possible; familiar walks before exploration walks; new neighborhood scout in short increments; confidence-building through known commands in new spaces.
+
+### "What's normal vs concerning" reassurance
+
+Inline reassurance content addressing the most common owner anxieties:
+
+- Cats hiding for 3-5 days post-move is normal. Hiding past 10 days, refusing food past 48 hours, or excessive vocalization warrants a vet check.
+- Dogs being clingy, vocal, or off their food for the first week is normal. Persistent appetite changes, accidents, or destructive behavior past 2-3 weeks warrants attention.
+- Both species: changes in litter habits, vomiting, or hiding combined with other signs is a vet visit, not "just stress".
+
+### Walk anxiety guidance (dogs)
+
+For dogs in new neighborhoods: short familiarization walks first (sniff-only, no agenda); gradual exposure to the new sight lines, sounds, and smells; counter-conditioning with treats around triggers (other dogs, garbage trucks, kids on bikes) during the first 2 weeks.
+
+### Week 4 / week 6 followup
+
+If the user reports the pet's behavior hasn't normalized by week 4 or week 6, the app surfaces a soft suggestion to schedule a vet behavioral consult — not a diagnosis, just "if you're still seeing X, this is worth a 30-min vet conversation." Connects naturally to the v1.2 vet contact integration.
+
+### Why it matters
+
+Relocation is one of the highest-stress life events for both pets and owners, and existing pet-care apps don't address it well. This is the kind of feature that users tell their friends about ("the app actually understood my cat hiding for a week"). It's also the kind of feature that's hard to build without lived experience — the founder has it.
+
+
+---
+
+## 2026-05-06 — Emergency procedures library (target v2.0, conservative path)
+
+A set of vet-aligned reference content for non-acute emergency situations. **Conservative scope deliberately** — see liability note below.
+
+### What's in scope (informational only)
+
+- "How to check your pet's temperature" — describes the procedure but always points to the vet for action on the result. Normal temp ranges by species included.
+- "Signs of fever in your pet" — observational checklist (lethargy, warm ears, dry nose, decreased appetite). Lead with "call your vet immediately" rather than self-treatment.
+- Cooling-down steps that are universally safe and well-established: cool water on belly + groin + paw pads, AC, shade, fan, removal from heat source. Explicitly call out that ICE is not appropriate (vasoconstriction).
+- Emergency vet locator (Maps deep-link with "emergency veterinarian near me" — already in the v2.0 plan).
+- Outbound links to certified educational resources rather than reproducing their content: American Red Cross Pet First Aid (course + reference), ASPCA Animal Poison Control, AVMA emergency preparedness.
+
+### What is NOT in scope (liability gate)
+
+The following are deliberately out of scope until specific gates are met:
+
+- Pet CPR (illustrations or step-by-step instructions)
+- Specific medication dosing (Benadryl, hydrogen peroxide for emesis, etc.)
+- Step-by-step diagnostic flowcharts ("if symptom A → do B → if also C → do D")
+
+### Liability gate (must be met before in-scope content expands)
+
+The founder's existing app-wide disclaimer ("FloofLife provides general guidance for healthy pets. It is not a substitute for veterinary advice") is a necessary condition but **not sufficient** for the level of specificity above. Before expanding emergency content into CPR, dosing, or flowcharts, all three of the following must be in place:
+
+- **(a) Vet advisor on retainer with DVM certification of content** — every page reviewed and signed off by a licensed Doctor of Veterinary Medicine.
+- **(b) Liability insurance** — pet-care content liability rider, estimated $500-1,500/yr depending on scope and reach.
+- **(c) Attorney review** — language reviewed by counsel familiar with veterinary publishing and FDA guidance on animal medicine information.
+
+Until those three are in place, emergency content stays at the informational/observational level above and links out to certified content for anything involving action. This is intentional and matches the v1.0 emergency-content strip rationale (see backlog item d).
+
+
+---
+
+## 2026-05-06 — New monetization tier: FloofLife Vet+ (consideration for v2.0+)
+
+A second Premium tier above the current $4.99/mo / $39/yr Premium. Contemplating; not committed; not in v1.x.
+
+### Pricing
+
+- **Tier 1 (current Premium):** $4.99/mo or $39/yr
+- **Tier 2 (Vet+, proposed):** $9.99/mo or $79/yr (~33% savings annual)
+
+### What Vet+ includes (proposed scope)
+
+- **Emergency procedures library** (illustrated, conservatively scoped per the section above) — gates the deeper content behind the higher tier.
+- **Vet teleconsult integration** — partnership with one or more existing teleconsult services (Pawp, Fuzzy, AskVet, Petriage, Dutch). Vet+ subscribers get a flat-rate or unlimited consult included; FloofLife collects a referral or revenue share.
+- **Document storage** — vaccine records, prescriptions, X-rays, lab results uploaded and stored locally (then optionally synced to cloud once v2.0 cloud sync ships). Free tier sees current Health Tracker; Vet+ extends to unlimited document attachments + multi-year history.
+- **Multi-pet aggregate health dashboard** — for households with 3+ pets, a unified upcoming-care + recall + risk view across all floofs. Premium gets per-pet; Vet+ gets the aggregate.
+
+### Hard requirements before launch
+
+- **Vet partnership** — at least one signed teleconsult partnership with clear referral/revenue terms.
+- **Liability insurance** — same rider as needed for the emergency procedures library, plus expanded coverage for facilitating teleconsult connections.
+- **Possible LLC operating agreement update** — depending on partnership structure, may require amending TenTenths LLC's operating agreement (currently set up for solo-founder app revenue; partnerships add complexity around revenue allocation and liability).
+- **Apple subscription tier configuration** — second In-App Purchase product in App Store Connect, second RevenueCat offering. Trivial vs the partnership work.
+
+### Why it's a v2.0+ consideration, not earlier
+
+- v1.x economics work without a second tier. Single Premium gets us to product-market-fit signal first.
+- Vet partnerships are slow (multi-month sales cycles) and don't accelerate product development.
+- Each requirement above is real money or time; doing them prematurely burns runway without proportional revenue lift.
+- The v1.x roadmap already has enough premium-gateable features (multi-pet, expanded breed depth, health tracker, weekly checklist refresh, Pawgress longer horizons, Tummy Tracker PDF) to differentiate Premium from Free without needing a second tier.
+
+**Status:** logged as a future consideration. Don't build until at least v2.0 and ideally with documented user demand for at least one of the Vet+ pillars first (most likely teleconsult).
