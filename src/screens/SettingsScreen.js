@@ -1,21 +1,65 @@
 import React, { useEffect, useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Alert, Linking, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Alert, Linking, Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Pet } from "../lib/storage";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import * as Application from "expo-application";
+import { Pet, Pets } from "../lib/storage";
 import { usePurchases } from "../lib/purchasesContext";
 import { getDeviceId } from "../lib/founderOverride";
 import { theme } from "../theme";
+
+const FEEDBACK_EMAIL = "streetparkinfo@gmail.com";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
 export default function SettingsScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [pet, setPet] = useState(null);
+  const [petCount, setPetCount] = useState(0);
   const [deviceId, setDeviceId] = useState("");
   const { isPremium, isFounderDevice } = usePurchases();
 
   useEffect(() => { Pet.get().then(setPet); }, []);
+  useEffect(() => { Pets.list().then(arr => setPetCount(arr.length)); }, []);
   useEffect(() => { getDeviceId().then(setDeviceId); }, []);
+
+  // Compose a mailto: link with diagnostic context (app version, OS,
+  // pet count). No pet names, photos, or other identifying data — see
+  // the Privacy Policy. Falls back to a copy-the-address Alert if the
+  // device has no configured mail client.
+  async function sendFeedback() {
+    const version = Application.nativeApplicationVersion || "unknown";
+    const build = Application.nativeBuildVersion || "?";
+    const os = `${Platform.OS} ${Platform.Version}`;
+    const body = [
+      "What's working well?",
+      "",
+      "",
+      "What's not working?",
+      "",
+      "",
+      "What features would you want next?",
+      "",
+      "",
+      "---",
+      `App version: ${version} (${build})`,
+      `OS: ${os}`,
+      `Pet count: ${petCount}`,
+    ].join("\n");
+    const url = `mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent("FloofLife Feedback")}&body=${encodeURIComponent(body)}`;
+    try {
+      const supported = await Linking.canOpenURL(url);
+      if (supported) {
+        await Linking.openURL(url);
+        return;
+      }
+    } catch { /* fall through to alert */ }
+    Alert.alert(
+      "No mail app found",
+      `Email us at ${FEEDBACK_EMAIL}`,
+      [{ text: "OK" }],
+    );
+  }
 
   function showDeviceId() {
     Alert.alert(
@@ -72,6 +116,7 @@ export default function SettingsScreen({ navigation }) {
 
       <Text style={s.sectionHd}>FLOOFLIFE</Text>
       <Row label="Story · About this app" onPress={() => navigation.navigate("About")} />
+      <Row label="Send Feedback" icon="message-text-outline" onPress={sendFeedback} />
 
       {isFounderDevice && (
         <>
@@ -105,9 +150,10 @@ export default function SettingsScreen({ navigation }) {
   );
 }
 
-function Row({ label, onPress }) {
+function Row({ label, onPress, icon }) {
   return (
     <TouchableOpacity onPress={onPress} style={s.row}>
+      {icon && <MaterialCommunityIcons name={icon} size={18} color={theme.muted} />}
       <Text style={s.rowLabel}>{label}</Text>
       <Text style={{ color: theme.muted }}>›</Text>
     </TouchableOpacity>
