@@ -1035,3 +1035,104 @@ A second Premium tier above the current $4.99/mo / $39/yr Premium. Contemplating
 - The v1.x roadmap already has enough premium-gateable features (multi-pet, expanded breed depth, health tracker, weekly checklist refresh, Pawgress longer horizons, Tummy Tracker PDF) to differentiate Premium from Free without needing a second tier.
 
 **Status:** logged as a future consideration. Don't build until at least v2.0 and ideally with documented user demand for at least one of the Vet+ pillars first (most likely teleconsult).
+
+
+---
+
+## 2026-05-06 — Seizure awareness + neurological monitoring (v1.4 awareness, v2.0 tracker, v2.0+ cross-referencing)
+
+Roughly 5% of dogs have epilepsy or a seizure disorder in their lifetime, with elevated rates in Beagle, Border Collie, Australian Shepherd, Boxer, Miniature Schnauzer, Cavalier King Charles Spaniel, Vizsla, and Bernese Mountain Dog. Cats are less commonly affected but seizures still occur. Most owners' first encounter with a seizure is a panic moment — they don't know what to do during, what to film, what to bring to the vet, or when to call it an emergency. This is a genuinely under-served space and FloofLife is well-positioned to fill it.
+
+The feature splits cleanly into three layers shipping at different versions.
+
+### Layer 1 — Awareness content (target v1.4)
+
+Build on the existing v1.2 breed-health audit, which already calls out epilepsy on Beagle, Border Collie, Aussie, Brittany, Cavalier, Cane Corso, and Mini Schnauzer entries. Expand to a dedicated awareness module accessible from the breed card and from a new top-level "Seizure 101" reference doc.
+
+Content scope:
+
+- **What a seizure looks like** — the three phases described in plain language: pre-ictal aura (anxiety, restlessness, attention-seeking, hiding), ictal (the seizure itself — usually under 2 minutes), postictal (disorientation, blindness, hunger, exhaustion lasting minutes to hours).
+- **What to do during** — don't put hands near the mouth (no tongue-swallowing risk; bite risk to the human is real), clear obstacles, time the duration, video if possible, dim lights and reduce noise.
+- **When to ER** — single seizure under 5 minutes with normal recovery: call your vet next business day. Over 5 minutes (status epilepticus): emergency. Two or more seizures in 24 hours (cluster): emergency. First-ever seizure in a dog over 5 years old: needs workup soon, not necessarily emergency.
+- **What to bring the vet** — video of the seizure is gold. Notes on duration, time of day, what the pet was doing immediately before, postictal duration, recent meds, recent food/treat changes, possible toxin exposures.
+- **Postictal expectations** — disoriented for minutes to hours is normal. Hungry/thirsty post-seizure is normal. Persistent neurologic deficits (continued blindness, circling, weakness) past several hours is not normal.
+- **Subtle pre-seizure watch-list** — twitchiness in response to sudden noise or light, behavioral changes in the hours before (hiding, clinginess, vocalizing), "fly-biting" episodes (snapping at invisible flies), focal facial twitches, brief unresponsive staring spells.
+
+Tone: always points to the vet for action. No diagnostic content; no medication recommendations. Editorial summary, not advice.
+
+### Layer 2 — Seizure tracker (target v2.0)
+
+A structured per-event log similar in shape to the Tummy Tracker. Each entry captures:
+
+- Date/time
+- Duration (in-app timer with start/stop, plus manual entry for retroactive logs)
+- Type — focal (one body part, possibly conscious) vs generalized (whole body, unconscious) vs absence (brief unresponsive)
+- Pre-seizure behavior (free text + checkbox shortcuts)
+- Postictal duration + symptoms (free text + checkbox shortcuts)
+- Suspected trigger (food, medication, vaccine, exposure, none/unknown)
+- Video upload (stored locally per the existing photo-storage pattern)
+- Free-text notes
+
+Beyond the per-event log, the tracker provides:
+
+- **Trend chart over time** — frequency, duration, time-of-day patterns
+- **Cluster detection** — automated alert when 2+ seizures are logged in 24 hours, with a "this is an emergency situation; here's what to do" overlay
+- **Trigger pattern recognition** — surfaces correlations between logged triggers and seizure events ("3 of your last 4 seizures were within 24 hours of a flea/tick dose — worth discussing with your vet")
+- **Vet PDF export** — Premium feature; veterinary neurologists value structured seizure history heavily for diagnosis and medication titration
+
+Storage layout follows the same per-pet inline pattern as Health Tracker (inline `seizureEvents: []` on the pet record, attachments on filesystem).
+
+### Layer 3 — Cross-reference with diet, meds, and exposures (target v2.0+ or v3.0)
+
+Once the user has both a Diet Log (from Tummy Tracker) and a seizure event, the app can surface possible contributing factors at the moment a seizure is logged:
+
+- **Diet** — foods with seizure-implicated compounds (xylitol acutely; certain preservatives chronically). Cross-checks against the user's logged diet.
+- **Meds** — isoxazolines (Bravecto, Nexgard, Simparica, Credelio), metronidazole, acepromazine. Cross-checks against the user's logged Health Tracker entries.
+- **Plants and exposures** — sago palm, certain essential oils (especially diffused tea tree, eucalyptus, peppermint at high concentration), mycotoxins from moldy food. Cross-checks against the user's environment notes if recorded.
+
+Framing is critical: surfaced as "possible factors to discuss with your vet," never "this caused the seizure." Sources cited inline; outbound link to the FDA Animal Drug Safety Communications and to vet-authored references for each. Owners get the information; the vet does the diagnosis.
+
+
+---
+
+## 2026-05-06 — Content principle: how we handle contested topics
+
+The seizure module above includes a contested topic — the relationship between isoxazoline-class flea/tick medications and seizures. The FDA has flagged it; vets are split on whether the relationship is causal or coincidental. This is the first of several contested topics FloofLife will need to surface, and the principle below applies to all of them.
+
+### The principle
+
+When a topic is medically contested — vets are split, evidence is mixed, owner communities are divided — FloofLife surfaces both sides with sourcing and lets the owner decide with their vet. **We do not pick a side.** We are a reference layer between owners and the veterinary literature, not a clinic.
+
+### Reference framing for the isoxazoline/seizure question
+
+> The FDA has flagged isoxazoline-class flea/tick medications (Bravecto, Nexgard, Simparica, Credelio) for possible neurological adverse events including seizures. Vets are split on whether the connection is causal or coincidental, but it's something to consider — especially for dogs with a prior seizure history. Watch for: twitchiness from sudden noise or light, behavioral changes after a dose, unexplained tremors. Always discuss with your vet before changing medications.
+
+That paragraph is the template. State the contested fact, note the split, give the owner a watch-list, end on the vet.
+
+### Other contested topics that will be surfaced over time
+
+- Vaccine titer testing vs annual revaccination — meaningful split among vets, especially for older animals
+- Raw vs kibble diets — split, with significant safety concerns on raw (bacterial contamination, nutrient imbalance) that some camps minimize
+- Neuter timing — early (under 6 months) vs delayed (12-24 months) has real evidence on both sides for orthopedic outcomes and certain cancer risks; varies by breed
+- Ear cropping and tail docking — banned in many countries, normalized in others; ethical debate plus medical necessity claims
+- Grain-free diets and DCM — FDA investigation ongoing; some lines of evidence implicate boutique exotic-protein diets, others do not
+- Vaccine timing for breed-sensitive lines (the Lepto-and-Chow-Chows pattern, expanded to other breeds with documented adjuvant sensitivity)
+- Spay/neuter and behavior — claims about reduced aggression are mixed; evidence varies by breed and timing
+
+### Format for contested-topic content
+
+Every contested-topic surface in the app follows the same four-part structure:
+
+1. **State the topic neutrally** — describe the question without leading language ("there is an active discussion about X" rather than "X is dangerous").
+2. **Summarize what each side says with sources** — at minimum, the FDA / AVMA / peer-reviewed-journal position alongside the breed-club, owner-community, or alternative-vet position. Cite both.
+3. **Note what owners should watch for or consider** — a practical watch-list or set of considerations (the dog's history, the breed, the alternative options) that lets the owner have an informed conversation.
+4. **Always end with "discuss with your vet"** — the owner decides; we don't.
+
+### What we do not do
+
+- Don't invent positions or take a side. If FloofLife's editorial voice is going to land somewhere on a contested topic, that decision needs (a) a DVM advisor on retainer, (b) attorney review, (c) explicit founder sign-off. Until those gates are met, we surface, we don't decide.
+- Don't summarize a debate dishonestly. If one side has clearly stronger evidence, that strength should come through in the sourcing, not in the editorial voice.
+- Don't mock or dismiss either side, even if the founder personally disagrees. Owners come to FloofLife from many priors; trust collapses if they feel their views are being editorialized against.
+- If a topic is too contested to summarize fairly within the four-part format above, defer it. Better to omit than to harm trust.
+
+This principle applies to seizure / isoxazolines first, but is the general policy for every contested medical topic the app will surface as the catalog grows.
