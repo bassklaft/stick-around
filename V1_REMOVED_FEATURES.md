@@ -10,6 +10,35 @@ This document is the canonical record of every feature removed or changed for v1
 
 ---
 
+## North Star: bootstrap to revenue, defer infrastructure
+
+FloofLife is built by a solo founder in bootstrap mode. The strategic priority is **revenue from v1.x first, infrastructure investment second**. Backend buildout (Supabase, accounts, cloud sync — see the "Architecture pivot" section below) is deferred until revenue justifies it: minimum 3 months post-v1.1 launch.
+
+### Order of operations
+
+1. **Ship v1.1**, push marketing hard for 2-4 weeks (validate demand)
+2. **Ship v1.1.1** with the feedback button + PostHog analytics SDK only — no backend yet, just product analytics on free tier (cost: $0)
+3. **Ship v1.2** with breed audit + Health Tracker + Tummy Tracker (already mostly code-complete on `v1.2-work`)
+4. **Ship v1.3** with Pawgress + push notifications + weather alerts + tick features
+5. **By month 3, evaluate revenue.** If ~$2,500+ MRR, backend buildout for v2.0 makes sense; if not, pivot or persist with the v1.x local-only architecture
+6. **If green-lit:** lean backend buildout per the Architecture pivot section — Supabase free tier, Resend free tier, PostHog free tier — $0/mo to start, scaling only when traction justifies
+
+This sequencing keeps cash burn near-zero through validation. The v1.x local-only architecture continues to serve users well; **no forced migration when v2.0 ships.**
+
+### Founder priority
+
+Every v1.x feature decision should answer: *"does this make a Premium subscription a no-brainer for the right user?"*
+
+Features that help pet owners genuinely **and** justify Premium subscription pricing get prioritized. Features that are nice-to-have but don't move the conversion needle get deferred. The North Star is not "build the most beautiful pet care app" — it's "build the pet care app that owners feel they can't live without, then charge a fair price for it."
+
+### What this means in practice
+
+- The architecture pivot section below (added 2026-05-06) describes the backend stack and timeline **if** revenue clears the gate. Treat the timelines there as conditional, not committed.
+- The Vet+ tier (separate section) is explicitly a v2.0+ consideration — second tier ships only after v1.x economics work and we have documented user demand for at least one of its pillars.
+- The paywall placement roadmap (separate section) ships incrementally throughout v1.x because it directly serves the conversion-driven prioritization above.
+
+---
+
 ## v1.1 BACKLOG
 
 (a) **Premium subscription system** — wire up via RevenueCat. The PremiumScreen UI below is ready to drop back in once StoreKit products are configured in App Store Connect. RevenueCat SDK (`react-native-purchases`) handles the iOS + Android wrapping.
@@ -1236,3 +1265,83 @@ These are non-negotiable rules for the architecture pivot:
 The original "all data stays on device, we don't track" privacy framing was a v1.0 prototype-speed decision, not a long-term position. It was useful for getting to App Store fast and for the v1 marketing story.
 
 Going forward, FloofLife is a backend-supported business that respects privacy through good practices — anonymous analytics, opt-in cloud, transparent policies, easy data deletion — rather than through architectural minimalism. This positioning will be reflected in v2.0 marketing copy and in the rewritten Privacy Policy. The app's relationship with user data graduates from "we never see it" to "we see what we need to make the product work, we tell you exactly what that is, and you can take it back any time." That's the more honest version anyway; the v1 framing was as much about not having servers as it was about principle.
+
+
+---
+
+## 2026-05-06 — Tick map + tick disease awareness (target v1.3 or v1.4)
+
+### Founder context
+
+Falafel was bitten by a tick despite being on preventatives, contracted anaplasmosis, and battled fevers and joint pain through multiple rounds of doxycycline over years, with relapse fevers later. This feature exists so other owners can avoid that journey — or, if they're already in it, feel less alone and have better information for their vet conversations.
+
+This is the kind of feature that's hard to fake. Owners who've been through tick-borne illness will recognize the difference between "the app gets it" and "the app reads like a generic vet pamphlet."
+
+### Layer 1 — Tick risk by location (v1.3 or v1.4)
+
+- Pull CDC + USGS public tick distribution data + Companion Animal Parasite Council (CAPC) forecast maps
+- Show the user their county or ZIP-level risk level
+- Identify the tick species active in their area: Black-legged / Deer (Lyme, Anaplasmosis, Babesia), American Dog (Rocky Mountain Spotted Fever, Tularemia), Lone Star (Ehrlichia, Heartland virus, alpha-gal syndrome in humans), Brown Dog (Ehrlichia, Babesia), Gulf Coast (American canine hepatozoonosis)
+- Diseases of concern per tick type with brief plain-language descriptions
+- Seasonal awareness: "Tick activity peaks April-October in your area" — pulls from regional climate data + CAPC forecasts
+
+### Layer 2 — Walk planner with tick-aware route suggestions (v1.4)
+
+- Wooded trails are higher risk than open grass parks; tall grass and leaf litter are higher risk than short-mown turf
+- Weather integration (warm + wet + still air = high tick activity)
+- "Avoid tall grass and leaf litter areas during peak season" reminders surfaced contextually
+- Reminds the user to do a tick check after walks during high-activity periods (15-30 min head-to-tail, especially around ears, between toes, armpits, groin, under collar)
+
+### Layer 3 — Tick log + post-bite followup (v1.4)
+
+When the user finds a tick on their pet, they hit "Found a tick on Falafel" and log:
+
+- Date and time
+- Location of bite on body
+- Estimated time the tick was attached (if known) — disease transmission risk varies by attachment time (Lyme typically requires 24-48 hr attachment; Anaplasmosis can transmit faster)
+- Tick species (with a photo guide for ID — adult vs nymph, engorged vs unfed)
+- Removal method
+- Photo of the tick (helpful for vet ID if the user wants to send it)
+
+Auto-followups generate from the log:
+
+- **Day 14 push:** "Watch for fever, lethargy, lameness, joint pain, decreased appetite. Anaplasmosis and Lyme typically present 1-2 weeks after bite. If you see any, call your vet."
+- **Day 30 push:** "Talk to your vet about a 4DX or SNAP test if you've seen any symptoms since the bite — or even as a baseline. Lyme antibodies take 4-6 weeks to develop."
+- **Lifetime tick log per pet** — vet finds this valuable for diagnosis decisions years later. Some tick-borne diseases relapse months or years after initial infection.
+
+### Layer 4 — Personalized treatment context for tick-borne illness diagnosis
+
+Editorial content (informational, not diagnostic) that surfaces when the user logs a tick-borne illness diagnosis from their vet:
+
+- "Anaplasmosis treatment is typically a 28-day course of doxycycline. Symptoms usually resolve within 1-2 weeks of starting treatment, but the full course is needed to clear the organism."
+- "Lyme disease in dogs is treated with doxycycline or amoxicillin, typically 28-30 days. Lyme nephritis is a serious complication; ask your vet about urine protein:creatinine ratio monitoring."
+- "Even after treatment, watch for return of high fevers or joint stiffness over the next 6-12 months. Chronic or recurrent infections are real, especially with Anaplasmosis and Ehrlichia."
+
+Sources cited inline: AVMA, AKC Canine Health Foundation, CAPC, peer-reviewed literature where appropriate.
+
+**Founder's personal note (in-app, attributed):** "My dog Falafel went through this. He had multiple rounds of doxycycline over the years. The relapse fevers were unexpected and frightening. If you're going through this, you're not alone, and please push your vet to test thoroughly." This kind of personal anchor is exactly the editorial voice that distinguishes FloofLife from generic vet content.
+
+### Layer 5 — Aggregate exposure data (v2.0+, requires backend per the Architecture pivot section)
+
+When the backend ships:
+
+- User opts in to share their tick-log data anonymously
+- Build a heat map of tick exposure reports nationwide
+- Surface to other users: "47 tick reports on this trail this season — high tick activity reported in the last 14 days"
+- Long-tail data play; gets meaningfully more valuable with more users
+- Privacy: aggregated geographic data only, never individual reports linked to a user; opt-in only
+
+### Premium positioning
+
+- **Free tier:** tick risk awareness for the user's area, basic content layer
+- **Premium:** detailed risk maps, walk planner with tick-aware route suggestions, tick log + automated followups, treatment context library, lifetime exposure history
+
+This feature is a strong Premium conversion driver. Owners in tick country with a dog will pay $4.99/month to avoid going through what Falafel did — that calculation makes itself.
+
+### Sources to cite when implementing
+
+- [CDC tick maps and disease data](https://www.cdc.gov/ticks/)
+- [USGS tick distribution research](https://www.usgs.gov/)
+- [AVMA tick-borne disease resources](https://www.avma.org/)
+- [AKC Canine Health Foundation](https://www.akcchf.org/)
+- [Companion Animal Parasite Council (CAPC) forecast maps](https://capcvet.org/maps/)
