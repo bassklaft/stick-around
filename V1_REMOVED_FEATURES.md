@@ -1136,3 +1136,103 @@ Every contested-topic surface in the app follows the same four-part structure:
 - If a topic is too contested to summarize fairly within the four-part format above, defer it. Better to omit than to harm trust.
 
 This principle applies to seizure / isoxazolines first, but is the general policy for every contested medical topic the app will surface as the catalog grows.
+
+
+---
+
+## 2026-05-06 — Architecture pivot: backend buildout for v2.0 (cloud accounts + analytics + scale)
+
+### Context
+
+v1.0 and v1.1 shipped local-only as a fast-prototyping decision: every pet, photo, checklist state, and health record lives in AsyncStorage + the FileSystem documentDirectory on the user's device. That architectural minimalism doubled as a privacy story for v1 marketing. **It was the right call for getting to App Store; it is not the right call for the next phase.**
+
+Going forward, FloofLife is being built as a real business with the goal of becoming a sustainable money-making product. The founder is retiring the "everything on-device" architectural decision while preserving local-only as a respected option for existing v1.0 / v1.1 users (no forced migration, ever — see GUARDRAILS).
+
+### Strategic goal
+
+Move from "free privacy-first checklist app" to "real product with real backend, with privacy still respected through good practices rather than architectural minimalism." Backend unlocks:
+
+- Cross-device sync
+- Server-driven recall alerts (no App Store version bump for new recalls)
+- Re-engagement notifications (vaccine reminders, inactivity prompts, weather-tied alerts)
+- Real analytics (PostHog) so feature decisions are data-informed, not gut-checked
+- AI features (breed-from-photo, symptom triage, care recommendations)
+- Tier expansion (Vet+, multi-household, family sharing)
+
+### Cost priority
+
+Lean stack, **$0/mo backend until we cross free-tier limits.** Founder is bootstrapping; cash burn during validation must be near-zero.
+
+### Phase 1 — Backend foundation (target: weeks 3-6 post-v1.1)
+
+Tech stack, all on free tiers to start:
+
+- **Supabase free tier** (Postgres + Auth + Storage + Realtime + Edge Functions) — 500 MB database, 1 GB file storage, 50K MAU. $0/mo until we cross limits.
+- **Resend free tier** for transactional email — 3,000/month, 100/day. $0/mo.
+- **PostHog free tier** for product analytics — 1M events/month. $0/mo.
+- **Vercel Hobby** for any serverless / edge logic — free for personal projects. $0/mo.
+- **Apple Push Notification Service** — free.
+- **Cloudflare R2** if/when we outgrow Supabase storage — 10 GB free, free egress.
+
+**Total operational cost: $0/mo to start.** Graduating to paid tiers (~$50-100/mo combined) only happens when we cross free limits, which by definition means we have meaningful traction.
+
+What gets built in Phase 1:
+
+- User accounts: email + Apple Sign-In + Google Sign-In via Supabase Auth.
+- Database schema: `users`, `pets`, `checklist_items`, `checklist_state`, `health_records`, `vaccine_logs`, `photos`, `diet_logs`, `recall_watchlist`, `seizure_logs`. Versioned migrations from day one.
+- Sync layer with conflict resolution — offline-first approach (writes go to local cache, then push when online; reads prefer cache, refresh in background).
+- File storage for pet photos and document uploads.
+- API for the app to read/write — Supabase auto-generates a REST + Realtime API from the schema, so most CRUD is zero custom code.
+- Server-side push notification dispatch via APNS.
+- Server-side recall feed (the v1.3 remote-JSON plan, but now stored in Postgres rather than as a static JSON on Cloudflare Pages).
+
+### Phase 2 — App rewrites (target: weeks 5-7 post-v1.1)
+
+- Add an optional account-creation flow at app launch and inside Settings.
+- **Local-only users keep working forever, no forced migration.** This is non-negotiable (see GUARDRAILS).
+- New users on a fresh install see a "Create an account or use locally" choice.
+- Sync logic in the app: offline-first, conflict resolution surfaces in UI only when truly ambiguous.
+- Migration path for existing local users who choose to upgrade to cloud: read all local AsyncStorage + documentDirectory data → upload to Supabase under the new account → preserve local as cache → never wipe local until cloud sync is confirmed (per the migration constraint already documented in this file).
+
+### Phase 3 — v2.0 ship (target: ~7 weeks post-v1.1)
+
+- Cloud-optional version goes to App Store Review.
+- Privacy Policy rewritten for the new architecture (transparent data handling, anonymous-by-default analytics, opt-in cloud, easy data deletion).
+- Terms of Service updated.
+- App Privacy declarations in App Store Connect updated to match.
+- Marketing positioning shifts: "Now syncs across your devices" / "Never lose your pet's care history."
+
+### Phase 4 — Backend-dependent features (target: weeks 8-12 post-v1.1)
+
+Features that require Phase 1 to exist:
+
+- Server-side recall alerts (push when a recall hits, no app update needed).
+- Re-engagement notifications: 5-day inactivity prompt, vaccine due reminders, Pawgress streak nudges.
+- Cross-device sync of all pet data.
+- Pawgress with full historical data (today's local-only design caps at 7-day history on free tier).
+- Tummy Tracker with vet PDF export (server-rendered PDFs).
+- Real customer support — operator can look up a user by email.
+- Weather-aware notifications now possible at scale (server-side WeatherKit + APNS dispatch instead of in-app fetch + local notifications).
+
+### Phase 5 — Monetization expansion (target: month 4+)
+
+- Vet+ tier launched (see separate Vet+ section in this file).
+- Analytics-driven feature prioritization replaces gut-feel.
+- AI-powered features (breed identification from photo, symptom triage, care recommendations) become technically possible because we have a backend that can run inference.
+
+### Guardrails
+
+These are non-negotiable rules for the architecture pivot:
+
+- **Local-only users from v1.0 / v1.1 must keep working forever.** No forced migration. No "create an account to keep using the app" wall. The local path stays viable as a first-class option, even if it stops getting new server-driven features.
+- **Privacy still matters even with a backend.** Anonymous-by-default analytics; opt-in for richer data; transparent disclosure of what is and isn't collected.
+- **GDPR / CCPA compliance built in from day one** — data export endpoint, deletion request handling, retention policies, privacy-policy clauses for both. Not bolted on later.
+- **Privacy Policy and Terms of Service rewritten** to reflect the new architecture before v2.0 ships. Don't update them after the fact.
+- **Breach notification plan** in place before storing any PII. At minimum: who to contact internally, what to disclose to users, what timeline applies under GDPR / CCPA.
+- **Stay on free tiers as long as possible.** Crossing into paid tiers should be a celebration (we have traction), not a panic. If we're paying $200/mo for backend with 50 paying users, we did something wrong.
+
+### Architectural decision reversal (explicitly acknowledged)
+
+The original "all data stays on device, we don't track" privacy framing was a v1.0 prototype-speed decision, not a long-term position. It was useful for getting to App Store fast and for the v1 marketing story.
+
+Going forward, FloofLife is a backend-supported business that respects privacy through good practices — anonymous analytics, opt-in cloud, transparent policies, easy data deletion — rather than through architectural minimalism. This positioning will be reflected in v2.0 marketing copy and in the rewritten Privacy Policy. The app's relationship with user data graduates from "we never see it" to "we see what we need to make the product work, we tell you exactly what that is, and you can take it back any time." That's the more honest version anyway; the v1 framing was as much about not having servers as it was about principle.
