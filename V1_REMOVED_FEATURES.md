@@ -1345,3 +1345,90 @@ This feature is a strong Premium conversion driver. Owners in tick country with 
 - [AVMA tick-borne disease resources](https://www.avma.org/)
 - [AKC Canine Health Foundation](https://www.akcchf.org/)
 - [Companion Animal Parasite Council (CAPC) forecast maps](https://capcvet.org/maps/)
+
+
+---
+
+## 2026-05-07 — Polish, animation, and gamification (target v1.2 or v1.3 — HIGH priority for retention)
+
+### Strategic context
+
+FloofLife is currently functional but visually flat. For a subscription app to retain users past the 7-day trial, **it has to feel satisfying every time they open it.** The paywall is sellable; the daily experience needs to be enticing. This work is not "nice-to-have" — it's a core retention lever and is being treated as a hard requirement before the v1.3 marketing push.
+
+### Guiding principle
+
+Every interaction should produce a small dopamine hit. **Subtle, not overkill. Cute, not childish.** Branded with paw motifs throughout but tasteful. Haptics differ by interaction weight — heavier for transactions, lighter for daily care. The goal is users feel rewarded for engaging and want to come back tomorrow.
+
+### Reference apps for inspiration (study what they do well)
+
+- **Duolingo** — streak satisfaction, mascot personality, micro-celebrations
+- **Streaks** — haptics on completion
+- **Apple Fitness** — ring-close animations
+- **Finch** — gentle gamification, character progression
+- **Headspace** — breathing-room animations, considered branding
+
+### Scope — visual polish
+
+1. Paw print pattern wallpaper as subtle background texture across the app — very low opacity, brand color, repeating pattern. Available in light + dark mode variants.
+2. Brand color refinement — current accent color used consistently across all interactive elements. Audit for inconsistency.
+3. Card transitions — smooth scale-and-fade as cards expand/collapse (the new collapsible About card should animate, not snap).
+4. List item entry animations — when My Floofs renders, pet cards stagger-fade in.
+5. Empty states with personality — illustrated empty checklist, empty recall list, etc. Currently they're plain text.
+6. Loading states with paw animation — a paw walking across the screen while data loads, replacing generic spinners.
+7. Pull-to-refresh on Home and Checklist with custom paw-themed indicator.
+
+### Scope — micro-interactions
+
+1. **Checklist item completion** — when user taps the checkbox, paw stamp animation overlays the row briefly + light haptic + completion sound (optional, off by default).
+2. **Pawgress fill animation** — when a checklist item completes, the Pawgress indicator visibly fills toward its next segment with a smooth animation (when Pawgress ships in v1.3).
+3. **Pawgress paw-close** — when user completes a paw segment, full confetti + spinning paw animation + medium haptic + celebratory toast ("Good Floof Parent!" or similar varied messages).
+4. **Paywall reveal** — cards stagger in, price highlight pulses subtly to draw eye to the trial offer.
+5. **Premium purchase success** — large animation moment: confetti, paw bounce, "Welcome to FloofLife Premium!" personalized with the active pet's name.
+6. **Pet switcher tap** — subtle scale-up bounce as the active pet card animates to selected state.
+7. **Pet photo update** — smooth crossfade between old and new photo, brief shimmer.
+8. **Streak indicators** (when daily care logged) — flame or paw glow that intensifies with streak length.
+
+### Scope — haptics (use Expo Haptics, calibrated)
+
+- **Light tap** (UI navigation, card taps) — `Haptics.ImpactFeedbackStyle.Light`
+- **Medium tap** (checklist item complete, photo upload, settings toggle) — `Haptics.ImpactFeedbackStyle.Medium`
+- **Heavy tap** (premium purchase, restore purchases, deletion confirmation) — `Haptics.ImpactFeedbackStyle.Heavy`
+- **Success notification** (purchase complete, trial started) — `Haptics.NotificationFeedbackType.Success`
+- **Warning notification** (paywall blocked action, error) — `Haptics.NotificationFeedbackType.Warning`
+- **Error notification** (purchase failed, network error) — `Haptics.NotificationFeedbackType.Error`
+- All haptics should respect system settings (iOS users can disable haptics globally).
+- **Settings toggle:** "Haptic feedback" with three options (On, Subtle, Off) — default On.
+
+### Scope — sound design (optional, off by default)
+
+1. Paw stamp sound on checklist completion — very brief, satisfying.
+2. Confetti pop on Pawgress segment close.
+3. Subscription success chime.
+4. All sound respects system silent mode.
+5. **Settings toggle:** "Sound effects" — default OFF (many users have notifications muted; opt-in not opt-out).
+
+### Scope — branding refinement
+
+1. Custom app icon variants — offer 3-5 alternatives via the iOS alternate icon API: default, dark mode, paw monogram, Floof Parent badge variant.
+2. Splash screen animation — paw print materializing into the FloofLife logo. Currently static.
+3. Loading states throughout the app share visual language with the splash animation.
+4. Tab bar icon refinement — make the active state more visually distinct (color + bounce on tap).
+5. Toast notifications styled with paw motif (currently `Alert.alert`, which feels generic).
+
+### Implementation notes
+
+- Use **react-native-reanimated** for all animations (already common in RN, works with Expo).
+- Use **Lottie** for complex animations (paw walking, confetti, Pawgress fill). Lottie files can be designed in After Effects or sourced from LottieFiles.
+- Keep animation durations under **600ms** — anything longer feels slow.
+- **Reduce motion:** respect the iOS Reduce Motion accessibility setting (Settings → Accessibility → Reduce Motion). When enabled, replace animations with simple fades.
+- **Performance:** target 60fps throughout. Profile on iPhone 12 / iPhone SE 3rd gen as the low-end target devices.
+
+### Phasing
+
+- **v1.2 (with breed audit)** — basic haptics, micro-interaction polish on existing screens, animation refinement on the collapsible About card. No major new visual patterns yet.
+- **v1.3 (with Pawgress + push notifications)** — full visual polish pass: paw wallpaper backgrounds, custom loading states, empty states with illustrations, Pawgress confetti + sound + haptics integration, custom app icon variants, splash screen animation. **This is the big visual moment.**
+- **Ongoing** — every new feature ships with appropriate haptics + animations baked in. New features without polish are not considered done.
+
+### Principle — retention over acquisition
+
+Acquisition is marketing's job. Retention is the product's job. Every visual polish item in this section is a retention lever. **A user who feels satisfied opening FloofLife daily will not cancel after the trial. A user who feels nothing will cancel.**
