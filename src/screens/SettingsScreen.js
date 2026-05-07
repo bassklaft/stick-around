@@ -6,9 +6,12 @@ import * as Application from "expo-application";
 import { Pet, Pets } from "../lib/storage";
 import { usePurchases } from "../lib/purchasesContext";
 import { getDeviceId } from "../lib/founderOverride";
+import { track, resetAnalytics } from "../lib/analytics";
 import { theme } from "../theme";
 
 const FEEDBACK_EMAIL = "streetparkinfo@gmail.com";
+const PRIVACY_URL = "https://bassklaft.github.io/floof-life/legal/privacy-policy.html";
+const TERMS_URL = "https://bassklaft.github.io/floof-life/legal/terms-of-service.html";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
@@ -28,6 +31,7 @@ export default function SettingsScreen({ navigation }) {
   // the Privacy Policy. Falls back to a copy-the-address Alert if the
   // device has no configured mail client.
   async function sendFeedback() {
+    track("send_feedback_tapped", { pet_count: petCount });
     const version = Application.nativeApplicationVersion || "unknown";
     const build = Application.nativeBuildVersion || "?";
     const os = `${Platform.OS} ${Platform.Version}`;
@@ -132,13 +136,13 @@ export default function SettingsScreen({ navigation }) {
 
       <Text style={s.sectionHd}>HELP</Text>
       <Row label="Contact support"   onPress={() => Linking.openURL("mailto:hello@stickaround.app")} />
-      <Row label="Privacy policy"    onPress={() => Alert.alert("Privacy", "FloofLife stores all data on your device. We do not collect, transmit, or sell your data.")} />
-      <Row label="Terms of service"  onPress={() => Alert.alert("Terms", "FloofLife provides general guidance for healthy pets. It is not a substitute for veterinary advice.")} />
+      <Row label="Privacy policy"    onPress={() => Linking.openURL(PRIVACY_URL)} />
+      <Row label="Terms of service"  onPress={() => Linking.openURL(TERMS_URL)} />
 
       <Text style={s.sectionHd}>DANGER ZONE</Text>
       <TouchableOpacity onPress={() => Alert.alert("Reset FloofLife?", "This deletes your pet profile and all checklist data. Cannot be undone.", [
         { text: "Cancel" },
-        { text: "Delete", style: "destructive", onPress: async () => { await Pet.clear(); Alert.alert("Done", "Restart the app."); } },
+        { text: "Delete", style: "destructive", onPress: async () => { track("reset_all_data_confirmed"); await Pet.clear(); resetAnalytics(); Alert.alert("Done", "Restart the app."); } },
       ])} style={[s.card, { borderColor: theme.red }]}>
         <Text style={[s.body, { color: theme.red, fontWeight: "700" }]}>Reset all data</Text>
       </TouchableOpacity>

@@ -9,6 +9,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Purchases from "react-native-purchases";
 import { usePurchases } from "../lib/purchasesContext";
 import { PREMIUM_ENTITLEMENT_ID } from "../lib/config";
+import { track } from "../lib/analytics";
 import { theme } from "../theme";
 
 const FREE = [
@@ -90,6 +91,7 @@ export default function PremiumScreen({ navigation }) {
   const selectedPkg = selected === "annual" ? annual : monthly;
 
   async function purchase() {
+    track("premium_purchase_initiated", { plan: selected });
     // Resolution chain (silent — no diagnostic alerts):
     //   1. selectedPkg from resolvePkg() against the offering
     //   2. fallback to first availablePackage if resolver missed
@@ -115,6 +117,7 @@ export default function PremiumScreen({ navigation }) {
             await refresh();
             const nowPremium = !!result?.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
             if (nowPremium) {
+              track("premium_purchase_completed", { plan: selected, path: "direct_product" });
               Alert.alert(
                 "Welcome to Premium",
                 "Thanks for supporting FloofLife. Your premium features are unlocked.",
@@ -122,7 +125,10 @@ export default function PremiumScreen({ navigation }) {
               );
             }
           } catch (err) {
-            if (!err?.userCancelled) {
+            if (err?.userCancelled) {
+              track("premium_purchase_cancelled", { plan: selected });
+            } else {
+              track("premium_purchase_failed", { plan: selected, reason: err?.code || "unknown" });
               Alert.alert("Purchase failed", err?.message ?? "Apple couldn't process the payment. Please try again.");
             }
           } finally {
@@ -147,6 +153,7 @@ export default function PremiumScreen({ navigation }) {
       await refresh();
       const nowPremium = !!result?.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
       if (nowPremium) {
+        track("premium_purchase_completed", { plan: selected, path: "package" });
         Alert.alert(
           "Welcome to Premium",
           "Thanks for supporting FloofLife. Your premium features are unlocked.",
@@ -154,8 +161,12 @@ export default function PremiumScreen({ navigation }) {
         );
       }
     } catch (err) {
-      if (err?.userCancelled) return;
+      if (err?.userCancelled) {
+        track("premium_purchase_cancelled", { plan: selected });
+        return;
+      }
       const msg = err?.message ?? "";
+      track("premium_purchase_failed", { plan: selected, reason: err?.code || "unknown" });
       if (/network|connection|offline/i.test(msg)) {
         Alert.alert("Network error", "Couldn't reach the App Store. Try again on a stable connection.");
       } else {
@@ -167,11 +178,13 @@ export default function PremiumScreen({ navigation }) {
   }
 
   async function restore() {
+    track("premium_restore_initiated");
     setWorking(true);
     try {
       const info = await Purchases.restorePurchases();
       await refresh();
       const restored = !!info?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
+      track("premium_restore_result", { restored });
       Alert.alert(
         restored ? "Purchases restored" : "Nothing to restore",
         restored

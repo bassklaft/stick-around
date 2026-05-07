@@ -10,6 +10,7 @@ import { Pets } from "../lib/storage";
 import { usePurchases } from "../lib/purchasesContext";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
+import { track } from "../lib/analytics";
 import { theme } from "../theme";
 
 const titleCase = s => (s || "").split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -20,6 +21,7 @@ export default function YourPetsScreen() {
   const [pets, setPets] = useState([]);
   const [activeId, setActiveId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
+  const [aboutOpen, setAboutOpen] = useState({});
   const [healthOpen, setHealthOpen] = useState({});
   const { isPremium } = usePurchases();
 
@@ -41,13 +43,23 @@ export default function YourPetsScreen() {
     const uri = await pickPetPhoto({ petId });
     if (!uri) return;
     await Pets.update(petId, { photoUri: uri });
+    track("pet_photo_picked", { context: "my_floofs" });
     load();
   }
 
   async function activatePet(petId) {
     await Pets.setActive(petId);
     setActiveId(petId);
+    track("active_pet_switched", { pet_count: pets.length });
     navigation.navigate("Main", { screen: "Home" });
+  }
+
+  function toggleAbout(petId) {
+    setAboutOpen(prev => {
+      const next = !prev[petId];
+      if (next) track("about_breed_expanded");
+      return { ...prev, [petId]: next };
+    });
   }
 
   function addAnotherPet() {
@@ -133,7 +145,17 @@ export default function YourPetsScreen() {
 
             {breed?.summary && (
               <View style={s.breedCard}>
-                <Text style={s.breedTitle}>About {breedDisplayName(pet.breed)}</Text>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => toggleAbout(pet.id)}
+                  style={s.breedHeader}
+                >
+                  <Text style={s.breedTitle}>About {breedDisplayName(pet.breed)}</Text>
+                  <Text style={s.breedHeaderHint}>
+                    {aboutOpen[pet.id] ? "Tap to hide" : "Tap to learn more"}
+                  </Text>
+                </TouchableOpacity>
+                {aboutOpen[pet.id] && (<>
                 {breed.origin && <Text style={s.breedOrigin}>📍 {breed.origin}</Text>}
                 <Text style={s.breedBody}>{breed.summary}</Text>
                 {breed.originStory && (
@@ -196,6 +218,7 @@ export default function YourPetsScreen() {
                     )}
                   </TouchableOpacity>
                 )}
+                </>)}
               </View>
             )}
 
@@ -255,7 +278,9 @@ const s = StyleSheet.create({
   petMeta:       { fontSize: 13, color: theme.muted, marginTop: 4, textAlign: "center", textTransform: "capitalize" },
   mixMeta:       { fontSize: 12, color: theme.accent, marginTop: 4, textAlign: "center", fontStyle: "italic" },
   breedCard:     { marginTop: 16, padding: 14, backgroundColor: theme.bg, borderRadius: 12, borderWidth: 1, borderColor: theme.line },
-  breedTitle:    { fontWeight: "700", color: theme.fg, fontSize: 16, marginBottom: 4 },
+  breedHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
+  breedTitle:    { flex: 1, fontWeight: "700", color: theme.fg, fontSize: 16 },
+  breedHeaderHint:{ flexShrink: 0, fontSize: 11, color: theme.accent, fontWeight: "600" },
   breedOrigin:   { fontSize: 11, color: theme.muted, fontWeight: "600", marginBottom: 8, letterSpacing: 0.3 },
   originNote:    { fontSize: 10, color: theme.muted, fontStyle: "italic", marginTop: 8, lineHeight: 14 },
   breedBody:     { fontSize: 13, color: theme.muted, lineHeight: 19 },

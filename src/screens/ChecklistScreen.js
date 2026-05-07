@@ -6,6 +6,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
+import { track } from "../lib/analytics";
 import { theme } from "../theme";
 
 export default function ChecklistScreen() {
@@ -32,6 +33,7 @@ export default function ChecklistScreen() {
     if (!pet?.id) return;
     const next = await ChecklistState.setItem(pet.id, id, status);
     setState(next);
+    track("checklist_item_toggled", { action: status });
   }
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;

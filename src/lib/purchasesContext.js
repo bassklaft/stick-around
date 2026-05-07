@@ -15,6 +15,7 @@ import { Platform } from "react-native";
 import Purchases from "react-native-purchases";
 import { revenueCatKey, PREMIUM_ENTITLEMENT_ID, DEFAULT_OFFERING_ID } from "./config";
 import { getDeviceId, isFounderDevice } from "./founderOverride";
+import { setSubscriptionState } from "./analytics";
 
 const PurchasesContext = createContext({
   customerInfo: null,
@@ -120,6 +121,14 @@ export function PurchasesProvider({ children }) {
     };
   }, []);
 
+  const isPremium = founderOverride || entitled(customerInfo);
+  // Mirror subscription state into the analytics person-properties so
+  // PostHog can segment funnels by free vs premium without us ever
+  // attaching a user identifier or pet PII.
+  useEffect(() => {
+    setSubscriptionState(isPremium ? "premium" : "free");
+  }, [isPremium]);
+
   const value = {
     customerInfo,
     offerings,
@@ -127,7 +136,7 @@ export function PurchasesProvider({ children }) {
     // matching IDFV in FOUNDER_DEVICE_IDS. The override is intentional
     // and ships in production so the founder + trusted teammates have
     // Premium without an active subscription.
-    isPremium: founderOverride || entitled(customerInfo),
+    isPremium,
     isFounderDevice: founderOverride,
     ready,
     refresh,

@@ -5,6 +5,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets } from "../lib/storage";
 import { breedFacts, dogBreeds, catBreeds, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
+import { track } from "../lib/analytics";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -29,7 +30,10 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
 
   async function pickPhoto() {
     const uri = await pickPetPhoto();
-    if (uri) setPhotoUri(uri);
+    if (uri) {
+      setPhotoUri(uri);
+      track("pet_photo_picked", { context: "onboarding" });
+    }
   }
 
   async function finish() {
@@ -49,8 +53,22 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
     };
     if (addMode) {
       await Pets.add(payload);
+      track("pet_added", {
+        species,
+        has_photo: !!photoUri,
+        has_age: payload.ageYears != null,
+        has_weight: payload.weightLbs != null,
+        is_mix: !!payload.mixOf,
+      });
     } else {
       await Pet.set(payload);
+      track("onboarding_completed", {
+        species,
+        has_photo: !!photoUri,
+        has_age: payload.ageYears != null,
+        has_weight: payload.weightLbs != null,
+        is_mix: !!payload.mixOf,
+      });
     }
     onDone();
   }
