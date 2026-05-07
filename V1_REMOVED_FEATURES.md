@@ -39,6 +39,32 @@ Features that help pet owners genuinely **and** justify Premium subscription pri
 
 ---
 
+## Development workflow notes
+
+### EAS build budget — 12 production iOS builds per month max (3 in reserve)
+
+Established 2026-05-07. Bootstrap-mode founder; build credits are a constrained resource. Target ~3 builds per week, with 3 builds held back as an emergency reserve.
+
+**How this changes day-to-day work:**
+
+- **Each build bundles multiple meaningful changes — never one tiny fix per build.** Aim for 3-5 features/fixes minimum per build.
+- **Default answer to "should we build now" is NO** unless multiple things are stacked on the branch.
+- **Code commits accumulate on the working branch between builds.** Don't reflexively reach for `eas build` after every commit; let work pile up.
+- **Test aggressively in TestFlight on the current build before triggering a new one.** Surface obvious issues during the testing window, not via fresh build cycles.
+- **Before triggering any build, list the stacked manifest and confirm explicitly.** Format: *"Build N includes X, Y, Z. Trigger build now or stack more?"* Wait for explicit go-ahead — never auto-trigger, even when the stack is obviously big enough.
+
+**Emergency builds — bypass the rule, do not count against the weekly cadence:**
+
+- Critical production bug affecting existing users.
+- Apple Review requires a binary fix to clear a rejection.
+- Paywall broken (revenue impact).
+
+For emergencies, propose the fix + immediate rebuild without the stacking ritual. **Do NOT quietly ship "while I'm at it" extras during an emergency build** — keep emergency builds minimal so the rebuild cost stays clearly justified.
+
+This rule is also persisted to Claude's memory system as `feedback_build_budget.md` so it applies autonomously across sessions.
+
+---
+
 ## v1.1 BACKLOG
 
 (a) **Premium subscription system** — wire up via RevenueCat. The PremiumScreen UI below is ready to drop back in once StoreKit products are configured in App Store Connect. RevenueCat SDK (`react-native-purchases`) handles the iOS + Android wrapping.
