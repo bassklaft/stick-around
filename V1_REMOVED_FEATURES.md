@@ -794,3 +794,154 @@ The v1.x line stays local-first iOS-only. v2.0 is the cross-device, cross-platfo
 - **Remote recall infrastructure** — already on the v1.3–v1.5 roadmap above; gets reused for cloud-sync's recall-update channel.
 - **Account-creation prep** — email collection (newsletter opt-in already in v1.5), push-token storage (ready for FCM/APNS), session token plumbing.
 - **Test cross-platform** with Android Emulator + at least 1 physical Pixel and 1 physical Samsung. Android fragmentation is real; emulator isn't enough.
+
+---
+
+## 2026-05-05 — v1.1.1 patch backlog (post-build-15 polish)
+
+Build 15 is the v1.1 production submission. The items below are queued for a follow-up v1.1.1 patch — code-complete on `v1.1-work` working tree but **uncommitted, unbuilt, and not yet visually verified** at the time of build 15 submission.
+
+### 1. Per-pet checklist state (correctness fix from multi-pet rollout)
+
+**Bug:** When v1.1 introduced multi-pet, `ChecklistState` was left as a flat global map keyed by item id (`pawrent_checklist_state` → `{ [itemId]: { status, ts } }`). Pets sharing item ids (most common breeds share at least 8–10 default items) saw each other's checkmarks. Checking off "brush teeth" on Bella also showed it checked on Max.
+
+**Fix landed on `v1.1-work` (uncommitted):**
+
+- `src/lib/storage.js` — `ChecklistState` now reads/writes a pet-scoped map under a new key `pawrent_checklist_state_v2`, shape `{ [petId]: { [itemId]: { status, ts } } }`. The legacy single-pet map is migrated under the currently-active pet's id on first read after upgrade and the old key is deleted. If there is no active pet yet (fresh install / mid-onboarding), the legacy key is left untouched and migration retries on the next read. `Pet.clear()` now also wipes the v2 key.
+- `src/screens/ChecklistScreen.js` — passes `pet.id` to `ChecklistState.get(petId)` and `ChecklistState.setItem(petId, key, status)`. Guards against `pet?.id` being missing.
+- `src/screens/HomeScreen.js` — same `pet?.id` guard on the home-tab progress-bar read.
+
+**What this fix covers:** the "active" pet (which is still defined as `Pets.list()[0]`) sees its own independent checklist state, and existing single-pet users have their existing checks preserved under that pet.
+
+**What this fix does NOT cover (pushed to a later version):**
+
+- A user-facing "switch active pet" UI. Today the active pet is the first item in the `Pets` array (oldest pet wins per `listSortedOldestFirst`); there is no "tap a pet card to make it active" interaction. Per-pet checklists won't truly feel per-pet until a switcher exists. Likely v1.2 work — track alongside the multi-pet UX polish.
+- Per-pet completion counts on a multi-pet aggregate view ("3 of 12 done across all your floofs"). Out of scope for v1.1.1.
+
+### 2. Layout collision sweep — visual polish
+
+A `flexDirection: "row"` + `justifyContent: "space-between"` audit caught seven row layouts where titles, badges, and severity pills could touch when content grows. The pattern applied: `gap` (10–12) on the container, `flex: 1` on the growable side, `flexShrink: 0` on the fixed side (badges, chevrons, pills).
+
+Files touched on `v1.1-work` (uncommitted):
+
+- `src/screens/YourPetsScreen.js` — `healthHeader` ("💛 Health considerations to know" + "Tap to learn more" hint colliding) — the collision the user actually flagged on-device.
+- `src/screens/SettingsScreen.js` — `row` (label vs PREMIUM badge / chevron), `premiumBadge`.
+- `src/screens/TrainingScreen.js` — `cardHd` (category chip vs cadence text), `catChip`, `cadence`.
+- `src/screens/RecallsScreen.js` — `sevBadge`.
+- `src/screens/ChecklistScreen.js` — `progress` (label vs count).
+- `src/screens/HomeScreen.js` — `progress` (label vs "X of Y done →" count).
+- `src/screens/RiskScreen.js` — `sevBadge` (RiskCard).
+
+LOW-severity items the audit flagged (emoji adjacency, `→` arrows, fragile-but-currently-fine bullets) were skipped — most already have spacing or `marginRight` and aren't actually crowded.
+
+### Visual verification
+
+Visual pass via simulator was attempted but blocked: no iOS simulator runtime is installed on the dev machine. Options when picking v1.1.1 back up: (a) install an iOS 18 runtime in Xcode (~6–7 GB, 10 min) for a true pixel-level pass, (b) use `expo start --web` as a rough flexbox proxy, or (c) trust the diff and verify on the next physical-device build. The fixes are mechanical (`gap` / `flex: 1` / `flexShrink: 0`) so regression risk is low, but neither path has been exercised yet.
+
+### Build pipeline status (as of 2026-05-05)
+
+- Build 15 (v1.1.0): on TestFlight via Transporter, on Max's iPhone, awaiting "Add for Review" on App Store Connect.
+- Build 16 (v1.1.1): **shipped** — bundled the per-pet checklist + active pet switcher (added mid-cycle as Option B) + the layout collision sweep. IPA at https://expo.dev/artifacts/eas/2WQx7myWSsk2mS4Kteiyhd.ipa. Transportered to App Store Connect.
+
+---
+
+## 2026-05-05 — v1.1.2 patch backlog (post-build-16 polish)
+
+Items flagged after build 16 was already in flight. Queued for the next build.
+
+### 1. Collapsible "About {breed}" card (My Floofs)
+
+**Today:** the About-breed card on My Floofs always renders fully expanded — origin, summary, origin story, sources/references, brachycephalic warning, plus the Health-considerations sub-section. With the v1.2 breed-health audit landing soon, each card will get longer, not shorter.
+
+**Fix:** mirror the existing `healthOpen[pet.id]` toggle pattern. Add `aboutOpen[pet.id]` state, default collapsed. The header (breed title + tap hint) stays visible; the body (origin + summary + originStory + originNote + references + brachy warning + healthDisclosure) only renders when expanded.
+
+**Implementation sketch:**
+- `src/screens/YourPetsScreen.js` — add `aboutOpen` state, replace the breedCard `<View>` opener with a header `<TouchableOpacity>` (only the header toggles, not the whole card — so inner reference-link tappables still work). Conditionally render the expanded body. Reuse the gap/flex/flexShrink pattern from `healthHeader` for the new `breedHeader`.
+- ~20 lines of code; should not require new style additions beyond a `breedHeader` row + a `breedHeaderHint` text style.
+
+**Why deferred from build 16:** flagged after build 16 was uploaded via Transporter; user explicitly chose to ship build 16 and bundle this with the next patch rather than re-build.
+
+### Build pipeline status (next)
+
+- Build 17 (v1.1.2): not started. Bundles the collapsible About card plus anything else that surfaces. Branch: continue on `v1.1-work`.
+
+
+---
+
+## 2026-05-05 — v1.1 ship day (massive solo founder push)
+
+Closing log for May 5, 2026 — the day v1.1 went from "still rebuilding the paywall" to build 16 submitted for App Store Review, plus a full v1.2 breed-health audit landed, plus the LLC paperwork that's been sitting around finally moved.
+
+### Personal / business milestones
+
+- EIN issued for TenTenths LLC (42-2335903)
+- Amex Business Checking application submitted
+- D&B documentation sent for D-U-N-S verification
+- LLC publication confirmed done from 2022 — no remediation needed
+- NY DOS address change deferred to a future Brooklyn batch
+
+### v1.1 shipped
+
+- Builds 12 → 16: iterations through paywall debugging (greyed-out trial button → custom-package-id resolver → empty RC offering → direct-product fallback), founder override (IDFV allowlist), and photo persistence (documentDirectory copy on pick)
+- Switched to Apple Transporter to bypass jammed EAS Submit Free Tier queue — direct .ipa upload to App Store Connect
+- Build 16 submitted to App Store Review at end of day
+- Includes: Premium subscription via RevenueCat ($4.99/mo or $39/yr with 7-day annual trial), multi-pet support with active pet switcher (tap any My Floofs card → that pet becomes active + jumps to Home; tap Home hero or Checklist header to switch back), per-pet checklist data (state now keyed by pet id with one-time legacy-map migration), pet photo persistence across TestFlight/App Store updates, layout collision sweep across 7 screens, "My Floofs" rebrand
+- App Store metadata cleaned up — Klafter typo fixed, manual release toggle set, sign-in unchecked
+- Founder override active for Max's iPhone (IDFV `981F7B5B-46DF-4B89-AF5D-49B812EB939D`)
+
+### v1.2 work started
+
+- Pawgress Indicator and Tummy Tracker feature briefs committed under `docs/features/`
+- Breed-health content audit COMPLETE across 47 named breeds — roughly 270 new health bullets, 210 new references citing AKC, parent breed clubs, peer-reviewed literature (Cooley 2002 on early-spay osteosarcoma, Raffan 2016 on Lab POMC, Keene 2019 ACVIM consensus on canine MVD), Washington State VCGL + UC Davis VGL for genetic tests, Berner-Garde, RVC, Cornell Feline, ACVO/OFA, BVA + International Cat Care for Scottish Fold welfare position, Merck Vet Manual
+- Audit format locked to: editorial tone (never prescriptive), sourced citations per claim cluster, per-condition checklist items with cadence + category, practical owner-level tips
+- Skipped intentionally: 4 generic catch-alls (mixed dog, other dog, mixed cat, other cat) and 10 designer mixes (already at audit-quality depth from prior v1.2-work content)
+
+### Deferred to v1.1.1 patch
+
+- Collapsible "About {breed}" card on My Floofs (mirror the existing `healthOpen` toggle pattern; ~20 lines of code)
+- Any post-launch issues that surface from v1.1 users in TestFlight or App Store Review feedback
+
+
+---
+
+## 2026-05-05 — paywall placement roadmap (post-v1.1 monetization)
+
+v1.1 ships Premium with multi-pet, expanded breed depth, and health/care tracking as the headline gates. A user with a single pet on v1.1 has no concrete reason to upgrade — the free tier is too generous. v1.2+ needs more touchpoints across the user journey that surface Premium at moments when users are demonstrably engaged and getting recurring value.
+
+### 1. Checklist weekly refresh paywall (priority — high)
+
+**Today:** `generateChecklist()` produces a derived list from breed/age/season that's effectively static for the pet's lifetime. Items cycle by cadence (the v1.2 cadence-reset rule unchecks them on schedule), but the underlying list doesn't refresh week to week with new tailored items. Single-pet free users see the same items forever.
+
+**The change:**
+- Each week, the checklist generates a fresh tailored refresh of new items keyed to the pet's current life stage, season, and recent care history. Some carry over (the breed-fundamentals); some are new (e.g., a senior-cat-specific oral exam reminder appears in week 8 if the cat is 7+).
+- Free tier sees their first week's list (the current behavior).
+- Week 2+ refresh requires Premium.
+
+**The paywall surface:** at the bottom of the Checklist tab once the free user enters week 2, a CTA card reading something like:
+
+> **Want next week's tailored list?**
+> Floof Parents on Premium get a fresh, breed-tailored refresh every week — new items keyed to the season, your pet's age, and what you've already done.
+> [Upgrade to Premium →]
+
+CTA links directly to `PremiumScreen` modal, same surface the Settings → Upgrade flow uses today.
+
+**Implementation notes:**
+- New field on the pet record: `checklistWeekStart: Date` (set on first generation; week index = `floor((now - start) / 7days)`).
+- Free tier gates by `weekIndex > 0 && !isPremium`.
+- Existing free users from v1.0 / v1.1 should be grandfathered — don't yank weekly refreshes from people who already have them. Set a `grandfatheredFreeWeekly: true` flag on any pet whose `checklistWeekStart` predates the v1.2 ship date.
+- Paywall copy must lead with what they're getting (a tailored next-week refresh), not just "go Premium". Apple's review guidelines also prefer specific value framing over generic upsell.
+- Show the CTA at the end-of-week moment, not after every checklist tap. One nag, in context, is far better than a persistent banner.
+
+**Why it matters:** this is the first recurring, value-aligned Premium touchpoint in the app. Multi-pet is one-time (you have multiple pets or you don't). Weekly refresh is a continual reason to upgrade because the value compounds week over week.
+
+### 2. Future paywall touchpoints (seeds — flesh out as the product evolves)
+
+- Health Tracker history beyond 30 days (free tier truncates).
+- Recall alert push notifications (free tier sees recalls in-app; Premium gets the push).
+- Multi-pet aggregate views ("3 of 12 done across all your floofs" on the home tab).
+- Photo storage beyond a free-tier cap (e.g., 1 pet portrait + 5 health-record attachments free; unlimited Premium).
+- Tummy Tracker PDF vet export (already specified in the v1.4 brief — Premium-gated).
+- Pawgress Indicator weekly / monthly / yearly views (already specified in the brief — Daily is free; longer horizons are Premium).
+- Vet integration "Schedule appointment" deep-link (already in v1.2 plan; consider gating advanced multi-vet contact storage).
+
+Each of these gets the same treatment when its underlying feature lands: specific value framing, in-context CTA, grandfathering rules for v1.0 / v1.1 users, no nag-spam.

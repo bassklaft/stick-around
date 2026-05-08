@@ -12,6 +12,8 @@ import { getPetBreeds, getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBree
 import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
+import { track } from "../lib/analytics";
+import { tapLight, tapMedium } from "../lib/haptics";
 import { theme } from "../theme";
 
 const titleCase = s => (s || "").split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -60,26 +62,54 @@ export default function YourPetsScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [pets, setPets] = useState([]);
+  const [activeId, setActiveId] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [aboutOpen, setAboutOpen] = useState({});
   const [healthOpen, setHealthOpen] = useState({});
+  const [tipsOpen, setTipsOpen] = useState({});
+  const [sourcesOpen, setSourcesOpen] = useState({});
+  const [originStoryOpen, setOriginStoryOpen] = useState({});
   const { isPremium } = usePurchases();
 
   function toggleAbout(sectionId) {
     setAboutOpen(prev => {
       // About defaults expanded — undefined ⇒ expanded → tap collapses.
       const currentlyExpanded = prev[sectionId] ?? true;
-      return { ...prev, [sectionId]: !currentlyExpanded };
+      const next = !currentlyExpanded;
+      if (next) track("about_breed_expanded");
+      return { ...prev, [sectionId]: next };
     });
+    tapLight();
   }
 
   function toggleHealth(sectionId) {
-    setHealthOpen(prev => ({ ...prev, [sectionId]: !prev[sectionId] }));
+    setHealthOpen(prev => {
+      const next = !prev[sectionId];
+      if (next) track("health_considerations_expanded");
+      return { ...prev, [sectionId]: next };
+    });
+    tapLight();
+  }
+
+  function toggleSubSection(setter, sectionId, eventName) {
+    setter(prev => {
+      const next = !prev[sectionId];
+      if (next && eventName) track(eventName);
+      return { ...prev, [sectionId]: next };
+    });
+    tapLight();
   }
 
   const load = useCallback(async () => {
     const list = await Pets.listSortedOldestFirst();
     setPets(list);
+    let active = await Pets.getActiveId();
+    // If active id is missing or stale, fall back to the oldest pet so
+    // the visual indicator matches what Pet.get() would resolve to.
+    if (!active || !list.find(p => p.id === active)) {
+      active = list[0]?.id || null;
+    }
+    setActiveId(active);
   }, []);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -88,7 +118,17 @@ export default function YourPetsScreen() {
     const uri = await pickPetPhoto({ petId });
     if (!uri) return;
     await Pets.update(petId, { photoUri: uri });
+    track("pet_photo_picked", { context: "my_floofs" });
+    tapMedium();
     load();
+  }
+
+  async function activatePet(petId) {
+    await Pets.setActive(petId);
+    setActiveId(petId);
+    track("active_pet_switched", { pet_count: pets.length });
+    tapMedium();
+    navigation.navigate("Main", { screen: "Home" });
   }
 
   function addAnotherPet() {
@@ -131,10 +171,26 @@ export default function YourPetsScreen() {
         const primary = getPrimaryBreed(pet);
         const isMix = isMixedBreed(pet);
         const mixLabel = mixedBreedLabel(pet);
+        const isMultiPet = pets.length > 1;
+        const isActive = isMultiPet && activeId === pet.id;
+        const CardWrapper = isMultiPet ? TouchableOpacity : View;
+        const cardProps = isMultiPet
+          ? { onPress: () => activatePet(pet.id), activeOpacity: 0.9 }
+          : {};
         return (
-          <View key={pet.id || idx} style={s.petCard}>
-            {idx === 0 && pets.length > 1 && (
+          <CardWrapper
+            key={pet.id || idx}
+            {...cardProps}
+            style={[s.petCard, isActive && s.petCardActive]}
+          >
+            {isActive && (
+              <View style={s.activeBadge}><Text style={s.activeBadgeText}>✓ ACTIVE</Text></View>
+            )}
+            {idx === 0 && isMultiPet && (
               <View style={s.eldestBadge}><Text style={s.eldestBadgeText}>👑 ELDEST</Text></View>
+            )}
+            {isMultiPet && (
+              <Text style={s.tapHint}>{isActive ? "Currently active — tap any other floof to switch" : "Tap card to make active"}</Text>
             )}
 
             <View style={{ alignItems: "center", marginTop: 4 }}>
@@ -167,11 +223,13 @@ export default function YourPetsScreen() {
               const sectionId = `${pet.id}:${breedKey}`;
               const aboutExpanded = aboutOpen[sectionId] ?? true;
               const healthExpanded = !!healthOpen[sectionId];
+              const originStoryExpanded = !!originStoryOpen[sectionId];
+              const sourcesExpanded = !!sourcesOpen[sectionId];
               return (
                 <React.Fragment key={breedKey}>
                   {/* About card — default expanded; warm narrative + origin
-                      + origin story + sources + brachy warning. NO medical
-                      content. */}
+                      + collapsible origin story + collapsible sources +
+                      brachy warning. NO medical content. */}
                   <View style={s.breedCard}>
                     {isMix && (
                       <View style={s.breedSectionHd}>
@@ -193,9 +251,21 @@ export default function YourPetsScreen() {
                       {breed.origin && <Text style={s.breedOrigin}>📍 {breed.origin}</Text>}
                       <Text style={s.breedBody}>{breed.about ?? breed.summary}</Text>
                       {breed.originStory && (
-                        <Text style={[s.breedBody, { marginTop: 10, fontStyle: "italic" }]}>
-                          {breed.originStory}
-                        </Text>
+                        <View style={{ marginTop: 10 }}>
+                          <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={() => toggleSubSection(setOriginStoryOpen, sectionId, "origin_story_expanded")}
+                            style={s.subSectionHeader}
+                          >
+                            <Text style={s.subSectionTitle} numberOfLines={2}>📖 Origin Story · How the {breedDisplayName(breedKey)} became the {breedDisplayName(breedKey)}</Text>
+                            <Text style={s.subSectionHint}>{originStoryExpanded ? "Hide" : "Show"}</Text>
+                          </TouchableOpacity>
+                          {originStoryExpanded && (
+                            <Text style={[s.breedBody, { marginTop: 8, fontStyle: "italic" }]}>
+                              {breed.originStory}
+                            </Text>
+                          )}
+                        </View>
                       )}
                       {(breed.origin || breed.originStory) && (
                         <Text style={s.originNote}>
@@ -204,12 +274,23 @@ export default function YourPetsScreen() {
                       )}
                       {Array.isArray(breed.references) && breed.references.length > 0 && (
                         <View style={{ marginTop: 12 }}>
-                          <Text style={s.breedRefHd}>SOURCES & DEEP DIVES</Text>
-                          {breed.references.map((r, i) => (
-                            <TouchableOpacity key={i} onPress={() => Linking.openURL(r.url)} style={{ paddingVertical: 4 }}>
-                              <Text style={s.breedRefText}>↗ {r.label}</Text>
-                            </TouchableOpacity>
-                          ))}
+                          <TouchableOpacity
+                            activeOpacity={0.7}
+                            onPress={() => toggleSubSection(setSourcesOpen, sectionId, "sources_expanded")}
+                            style={s.subSectionHeader}
+                          >
+                            <Text style={s.subSectionTitle}>📚 Sources · {breed.references.length} {breed.references.length === 1 ? "reference" : "references"}</Text>
+                            <Text style={s.subSectionHint}>{sourcesExpanded ? "Hide" : "Show"}</Text>
+                          </TouchableOpacity>
+                          {sourcesExpanded && (
+                            <View style={{ marginTop: 4 }}>
+                              {breed.references.map((r, i) => (
+                                <TouchableOpacity key={i} onPress={() => Linking.openURL(r.url)} style={{ paddingVertical: 4 }}>
+                                  <Text style={s.breedRefText}>↗ {r.label}</Text>
+                                </TouchableOpacity>
+                              ))}
+                            </View>
+                          )}
                         </View>
                       )}
                       {breed.brachycephalic && (
@@ -267,20 +348,33 @@ export default function YourPetsScreen() {
             {breedKeys.map((breedKey) => {
               const breed = breedFacts[breedKey];
               if (!Array.isArray(breed?.tips) || breed.tips.length === 0) return null;
+              const sectionId = `${pet.id}:${breedKey}`;
+              const tipsExpanded = !!tipsOpen[sectionId];
               return (
                 <View key={`tips-${breedKey}`} style={s.tipsCard}>
-                  <Text style={s.tipsTitle}>💡 Insider tips for {breedDisplayName(breedKey)}</Text>
-                  <Text style={s.tipsSub}>From owner communities, breed clubs, and vet references.</Text>
-                  {breed.tips.map((tip, i) => (
-                    <View key={i} style={s.tipRow}>
-                      <Text style={s.tipBullet}>›</Text>
-                      <Text style={s.tipBody}>{tip}</Text>
-                    </View>
-                  ))}
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => toggleSubSection(setTipsOpen, sectionId, "insider_tips_expanded")}
+                    style={s.tipsHeader}
+                  >
+                    <Text style={s.tipsTitle} numberOfLines={2}>💡 Insider Tips · {breed.tips.length} {breed.tips.length === 1 ? "thing" : "things"} only {breedDisplayName(breedKey)} owners know</Text>
+                    <Text style={s.tipsHeaderHint}>{tipsExpanded ? "Tap to hide" : "Tap to show"}</Text>
+                  </TouchableOpacity>
+                  {tipsExpanded && (
+                    <>
+                      <Text style={s.tipsSub}>From owner communities, breed clubs, and vet references.</Text>
+                      {breed.tips.map((tip, i) => (
+                        <View key={i} style={s.tipRow}>
+                          <Text style={s.tipBullet}>›</Text>
+                          <Text style={s.tipBody}>{tip}</Text>
+                        </View>
+                      ))}
+                    </>
+                  )}
                 </View>
               );
             })}
-          </View>
+          </CardWrapper>
         );
       })}
 
@@ -309,6 +403,10 @@ const s = StyleSheet.create({
   emptyBody:    { fontSize: 13, color: theme.muted, marginTop: 6, textAlign: "center" },
   intro:        { fontSize: 13, color: theme.muted, marginBottom: 14, lineHeight: 19 },
   petCard:      { backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.line, padding: 18, marginBottom: 16, position: "relative" },
+  petCardActive:{ borderColor: theme.accent, borderWidth: 2 },
+  activeBadge:  { position: "absolute", top: 12, left: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  activeBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 0.6 },
+  tapHint:      { fontSize: 10, color: theme.muted, fontStyle: "italic", textAlign: "center", marginTop: 28, marginBottom: -4, letterSpacing: 0.3 },
   eldestBadge:  { position: "absolute", top: 12, right: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   eldestBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 0.6 },
   avatarWrap:    { position: "relative" },
@@ -344,8 +442,13 @@ const s = StyleSheet.create({
   healthBody:      { flex: 1, fontSize: 12, color: theme.fg, lineHeight: 18 },
   healthFooter:    { fontSize: 11, color: theme.muted, fontStyle: "italic", marginTop: 6, lineHeight: 16 },
   tipsCard:      { marginTop: 12, padding: 14, backgroundColor: theme.accentSoft, borderRadius: 12, borderWidth: 1, borderColor: theme.accent + "44" },
-  tipsTitle:     { fontWeight: "800", color: theme.fg, fontSize: 14, marginBottom: 4 },
-  tipsSub:       { fontSize: 11, color: theme.muted, lineHeight: 16, marginBottom: 10, fontStyle: "italic" },
+  tipsHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
+  tipsTitle:     { flex: 1, fontWeight: "800", color: theme.fg, fontSize: 14 },
+  tipsHeaderHint:{ flexShrink: 0, fontSize: 11, color: theme.accent, fontWeight: "600" },
+  tipsSub:       { fontSize: 11, color: theme.muted, lineHeight: 16, marginTop: 6, marginBottom: 10, fontStyle: "italic" },
+  subSectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12, paddingVertical: 4 },
+  subSectionTitle: { flex: 1, fontSize: 12, fontWeight: "700", color: theme.fg, letterSpacing: 0.2 },
+  subSectionHint:  { flexShrink: 0, fontSize: 11, color: theme.accent, fontWeight: "600" },
   tipRow:        { flexDirection: "row", marginBottom: 8 },
   tipBullet:     { color: theme.accent, fontWeight: "800", marginRight: 8, fontSize: 14, lineHeight: 19 },
   tipBody:       { flex: 1, fontSize: 13, color: theme.fg, lineHeight: 19 },

@@ -17,3 +17,11 @@ export function revenueCatKey() {
 
 export const PREMIUM_ENTITLEMENT_ID = "premium";
 export const DEFAULT_OFFERING_ID = "default";
+
+// PostHog product analytics. Anonymous events only — no pet names,
+// photos, breeds, ages, weights, location, or any other PII. Events
+// are scoped to behavioral funnel data (which screens, which buttons,
+// which features used). Init is a no-op when the key is missing so
+// dev / preview builds without analytics don't crash or log noise.
+export const POSTHOG_KEY = process.env.EXPO_PUBLIC_POSTHOG_KEY ?? "";
+export const POSTHOG_HOST = process.env.EXPO_PUBLIC_POSTHOG_HOST ?? "https://us.i.posthog.com";

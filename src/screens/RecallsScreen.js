@@ -232,7 +232,7 @@ const s = StyleSheet.create({
   card:        { padding: 14, backgroundColor: theme.card, borderRadius: 12, borderWidth: 1, borderColor: theme.line, marginBottom: 10 },
   cardHd:      { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start", gap: 10 },
   cardName:    { flex: 1, fontSize: 15, fontWeight: "800", color: theme.fg, lineHeight: 20 },
-  sevBadge:    { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
+  sevBadge:    { flexShrink: 0, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 4 },
   sevText:     { fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
   cardMeta:    { fontSize: 11, color: theme.muted, marginTop: 2, fontWeight: "600" },
   metaRow:     { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginTop: 2 },

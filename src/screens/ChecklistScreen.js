@@ -3,14 +3,18 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect } from "@react-navigation/native";
-import { Pet, ChecklistState } from "../lib/storage";
+import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
+import { track } from "../lib/analytics";
+import { tapMedium, tapLight } from "../lib/haptics";
 import { theme } from "../theme";
 
 export default function ChecklistScreen() {
   const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
   const [pet, setPet] = useState(null);
+  const [petsCount, setPetsCount] = useState(0);
   const [items, setItems] = useState([]);
   const [state, setState] = useState({});
   const [refreshing, setRefreshing] = useState(false);
@@ -18,15 +22,21 @@ export default function ChecklistScreen() {
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
+    const all = await Pets.list();
+    setPetsCount(all.length);
     setItems(generateChecklist(p));
-    setState(await ChecklistState.get());
+    setState(await ChecklistState.get(p?.id));
   }, []);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
   async function setStatus(id, status) {
-    const next = await ChecklistState.setItem(id, status);
+    if (!pet?.id) return;
+    const next = await ChecklistState.setItem(pet.id, id, status);
     setState(next);
+    track("checklist_item_toggled", { action: status });
+    if (status === "done") tapMedium();
+    else tapLight();
   }
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;
@@ -38,6 +48,18 @@ export default function ChecklistScreen() {
       contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 40, paddingHorizontal: 20 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
+      <TouchableOpacity
+        onPress={() => petsCount > 1 && navigation.navigate("Main", { screen: "YourPets" })}
+        disabled={petsCount <= 1}
+        activeOpacity={0.7}
+        style={s.petHeader}
+      >
+        <Text style={s.petHeaderName} numberOfLines={1}>
+          {pet.name}'s checklist
+        </Text>
+        {petsCount > 1 && <Text style={s.petHeaderSwitch}>Switch ›</Text>}
+      </TouchableOpacity>
+
       <View style={s.progress}>
         <Text style={s.progressLabel}>This week</Text>
         <Text style={s.progressCount}>{completed} of {items.length} done</Text>
@@ -77,7 +99,10 @@ export default function ChecklistScreen() {
 }
 
 const s = StyleSheet.create({
-  progress:     { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 16 },
+  petHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingHorizontal: 4, gap: 12 },
+  petHeaderName:{ flex: 1, fontSize: 18, fontWeight: "800", color: theme.fg, textTransform: "capitalize" },
+  petHeaderSwitch:{ flexShrink: 0, fontSize: 12, fontWeight: "700", color: theme.accent, letterSpacing: 0.4 },
+  progress:     { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 16, gap: 12 },
   progressLabel:{ color: theme.fg, fontWeight: "700", fontSize: 14, letterSpacing: 0.5 },
   progressCount:{ color: theme.accent, fontWeight: "800", fontSize: 18 },
   item:         { flexDirection: "row", alignItems: "flex-start", paddingVertical: 14, paddingHorizontal: 12, borderRadius: 10, backgroundColor: theme.card, borderWidth: 1, borderColor: theme.line, marginBottom: 8 },

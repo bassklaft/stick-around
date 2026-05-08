@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { NavigationContainer } from "@react-navigation/native";
@@ -7,6 +7,8 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, TouchableOpacity, View, Text, Platform } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { initAnalytics, screen as trackScreen } from "./src/lib/analytics";
+import { initHaptics } from "./src/lib/haptics";
 
 import Logo from "./src/components/Logo";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -99,6 +101,8 @@ function MainTabs({ navigation }) {
 export default function App() {
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+  const navRef = useRef(null);
+  const lastRouteRef = useRef(null);
 
   useEffect(() => {
     (async () => {
@@ -107,6 +111,9 @@ export default function App() {
       setReady(true);
     })();
   }, []);
+
+  useEffect(() => { initAnalytics(); }, []);
+  useEffect(() => { initHaptics(); }, []);
 
   if (!ready) {
     return (
@@ -129,7 +136,23 @@ export default function App() {
     <SafeAreaProvider>
       <StatusBar style="dark" />
       <PurchasesProvider>
-      <NavigationContainer>
+      <NavigationContainer
+        ref={navRef}
+        onReady={() => {
+          const route = navRef.current?.getCurrentRoute?.();
+          if (route?.name) {
+            lastRouteRef.current = route.name;
+            trackScreen(route.name);
+          }
+        }}
+        onStateChange={() => {
+          const route = navRef.current?.getCurrentRoute?.();
+          if (route?.name && route.name !== lastRouteRef.current) {
+            lastRouteRef.current = route.name;
+            trackScreen(route.name);
+          }
+        }}
+      >
         <RootStack.Navigator screenOptions={{ headerShown: false }}>
           {!onboarded ? (
             <RootStack.Screen name="Onboarding">

@@ -12,6 +12,7 @@ import { normalizePetBreeds } from "./petBreeds";
 
 const KEY_LIST   = "pawrent_pets_v2";
 const KEY_LEGACY = "pawrent_pet";
+const KEY_ACTIVE = "pawrent_active_pet_id";
 
 function newId() { return "p" + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
@@ -77,6 +78,8 @@ export const Pets = {
   async remove(id) {
     const arr = (await this.list()).filter(p => p.id !== id);
     await this.setAll(arr);
+    const activeId = await AsyncStorage.getItem(KEY_ACTIVE);
+    if (activeId === id) await AsyncStorage.removeItem(KEY_ACTIVE);
   },
 
   // ─────────────── Health records (v1.2) ─────────────────────────
@@ -145,14 +148,32 @@ export const Pets = {
       return (a.createdAt || 0) - (b.createdAt || 0);
     });
   },
+  async getActiveId() {
+    return await AsyncStorage.getItem(KEY_ACTIVE);
+  },
+  async setActive(id) {
+    if (!id) return;
+    await AsyncStorage.setItem(KEY_ACTIVE, id);
+  },
+  async clearActive() {
+    await AsyncStorage.removeItem(KEY_ACTIVE);
+  },
 };
 
-// Backward-compat shim: existing screens that used Pet.get/set treat
-// the first pet as "the" pet.
+// Backward-compat shim: every screen calls Pet.get() to retrieve "the"
+// pet. With multi-pet support that resolves to the active pet (if set
+// and still in the list), otherwise the oldest pet as fallback.
 export const Pet = {
   async get() {
     const arr = await Pets.list();
-    return arr[0] || null;
+    if (arr.length === 0) return null;
+    const activeId = await Pets.getActiveId();
+    if (activeId) {
+      const found = arr.find(p => p.id === activeId);
+      if (found) return found;
+    }
+    const sorted = await Pets.listSortedOldestFirst();
+    return sorted[0] || arr[0] || null;
   },
   async set(p) {
     const arr = await Pets.list();
@@ -166,21 +187,59 @@ export const Pet = {
   async clear() {
     await AsyncStorage.removeItem(KEY_LIST);
     await AsyncStorage.removeItem(KEY_LEGACY);
-    await AsyncStorage.removeItem("pawrent_checklist_state");
+    await AsyncStorage.removeItem(KEY_ACTIVE);
+    await AsyncStorage.removeItem(KEY_CHECKLIST_V1);
+    await AsyncStorage.removeItem(KEY_CHECKLIST_V2);
     await AsyncStorage.removeItem("pawrent_observations");
   },
 };
 
+// Checklist completion state, scoped per pet.
+// Shape: { [petId]: { [itemId]: { status, ts } } }
+// V1 was a flat { [itemId]: ... } map shared across pets; on first read
+// after upgrade the legacy map is folded under the active pet's id.
+const KEY_CHECKLIST_V1 = "pawrent_checklist_state";
+const KEY_CHECKLIST_V2 = "pawrent_checklist_state_v2";
+
 export const ChecklistState = {
-  async get() {
-    const s = await AsyncStorage.getItem("pawrent_checklist_state");
-    return s ? JSON.parse(s) : {};
+  async _readAll() {
+    const raw = await AsyncStorage.getItem(KEY_CHECKLIST_V2);
+    if (raw) {
+      try { return JSON.parse(raw); } catch { /* fall through to migration */ }
+    }
+    // Migrate legacy global state under the active pet. If there is no
+    // active pet yet (fresh install, mid-onboarding), leave the legacy
+    // key alone — the next read will retry once a pet exists.
+    const legacy = await AsyncStorage.getItem(KEY_CHECKLIST_V1);
+    if (legacy) {
+      try {
+        const oldState = JSON.parse(legacy);
+        const active = await Pet.get();
+        if (active?.id) {
+          const next = { [active.id]: oldState };
+          await AsyncStorage.setItem(KEY_CHECKLIST_V2, JSON.stringify(next));
+          await AsyncStorage.removeItem(KEY_CHECKLIST_V1);
+          return next;
+        }
+      } catch { /* fall through */ }
+    }
+    return {};
   },
-  async setItem(key, status) {
-    const cur = await this.get();
-    cur[key] = { status, ts: Date.now() };
-    await AsyncStorage.setItem("pawrent_checklist_state", JSON.stringify(cur));
-    return cur;
+  async _writeAll(all) {
+    await AsyncStorage.setItem(KEY_CHECKLIST_V2, JSON.stringify(all));
+  },
+  async get(petId) {
+    if (!petId) return {};
+    const all = await this._readAll();
+    return all[petId] || {};
+  },
+  async setItem(petId, key, status) {
+    if (!petId) return {};
+    const all = await this._readAll();
+    if (!all[petId]) all[petId] = {};
+    all[petId][key] = { status, ts: Date.now() };
+    await this._writeAll(all);
+    return all[petId];
   },
 };
 

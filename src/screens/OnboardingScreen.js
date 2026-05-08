@@ -6,6 +6,8 @@ import { Pet, Pets } from "../lib/storage";
 import { breedFacts, dogBreeds, catBreeds, breedEmoji } from "../data/breeds";
 import { MAX_BREEDS, shortBreedName } from "../lib/petBreeds";
 import { pickPetPhoto } from "../lib/photoPicker";
+import { track } from "../lib/analytics";
+import { tapMedium, notifySuccess } from "../lib/haptics";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -46,7 +48,11 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
 
   async function pickPhoto() {
     const uri = await pickPetPhoto();
-    if (uri) setPhotoUri(uri);
+    if (uri) {
+      setPhotoUri(uri);
+      track("pet_photo_picked", { context: "onboarding" });
+      tapMedium();
+    }
   }
 
   async function finish() {
@@ -70,8 +76,24 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
     };
     if (addMode) {
       await Pets.add(payload);
+      track("pet_added", {
+        species,
+        has_photo: !!photoUri,
+        has_age: payload.ageYears != null,
+        has_weight: payload.weightLbs != null,
+        is_mix: !!payload.mixOf,
+      });
+      notifySuccess();
     } else {
       await Pet.set(payload);
+      track("onboarding_completed", {
+        species,
+        has_photo: !!photoUri,
+        has_age: payload.ageYears != null,
+        has_weight: payload.weightLbs != null,
+        is_mix: !!payload.mixOf,
+      });
+      notifySuccess();
     }
     onDone();
   }
@@ -156,6 +178,27 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
                 );
               })}
             </View>
+
+            {species === "cat" && (
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    "Tabby, Tortoiseshell, or Calico?",
+                    "These are coat patterns that can appear on many cat breeds — not breeds themselves. If your cat is mixed-breed, pick 'Domestic Shorthair' or 'Mixed Cat' below. If they're a specific breed (like a Maine Coon) with one of these patterns, pick the breed.",
+                    [
+                      { text: "Use Domestic Shorthair", onPress: () => setSelectedBreeds(["domestic shorthair"]) },
+                      { text: "Use Mixed Cat", onPress: () => setSelectedBreeds(["mixed cat"]) },
+                      { text: "Cancel", style: "cancel" },
+                    ],
+                  );
+                }}
+                style={s.coatPatternHint}
+              >
+                <Text style={s.coatPatternHintText}>
+                  💡 Is your cat a Tabby, Tortoiseshell, or Calico?
+                </Text>
+              </TouchableOpacity>
+            )}
 
             {showMixDetails && (
               <View style={{ marginTop: 18 }}>
@@ -266,6 +309,8 @@ const s = StyleSheet.create({
   selectedChipEmoji:  { fontSize: 14, marginRight: 4 },
   selectedChipText:   { color: "#fff", fontSize: 13, fontWeight: "600", textTransform: "capitalize" },
   selectedHint:       { width: "100%", fontSize: 11, color: theme.muted, marginTop: 4, fontStyle: "italic" },
+  coatPatternHint:    { marginTop: 14, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: theme.line, backgroundColor: theme.accentSoft, alignSelf: "flex-start" },
+  coatPatternHintText:{ fontSize: 13, color: theme.fg, fontWeight: "500" },
   disclaimer:       { marginTop: 24, padding: 14, backgroundColor: theme.accentSoft, borderRadius: 10 },
   disclaimerText:   { fontSize: 12, color: theme.fg, lineHeight: 18 },
   dnaHint:          { fontSize: 11, color: theme.muted, marginTop: 8, lineHeight: 17, fontStyle: "italic" },

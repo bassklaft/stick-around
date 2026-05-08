@@ -296,7 +296,7 @@ const rs = StyleSheet.create({
   hd:          { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
   iconCircle:  { width: 32, height: 32, borderRadius: 16, backgroundColor: theme.accentSoft, alignItems: "center", justifyContent: "center" },
   title:       { flex: 1, fontSize: 14, fontWeight: "700", color: theme.fg },
-  sevBadge:    { paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
+  sevBadge:    { flexShrink: 0, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
   sevText:     { fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
   body:        { fontSize: 13, color: theme.fg, lineHeight: 19 },
   linkBtn:     { flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, alignSelf: "flex-start" },
