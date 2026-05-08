@@ -1,5 +1,10 @@
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { normalizePetBreeds } from "./petBreeds";
+import { normalizePetPhotos, migratePetPhotosArray } from "./petPhotos";
+
+// Re-export so existing import sites that pull `normalizePetPhotos`
+// from this module keep working.
+export { normalizePetPhotos };
 
 // Multi-pet storage with auto-migration from the legacy single-pet key.
 // All UI flows read through `Pets`. The legacy `Pet` object is kept so
@@ -28,6 +33,10 @@ function migrateBreeds(arr) {
   return { pets: out, changed };
 }
 
+// Photo-schema migration is implemented in ./petPhotos.js as pure
+// functions (no AsyncStorage), so they can be unit-tested under plain
+// Node. We just consume migratePetPhotosArray here.
+
 export const Pets = {
   async list() {
     // Prefer the v2 array
@@ -35,8 +44,13 @@ export const Pets = {
     if (s) {
       try {
         const raw = JSON.parse(s);
-        const { pets, changed } = migrateBreeds(raw);
-        if (changed) await AsyncStorage.setItem(KEY_LIST, JSON.stringify(pets));
+        // v1.2 migrations chain: breeds first, then photos. Each is
+        // idempotent and tracks its own `changed` flag. Persist back
+        // to storage only when something actually changed so we don't
+        // write on every read.
+        const { pets: afterBreeds, changed: c1 } = migrateBreeds(raw);
+        const { pets, changed: c2 } = migratePetPhotosArray(afterBreeds);
+        if (c1 || c2) await AsyncStorage.setItem(KEY_LIST, JSON.stringify(pets));
         return pets;
       } catch { /* fall through */ }
     }
@@ -45,7 +59,7 @@ export const Pets = {
     if (legacy) {
       try {
         const pet = JSON.parse(legacy);
-        const arr = [normalizePetBreeds({ ...pet, id: pet.id || newId() })];
+        const arr = [normalizePetPhotos(normalizePetBreeds({ ...pet, id: pet.id || newId() }))];
         await AsyncStorage.setItem(KEY_LIST, JSON.stringify(arr));
         return arr;
       } catch { /* */ }
@@ -60,7 +74,11 @@ export const Pets = {
   },
   async add(pet) {
     const arr = await this.list();
-    const withId = normalizePetBreeds({ ...pet, id: pet.id || newId(), createdAt: pet.createdAt || Date.now() });
+    const withId = normalizePetPhotos(normalizePetBreeds({
+      ...pet,
+      id: pet.id || newId(),
+      createdAt: pet.createdAt || Date.now(),
+    }));
     arr.push(withId);
     await this.setAll(arr);
     return withId;
@@ -69,7 +87,9 @@ export const Pets = {
     const arr = await this.list();
     const idx = arr.findIndex(p => p.id === id);
     if (idx >= 0) {
-      arr[idx] = normalizePetBreeds({ ...arr[idx], ...updates });
+      // Normalize through both migrations on every update so any update
+      // path (photo edit, name change, etc.) writes a consistent shape.
+      arr[idx] = normalizePetPhotos(normalizePetBreeds({ ...arr[idx], ...updates }));
       await this.setAll(arr);
       return arr[idx];
     }
