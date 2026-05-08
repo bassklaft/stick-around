@@ -17,7 +17,6 @@ import { usePurchases } from "../lib/purchasesContext";
 import { getPetBreeds, getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
 import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
-import { pickPetPhoto } from "../lib/photoPicker";
 import { track } from "../lib/analytics";
 import { tapLight, tapMedium } from "../lib/haptics";
 import PhotoManagerSheet from "../components/PhotoManagerSheet";
@@ -126,24 +125,16 @@ export default function YourPetsScreen() {
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  // Adds the picked photo to the pet's photos[] (primary slot at the
-  // top), keeping any existing photos so the multi-photo schema stays
-  // intact. A future "Manage photos" sheet (item 9) will give finer
-  // control; this one-tap path stays for the avatar quick-replace.
-  async function changePhoto(petId) {
-    const uri = await pickPetPhoto({ petId });
-    if (!uri) return;
-    const all = await Pets.list();
-    const existing = all.find((p) => p.id === petId);
-    const existingPhotos = Array.isArray(existing?.photos)
-      ? existing.photos.filter((u) => typeof u === "string" && u.length > 0)
-      : [];
-    // New photo becomes primary (photos[0]). Dedupe + cap at MAX.
-    const next = [uri, ...existingPhotos.filter((u) => u !== uri)].slice(0, MAX_PHOTOS_PER_PET);
-    await Pets.update(petId, { photos: next, photoUri: uri });
-    track("pet_photo_picked", { context: "my_floofs", total_photos: next.length });
+  // Avatar tap opens the labeled photo-manager sheet so the user
+  // sees their existing 5 prompt slots (with labels matching the
+  // first-run onboarding reel) and can fill, replace, or remove any
+  // of them — including users who created their pet before the
+  // multi-photo feature shipped, who would otherwise never see the
+  // labeled prompts. The actual pickPetPhoto call lives inside the
+  // sheet now, scoped per slot.
+  function openPhotoManager(petId) {
+    setPhotoMgrPetId(petId);
     tapMedium();
-    load();
   }
 
   function editPet(petId) {
@@ -279,7 +270,7 @@ export default function YourPetsScreen() {
                 const photoCount = Array.isArray(pet.photos) ? pet.photos.length : (pet.photoUri ? 1 : 0);
                 return (
                   <>
-                    <TouchableOpacity onPress={() => changePhoto(pet.id)} activeOpacity={0.7} style={s.avatarWrap}>
+                    <TouchableOpacity onPress={() => openPhotoManager(pet.id)} activeOpacity={0.7} style={s.avatarWrap}>
                       {cardUri ? (
                         <Image source={{ uri: cardUri }} style={s.avatar} />
                       ) : (
@@ -293,20 +284,9 @@ export default function YourPetsScreen() {
                     </TouchableOpacity>
                     <Text style={s.avatarHint}>
                       {cardUri
-                        ? (photoCount > 1 ? `Tap to add another · ${photoCount}/${MAX_PHOTOS_PER_PET}` : "Tap to add another photo")
-                        : "Tap to add a photo"}
+                        ? `Tap to manage photos · ${photoCount}/${MAX_PHOTOS_PER_PET}`
+                        : "Tap to add the 5 photos that tell their story"}
                     </Text>
-                    {photoCount > 0 && (
-                      <TouchableOpacity
-                        onPress={() => { tapLight(); setPhotoMgrPetId(pet.id); }}
-                        style={s.managePhotosLink}
-                        accessibilityRole="button"
-                        accessibilityLabel={`Manage ${pet.name}'s photos`}
-                      >
-                        <MaterialCommunityIcons name="image-multiple-outline" size={14} color={theme.accent} />
-                        <Text style={s.managePhotosText}>Manage photos</Text>
-                      </TouchableOpacity>
-                    )}
                   </>
                 );
               })()}
@@ -535,8 +515,6 @@ const s = StyleSheet.create({
   avatarFallback:{ width: 130, height: 130, borderRadius: 65, backgroundColor: theme.accentSoft, alignItems: "center", justifyContent: "center" },
   avatarBadge:   { position: "absolute", bottom: 4, right: 4, width: 32, height: 32, borderRadius: 16, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: theme.card },
   avatarHint:    { fontSize: 11, color: theme.muted, marginTop: 8, fontStyle: "italic" },
-  managePhotosLink:{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: theme.accentSoft },
-  managePhotosText:{ color: theme.accent, fontSize: 11, fontWeight: "700", letterSpacing: 0.3 },
   petName:       { fontSize: 26, fontWeight: "800", color: theme.fg, textAlign: "center", textTransform: "capitalize" },
   petMeta:       { fontSize: 13, color: theme.muted, marginTop: 4, textAlign: "center", textTransform: "capitalize" },
   mixMeta:       { fontSize: 12, color: theme.accent, marginTop: 4, textAlign: "center", fontStyle: "italic" },

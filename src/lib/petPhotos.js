@@ -17,6 +17,34 @@ export const PHOTO_SCHEMA_VERSION = 2;
 // Maximum photos per pet (UI enforces this; storage layer accepts any).
 export const MAX_PHOTOS_PER_PET = 10;
 
+// The 5-photo onboarding reel. Single source of truth — both
+// OnboardingScreen and PhotoManagerSheet pull labels from here so a
+// later edit in the manager reads as the same prompt the user saw at
+// first run. Position in the array is the canonical slot index:
+//   photos[0] → "The day you met"     (also the primary canonical face)
+//   photos[1] → "Them in their happy place"
+//   photos[2] → "A silly one"
+//   photos[3] → "Looking their finest"
+//   photos[4] → "Latest pic of {pet}"
+//   photos[5..9] → "Extra" (unlabeled spillover, allowed up to MAX)
+//
+// shortLabel is what gets shown on the manager grid tile; title + sub
+// drive the onboarding prompt headers.
+export const PHOTO_PROMPTS = [
+  { shortLabel: "Day you met",      title: "The day you met",         sub: "First-day energy. A puppy class, the airport pickup, a shelter parking-lot moment." },
+  { shortLabel: "Happy place",      title: "Them in their happy place", sub: "The favorite spot. Sun puddle, that one couch corner, the back of the car." },
+  { shortLabel: "A silly one",      title: "A silly one",             sub: "A goofy face, a zoomies blur, the sleepy upside-down. Embarrassing is encouraged." },
+  { shortLabel: "Looking finest",   title: "Looking their finest",    sub: "Fresh from the groomer, in a holiday sweater, or just a really good nap-mane." },
+  { shortLabel: "Latest pic",       title: "Latest pic of {pet}",     sub: "Most recent — the version of them you'd text to a friend right now." },
+];
+
+export const PROMPT_SLOTS = PHOTO_PROMPTS.length;
+
+export function getPromptLabel(idx) {
+  if (idx < PROMPT_SLOTS) return PHOTO_PROMPTS[idx].shortLabel;
+  return "Extra";
+}
+
 // Per-build-20 guardrail D: try/catch fallback. If migration ever
 // throws on a corrupted record, return the record unchanged rather
 // than risk losing user data.

@@ -10,19 +10,17 @@ import { track } from "../lib/analytics";
 import { tapMedium, notifySuccess } from "../lib/haptics";
 import { theme } from "../theme";
 import PhotoboothAnimation from "../components/PhotoboothAnimation";
+import { PHOTO_PROMPTS, PROMPT_SLOTS } from "../lib/petPhotos";
 
-// 5-photo onboarding reel — cute prompts that nudge the user to capture
-// a small set of photos that the home screen rotates between. Each
-// prompt is individually skippable and "Skip all photos" jumps the
-// user past the entire reel in one tap (Apple Guideline 4.0 + build
-// 20 guardrail B: complete-skip path < 90s).
-const PHOTO_PROMPTS = [
-  { eyebrow: "📸  PHOTO 1 OF 5", title: "The day you met",        sub: "First-day energy. A puppy class, the airport pickup, a shelter parking-lot moment." },
-  { eyebrow: "📸  PHOTO 2 OF 5", title: "Them in their happy place", sub: "The favorite spot. Sun puddle, that one couch corner, the back of the car." },
-  { eyebrow: "📸  PHOTO 3 OF 5", title: "A silly one",             sub: "A goofy face, a zoomies blur, the sleepy upside-down. Embarrassing is encouraged." },
-  { eyebrow: "📸  PHOTO 4 OF 5", title: "Looking their finest",    sub: "Fresh from the groomer, in a holiday sweater, or just a really good nap-mane." },
-  { eyebrow: "📸  PHOTO 5 OF 5", title: "Latest pic of {pet}",     sub: "Most recent — the version of them you'd text to a friend right now." },
-];
+// 5-photo onboarding reel — pulls prompt copy from petPhotos.js (single
+// source of truth shared with PhotoManagerSheet so existing users see
+// the same labels in the manager that new users saw at first run).
+// Each prompt is individually skippable and "Skip all photos" jumps
+// the user past the entire reel in one tap (Apple Guideline 4.0 +
+// build 20 guardrail B: complete-skip path < 90s).
+function promptEyebrow(idx) {
+  return `📸  PHOTO ${idx + 1} OF ${PROMPT_SLOTS}`;
+}
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
@@ -394,7 +392,7 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
                   );
                 })}
               </View>
-              <Text style={s.eyebrow}>{prompt.eyebrow}</Text>
+              <Text style={s.eyebrow}>{promptEyebrow(photoPromptIdx)}</Text>
               <Text style={s.h1}>{promptTitle}</Text>
               <Text style={s.sub}>{prompt.sub}</Text>
 
