@@ -135,6 +135,47 @@ Estimated 2-3 hours focused work. Worth doing properly as one cohesive feature c
 4. **Long-press on My Floofs tab icon → mini list of floofs popup** (release-finger-on-name to switch). Earlier deferred to v1.3 due to needing `react-native-ios-context-menu` for slide-to-select. v1.2.0 pragmatic take: tap-to-select instead of slide-to-select.
 5. **Tosa Inu** still parked — needs neutral framing + BSL country list, separate decision.
 
+---
+
+## Build 20 — STAGED 2026-05-08 — awaiting EAS confirmation prompt
+
+**Status**: 🟡 Code landed on `v1.2-work`. Awaiting explicit user confirmation before `eas build` per `feedback_eas_build_confirmation.md`.
+
+**HEAD pre-confirmation**: `7195411` (feat(fan-out): continuous slide-to-select on My Floofs long-press)
+
+**Marketing version**: `1.2.0` (same train as build 19).
+**Build number**: `20` (auto-increment from 19).
+**Tag**: `1.2.0 (20)`.
+
+### What landed in build 20 (commits 45d62c5 → 7195411)
+
+| # | Item | Commit |
+|---|---|---|
+| 7 | **v1.2 photo schema migration** — `pet.photoUri: string` → `pet.photos: string[]` with `photoUri` retained as a backward-compat mirror of `photos[0]`. Idempotent via `pet.schemaVersion = 2` short-circuit, wrapped in try/catch (guardrail D) so corrupted records are returned unchanged rather than risk losing user data. Pure helpers extracted to `src/lib/petPhotos.js` so the migration logic is unit-testable from plain Node — no AsyncStorage / no React Native runtime in the dependency chain. **20/20 unit tests pass** (`node scripts/testPhotoMigration.mjs`). | `45d62c5` |
+| 6 | **5-photo onboarding reel + photobooth strip animation** — replaces the single-photo step with 5 cute reel-style prompts ("The day you met", "Them in their happy place", "A silly one", "Looking their finest", "Latest pic of {pet}"). Each prompt individually skippable; "Skip all photos · add later" one tap away on every prompt (Apple Guideline 4.0 + guardrail B: complete-skip path < 90s). After persistence, photos slide down from the top and settle into a strip with date label, ≤ 3.5s, with a visible "Skip" button at top-right at all times (guardrail C). Edit-mode skips the animation. Photos go to `documentDirectory` only — never to camera roll (guardrail E). | `3ecb5e6` |
+| 8 | **Multi-photo rotation across display sites** — `pickPhotoForSlot(pet, slot, opts)` chooses different photos for different surfaces, deterministically per (petId, slot, day-or-session bucket). Slots: `hero` (rotates daily), `collage` (per-tile-index — adjacent tiles never collide), `chip` (rotates daily, independent seed from hero), `card` (rotates per session), `primary` (always `photos[0]` for fan-out + switcher — canonical face). Pets with one photo or legacy `photoUri`-only fall back gracefully. | `92730c2` |
+| 9 | **Banner tap-to-edit photo manager** — new `PhotoManagerSheet` with up to `MAX_PHOTOS_PER_PET = 10` per pet. Tap home banner (single-pet hero) to open scoped to active pet; "Manage photos" pill appears below each My Floofs card avatar. Add path uses existing `pickPetPhoto` (sandbox-only — guardrail E preserved). Tap a non-primary photo to "Make primary" (reorders to `photos[0]`); tap any photo to "Remove" with destructive-style confirm. At-cap state hides the Add tile and shows "Max reached · remove one to add more." | `2f5f495` |
+| 10 | **Continuous slide-to-select on fan-out** — implemented with **RN's built-in PanResponder, no new native deps** (no `react-native-gesture-handler`, no `expo prebuild` required). Both interactions in one gesture system: TAP a circle picks it (preserved); SLIDE-TO-SELECT means touch anywhere → drag finger across the arc → release on a circle to pick it. Hovered circle scales to 1.18x with active-pet ring + brighter shadow + light haptic on hover transitions. Release outside any circle dismisses without picking. Inner circles use `pointerEvents="none"` so the parent's PanResponder owns the gesture end-to-end. | `7195411` |
+
+### Guardrails verification
+
+- **A. Photo permission strings clear and non-promotional** — `pickPetPhoto` (sandbox library + sandbox-only camera options) uses neutral copy ("Allow photo access in Settings to add a picture of your pet"). No marketing language.
+- **B. ALL onboarding skippable, complete-skip path < 90s** — every photo prompt has explicit Skip; "Skip all photos · add later" one tap away. Microchip step accepts "I'm not sure"; age/weight already optional. Tap-tap-tap through the form is < 30s.
+- **C. Photobooth animation skippable, ≤ 3-4s** — Skip button visible top-right at all times during animation. Total runtime ≤ 3.5s (1.4s entrance + 0.9s hold + 0.5s exit). Empty-photo case auto-dismisses immediately.
+- **D. Schema migration safety** — `normalizePetPhotos` wrapped in try/catch; idempotent via `schemaVersion = 2` short-circuit; persists `schemaVersion` flag once on first migration. 20/20 unit tests pass including null-defensive, multi-photo preservation, idempotency, out-of-sync `photoUri` repair, and full v1.1.x record fidelity (no field loss).
+- **E. Photos NEVER to camera roll** — `pickPetPhoto` only calls `launchImageLibraryAsync` (never camera, never `saveToPhotos`). Files copied to `documentDirectory/pets/{petId}/`. `pickTummyPhoto` (separate code path, untouched in build 20) already had explicit camera-roll-disabled comment.
+
+### Pre-trigger checklist before build 20 EAS
+
+- [ ] User confirms via `feedback_eas_build_confirmation.md` prompt (~$2 pay-as-you-go).
+- [ ] On confirm: bump `app.json` build number? (autoIncrement should handle, verify EAS config.)
+- [ ] Trigger via `eas build --platform ios --profile production` (no `--non-interactive` since auto-increment requires git clean state).
+- [ ] After build success: download `.ipa` → Transporter → ASC processing → smoke-test on MaxiTaxi.
+
+### Build budget impact
+
+Per `feedback_build_budget.md`: this cycle had **1 discretionary build + 1 emergency reserve**. Build 18 used 1, build 19 used the emergency replacement (Apple 1.1.0 train rejection ≈ emergency). Build 20 would consume the next discretionary credit. **Confirm budget room before triggering** — or defer the EAS build to next cycle (12/month + 3 emergency reserve, ≈3 weeks out).
+
 
 - Pawgress (data + visuals + screen + Home card integration)
 - Tummy Tracker (entry screens + timeline + recall match service + vet visit suggestion + PDF export + Home card)
