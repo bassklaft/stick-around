@@ -219,13 +219,23 @@ Walk through this on the physical device after build 18 lands in TestFlight, bef
 - [ ] **Independent state**: expand About on breed 1, collapse About on breed 2 → confirm they're independent (toggling breed 1 doesn't toggle breed 2)
 - [ ] Same independence on Health Considerations and Tips
 
-**4. Active pet switcher (multi-pet only)**
-- [ ] My Floofs tab with 2+ pets: cards show "Tap card to make active" hint
-- [ ] Currently active pet shows "✓ ACTIVE" badge + green border
-- [ ] Eldest pet shows "👑 ELDEST" badge
-- [ ] Tap a non-active card → haptic fires (light tap on physical device) → app navigates to Home tab → that pet is now the active hero
-- [ ] Home hero shows "Tap to switch floof ↓" hint at bottom in multi-pet mode
-- [ ] Tap Home hero → back to My Floofs
+**4. Multi-pet UX refinement (multi-pet only — UPDATED for v1.2.0)**
+
+The whole-card tap on My Floofs was REMOVED. Active-pet switching now lives on the nav-bar of pet-scoped screens via a chip + tappable title. The pet card name is the dedicated tap target for editing.
+
+- [ ] My Floofs tab with 2+ pets: cards do NOT show a "Tap card to make active" hint anymore (whole-card tap removed)
+- [ ] Currently active pet still shows "✓ ACTIVE" badge + green border
+- [ ] Eldest pet still shows "👑 ELDEST" badge
+- [ ] Tap anywhere on the card body (NOT name, NOT photo) → nothing happens (informational only)
+- [ ] **Tap pet NAME** (with pencil icon next to it) → EditPet modal opens pre-filled with the pet's data → change something → "Save changes" → modal closes → My Floofs reflects the change
+- [ ] Tap pet PHOTO → photo picker opens (existing single-purpose behavior preserved)
+- [ ] Edit modal "Cancel" button → closes without saving
+- [ ] **Checklist tab title shows "Falafel's Checklist"** in the nav bar (replaces the Logo on this tab); for multi-pet, title has a chevron-down + is tappable to open the switcher modal
+- [ ] **Checklist tab nav-bar top-right**: small avatar + first-name chip (multi-pet only); tap → switcher modal opens
+- [ ] **Health Tracker title shows "Falafel's Health Tracker"** in the nav bar; same chevron + chip pattern as Checklist
+- [ ] Switcher modal: page-sheet shows all pets with avatars; active pet has accent-colored border + "ACTIVE" pill; tap a non-active pet → modal closes → all pet-scoped screens reflect the new active pet
+- [ ] Switching from pet A to pet B updates: ChecklistScreen content (checks, items), HealthTrackerScreen content (records), HomeScreen hero photo, and the chip itself
+- [ ] **Single-pet households**: NO chip in nav bar, title is plain text (no chevron, not tappable)
 - [ ] Per-pet checklist state: switch from pet A to pet B → confirm pet B's checklist reflects pet B's checks, not pet A's (Falafel's "brushed teeth" check should NOT appear on a different pet's checklist)
 
 **5. Premium screen + founder override**
@@ -245,7 +255,8 @@ Walk through this on the physical device after build 18 lands in TestFlight, bef
 - [ ] Setting Haptic feedback to "Off" → no haptics anywhere
 
 **8. Analytics (verify in PostHog dashboard, not just console)**
-- [ ] Open PostHog dashboard → Live Events → confirm the test session shows: `app_opened`, `screen_viewed`, `about_breed_expanded`, `health_considerations_expanded`, `origin_story_expanded`, `sources_expanded`, `insider_tips_expanded`, `active_pet_switched`, `pet_photo_picked`
+- [ ] Open PostHog dashboard → Live Events → confirm the test session shows: `app_opened`, `screen_viewed`, `about_breed_expanded`, `health_considerations_expanded`, `origin_story_expanded`, `sources_expanded`, `insider_tips_expanded`, `active_pet_switched`, `pet_photo_picked`, `pet_edit_opened`, `pet_edited` (NEW in v1.2.0)
+- [ ] `active_pet_switched` events include a `source` property: `checklist_switcher` or `health_tracker_switcher` (NEW in v1.2.0)
 - [ ] No PII leakage: confirm none of the events contain `pet.name`, breed-key strings (only `species: "dog"|"cat"`), or photo URIs
 
 **9. Health Tracker (v1.2 feature — confirm it landed in the merge)**
