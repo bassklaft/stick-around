@@ -1453,7 +1453,9 @@ const dogBreedData = {
 const catBreedData = {
   "domestic shorthair": {
     species: "cat", lifespan: "12-18 years", energy: "moderate",
+    about: "America's most common cat — and the most genetically diverse, with personalities ranging from lap-loving to fiercely independent and coat patterns covering the full spectrum (tabby, tortoiseshell, calico, solid, bicolor, anything). Domestic Shorthairs aren't really a breed; they're an umbrella term for the mixed-genetics cats that make up the vast majority of the American cat population. Mixed genetics translates to genuinely robust health — most concerns are general feline patterns rather than breed-specific. They thrive in almost any household; environment + early socialization shape behavior far more than genetic background. Like all cats, Domestic Shorthairs benefit from awareness of common feline patterns — Health Considerations covers what to watch for.",
     summary: "America's most common cat — wide variation in personality and appearance, generally robust health from mixed genetics. Most concerns are general feline patterns rather than breed-specific.",
+    healthSummary: "Mixed genetics means generally robust health and few breed-specific risks. The headline concerns are general feline patterns: obesity (the #1 issue in indoor cats), diabetes (often obesity-driven), CKD in seniors, hyperthyroidism in seniors, periodontal disease, FLUTD (especially urethral obstruction in males). Annual senior bloodwork from age 7 catches most things early.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "International Cat Care", url: "https://icatcare.org/" },
@@ -1489,7 +1491,9 @@ const catBreedData = {
   },
   "domestic longhair": {
     species: "cat", lifespan: "12-18 years", energy: "moderate",
+    about: "The longhaired cousin of the Domestic Shorthair — same robust mixed-cat genetics, same wide range of personalities, same coat-pattern diversity, but in a longer-haired version. Like DSH, this isn't strictly a breed; it's an umbrella for mixed-genetics cats with long coats. They thrive in almost any household but require meaningfully more grooming than shorthairs — daily brushing for some coats, professional grooming if mats develop. The same robust feline genetics apply: most health concerns are general feline patterns rather than breed-specific. Like all longhaired cats, they need extra care around grooming and hairball management — Health Considerations covers what to watch for.",
     summary: "Same robust mixed-cat genetics as DSH but with a longer coat — needs more grooming and is more prone to mat-related skin disease and intestinal obstruction from ingested hair.",
+    healthSummary: "Same general-feline pattern as Domestic Shorthair (obesity, diabetes, CKD, hyperthyroidism, FLUTD) plus longhair-specific concerns: mat-related skin disease (severe mats can require shaving under sedation) and trichobezoar / hairball obstruction in the GI tract.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "International Cat Care", url: "https://icatcare.org/" },
@@ -1526,7 +1530,9 @@ const catBreedData = {
   },
   "maine coon": {
     species: "cat", lifespan: "10-13 years", energy: "moderate",
+    about: "The largest domestic cat breed, with a famously dog-like personality — Maine Coons originated in colonial New England (almost certainly from longhaired cats brought by European sailors crossing with local shorthair cats), and the breed name reflects the regional origin. Folk legend mixes in raccoon and bobcat ancestry; genetics confirms neither, but the bushy tail and tufted ears make the resemblance visible. They're sociable, vocal in a chirping/trilling way (rather than typical meow), comfortable with children and other pets, and willing to play fetch. Adults can reach 18-20 lb — large for a cat. The shaggy semi-long coat needs regular brushing, especially under armpits where mats form. Like all large pure-bred cats, Maine Coons have a meaningful breed-specific health pattern worth knowing — Health Considerations covers what to watch for, especially around HCM where genetic testing and echo screening genuinely change outcomes.",
     summary: "Largest domestic cat breed, dog-like personality, long coat. Hypertrophic cardiomyopathy is the breed-defining health concern — Maine Coons carry a known MYBPC3 gene mutation, and screening genuinely changes outcomes.",
+    healthSummary: "Hypertrophic cardiomyopathy (HCM) is the breed-defining cardiac concern. Maine Coons carry a specific MYBPC3 (A31P) gene mutation; the genetic test predicts risk but doesn't replace echocardiogram screening. Annual echo by a board-certified cardiologist starting at age 1-2 is the breed-club standard. SMA, PKD, hip dysplasia, and stomatitis round out the headlines.",
     references: [
       { label: "Cornell Feline Health Center — Maine Coon", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Maine Coon Breeders & Fanciers Association", url: "https://www.mcbfa.org/" },
@@ -1563,7 +1569,9 @@ const catBreedData = {
   },
   "ragdoll": {
     species: "cat", lifespan: "12-17 years", energy: "low-moderate",
+    about: "Docile, affectionate, and unmistakably named — Ragdolls were developed in 1960s California by Ann Baker, who selected for the trait that gives the breed its name: they go limp like a ragdoll when picked up. The temperament is intact: gentle, sociable, indoor-oriented, and famously good with children. They follow their humans from room to room, greet visitors at the door, and tolerate being carried in a way most cats won't. Adults reach 12-20 lb. The pointed coat (color-pointed pattern shared with Siamese) develops gradually over the first 2-3 years. They're indoor-only by temperament — they lack the street smarts and the will to fight back outdoors. Like all pure-bred cats, Ragdolls have a meaningful breed-specific cardiac pattern worth knowing — Health Considerations covers what to watch for, especially around HCM where genetic testing and echo screening genuinely change outcomes.",
     summary: "Docile, floppy when picked up, indoor-only by temperament. Hypertrophic cardiomyopathy is the breed-defining concern — Ragdolls carry a different MYBPC3 mutation than Maine Coons but the screening protocol is the same.",
+    healthSummary: "Hypertrophic cardiomyopathy (HCM) is the breed-defining cardiac concern. Ragdolls carry a Ragdoll-specific MYBPC3 (R820W) mutation distinct from the Maine Coon variant. Annual echo screening from age 1-2 is standard. PKD, FIP susceptibility, bladder stones, and MPS VI round out the breed's documented patterns.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Ragdoll Fanciers' Worldwide Club", url: "https://www.rfwclub.com/" },
@@ -1599,7 +1607,9 @@ const catBreedData = {
   },
   "siamese": {
     species: "cat", lifespan: "12-20 years", energy: "high",
+    about: "Vocal, social, and famously opinionated — Siamese cats originated in Siam (modern Thailand), where they were associated with royal households. The breed reached the West in the late 19th century and quickly became one of the world's most recognized cat breeds. They're notoriously vocal, demand active interaction with their humans, and form deep attachments. Don't get a Siamese if you want a cat who will entertain themselves — they want to be involved in your activities. They thrive in households where someone is home most of the day, do well with another active cat for company, and accept being trained to leash, fetch, and 'tricks' more readily than most breeds. Long-lived (often 12-20 years). Like all pure-bred cats, they have a meaningful list of breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Vocal, social, demand-interaction breed. One of the longest-lived AKC/CFA cats but with a meaningful list of breed-specific health patterns — asthma, dental disease, amyloidosis, and a handful of inherited eye and neurologic conditions.",
+    healthSummary: "Feline asthma is over-represented in Siamese; chronic cough is rarely 'just hairballs'. Renal amyloidosis is the other headline (annual urine protein:creatinine + SDMA from age 5 catches it early). Periodontal/gingivostomatitis, hyperesthesia syndrome, and a notable rate of mediastinal lymphoma in young cats round out the breed's documented patterns.",
     references: [
       { label: "Cornell Feline Health Center — Siamese", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — Siamese health", url: "https://cfa.org/siamese/" },
@@ -1636,7 +1646,9 @@ const catBreedData = {
   },
   "persian": {
     species: "cat", lifespan: "12-17 years", energy: "low",
+    about: "Mellow, regal, and unmistakably plush — Persians are one of the oldest known cat breeds, with longhaired ancestors recorded in 1600s Italy (likely originating from Persia / modern Iran, hence the name). The modern Persian's flat face is a 20th-century selective-breeding development; older 'doll-face' Persians retained a more traditional muzzle. They're famously calm, low-energy, and prefer quiet households where they can lounge undisturbed for most of the day. They tolerate being held, accept brushing, and are reliable companions for families that want a calm cat who won't climb the curtains. The flat face is real, eye care is daily (tear staining + corneal exposure), and the long coat needs daily brushing to prevent painful mats. Like all brachycephalic breeds, Persians need extra care around airway, eyes, and dental — Health Considerations covers what to watch for.",
     summary: "Brachycephalic flat-faced cat with a luxurious long coat. PKD (polycystic kidney disease) is the breed-defining concern, with brachycephalic airway issues, eye conditions, and dental problems all elevated. Daily face and coat care is non-optional.",
+    healthSummary: "PKD (polycystic kidney disease) is the breed-defining concern; the autosomal-dominant PKD1 gene mutation is widespread in older Persian lines, but reputable breeders test and the rate has dropped meaningfully. Brachycephalic airway, entropion + corneal ulcers + epiphora (tear overflow), dental disease from a small mouth, and matting from the long coat are the daily-care headlines.",
     references: [
       { label: "Cornell Feline Health Center — Persian", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — Persian health", url: "https://cfa.org/persian/" },
@@ -1672,7 +1684,9 @@ const catBreedData = {
   },
   "bengal": {
     species: "cat", lifespan: "12-16 years", energy: "very high",
+    about: "Wild-looking, athletic, and unmistakably demanding — Bengals are domestic cats with documented Asian Leopard Cat ancestry (developed in 1960s-70s California by Jean Mill via deliberate hybrid crosses), refined into a domestic breed across multiple generations. The wild ancestry is now several generations back in pedigreed Bengals (TICA registers F4+ as fully domestic), but the appearance and personality echo the wild origin. They're vocal, scary-athletic, intelligent, water-curious (will join showers), and require substantial daily mental and physical stimulation. They're not a casual-pet breed — under-stimulated Bengals become destructive within weeks. They thrive in active households with vertical climbing space, food puzzles, leash training, and ideally a second active cat for company. Like all athletic pure-breeds, Bengals have a meaningful list of breed-specific health patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Wild-looking spotted or marbled coat from Asian leopard cat heritage. Athletic, loud, water-curious, and demanding. Health concerns include HCM, several inherited eye conditions, and a notable metabolic disease (pyruvate kinase deficiency) that owners should screen for.",
+    healthSummary: "Pyruvate kinase deficiency (PK-Def) is a breed-relevant autosomal-recessive metabolic disease causing recurrent hemolytic anemia. Bengal-specific PRA (PRA-b, distinct from Abyssinian's PRA-rdAc) is the breed-specific eye condition. HCM is present at modest rates. Anesthetic sensitivity is documented — always tell the vet your cat is a Bengal before sedation.",
     references: [
       { label: "Cornell Feline Health Center — Bengal", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "The International Bengal Cat Society", url: "https://www.bengalcat.com/" },
@@ -1710,7 +1724,9 @@ const catBreedData = {
   },
   "british shorthair": {
     species: "cat", lifespan: "12-17 years", energy: "low",
+    about: "Plush, calm, and unmistakably 'teddy bear' shaped — British Shorthairs are one of the oldest English breeds, descended from Roman cats brought to Britain (the working farm-cat ancestors were refined into a show breed in the late 19th century). The signature dense coat in the iconic blue (gray) is the most-recognized variety, but BSH come in many colors. The personality is low-key: calm, undemanding, content to lounge for most of the day, accepting of being picked up but not requiring constant attention. They thrive in households where someone is around enough but not in their face — they're independent without being aloof. Slow to mature physically (3-5 years to full size) and slow to bond with new people; this is normal breed behavior. Like all pure-bred cats, BSH have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Plush 'teddy bear' coat, calm, undemanding. Generally one of the healthier pure breeds, but with three breed-specific genetic conditions worth screening for: HCM, PKD, and hemophilia B.",
+    healthSummary: "Generally one of the healthier pure breeds. HCM is the headline cardiac concern (annual echo from age 2). PKD is present in some lines (genetic test exists). Hemophilia B is a sex-linked bleeding disorder over-represented in BSH males — important to confirm before any surgery. Obesity-driven diabetes is the other big-ticket concern.",
     references: [
       { label: "Cornell Feline Health Center — British Shorthair", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — British Shorthair health", url: "https://cfa.org/british-shorthair/" },
@@ -1746,7 +1762,9 @@ const catBreedData = {
   },
   "scottish fold": {
     species: "cat", lifespan: "11-14 years", energy: "moderate",
+    about: "Sweet-natured, calm, and unmistakably owl-like — Scottish Folds originated in 1961 from a single farm cat in Perthshire, Scotland, named Susie, whose folded ears were caused by a spontaneous cartilage mutation. The breed was developed from her offspring. They're affectionate, easygoing, and known for sitting in unusual postures (the 'Buddha sit' is a common pose). They thrive in calm households and bond well with their people. The cartilage mutation that creates the distinctive folded ear affects EVERY joint in the body — not just the ears — and creates a painful, progressive arthritis that every Scottish Fold develops to some degree. Major UK and several European veterinary associations have publicly called the breed unethical to breed for this reason. If you have a Fold, you can still advocate for the welfare of the cat in front of you. If you're considering buying one, this is worth thinking carefully about. Health Considerations covers what to watch for.",
     summary: "Folded ears come from an autosomal-dominant cartilage mutation that affects EVERY joint in the body, not just the ears. The same gene that creates the famous look causes a painful, progressive arthritis that every Scottish Fold develops to some degree. Major UK and several European veterinary associations have called the breed unethical to breed for this reason; owners benefit from knowing what to expect.",
+    healthSummary: "Osteochondrodysplasia is universal in the breed — the same autosomal-dominant gene that folds the ears damages cartilage in every joint. Severity ranges from mild stiffness to severely deforming arthritis with limited mobility by middle age. There is no cure; lifelong pain management with NSAIDs, joint supplements, and weight control. HCM and PKD are also breed-relevant.",
     references: [
       { label: "Cornell Feline Health Center — Scottish Fold", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "British Veterinary Association — statement on Scottish Fold breeding", url: "https://www.bva.co.uk/" },
@@ -1781,7 +1799,9 @@ const catBreedData = {
   },
   "russian blue": {
     species: "cat", lifespan: "15-20 years", energy: "moderate",
+    about: "Reserved, devoted, and unmistakably blue — Russian Blues are an old natural breed (rather than a recent designed breed), traditionally believed to have originated near Arkhangelsk in northern Russia and brought to Western Europe in the 1860s. The signature short, dense, blue-grey double coat is shimmery in a way that's hard to photograph. They're famously one-person cats: deeply attached to their chosen human, reserved with strangers, but not aloof — they warm up gradually. They thrive in calm households, do well with another mellow cat, and accept being held when introduced gradually. Long-lived (15-20 years) and remarkably healthy as pure breeds go — there are no widely-reported breed-specific genetic diseases, and most concerns are general feline patterns. Like all cats, they benefit from awareness of common feline patterns — Health Considerations covers what to watch for.",
     summary: "Reserved with strangers, devoted to family, distinctive blue-grey double coat. Generally one of the healthiest and longest-lived pure breeds — with no widely-reported breed-specific genetic diseases. Most concerns are general feline patterns rather than breed-specific.",
+    healthSummary: "Russian Blues are notably healthy for a pure breed — no widely-documented breed-specific genetic diseases. Headlines are general-feline: bladder stones (over-represented), diabetes (especially if overweight — Russian Blues are food-motivated), CKD in seniors. Annual senior bloodwork from age 7 catches the rest.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — Russian Blue", url: "https://cfa.org/russian-blue/" },
@@ -1817,7 +1837,9 @@ const catBreedData = {
   },
   "abyssinian": {
     species: "cat", lifespan: "12-15 years", energy: "high",
+    about: "Active, athletic, and famously curious — Abyssinians are one of the oldest known cat breeds (the name references Ethiopia, though genetic studies suggest the breed actually originated near the Indian Ocean coast). The signature ticked tabby coat (each hair banded with multiple colors) gives them an almost cougar-like appearance. They're famously called 'the clowns of the cat world' for their playful intensity: they'll investigate everything, climb to the highest point in any room, and turn ordinary objects into interactive toys. They thrive in active households with vertical climbing space, food puzzles, and ideally a second active cat for company. They're not lap cats; they're interactive companions. Like all athletic pure-breeds, Abyssinians have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Active, athletic, deeply curious — often called the 'clowns of the cat world'. Generally healthy but with several breed-specific genetic conditions worth screening for, including pyruvate kinase deficiency and a breed-specific PRA.",
+    healthSummary: "Pyruvate kinase deficiency (PK-Def) and breed-specific PRA (rdAc-PRA, distinct from Bengal's PRA-b) are both autosomal-recessive with definitive genetic tests. Renal amyloidosis is the headline kidney concern — annual urine protein:creatinine + SDMA from age 5. Periodontal/gingivostomatitis is also over-represented.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — Abyssinian", url: "https://cfa.org/abyssinian/" },
@@ -1853,7 +1875,9 @@ const catBreedData = {
   },
   "sphynx": {
     species: "cat", lifespan: "9-15 years", energy: "high",
+    about: "Hairless, warm to the touch, and unmistakably elf-like — Sphynx cats originated from a 1966 spontaneous mutation in a litter of Toronto barn cats, refined into a pedigreed breed across the next decades. The hairless gene means a fine downy fuzz rather than true skin; they feel like warm peach skin. Personality is nothing like the appearance suggests: they're affectionate, sociable, vocal, and famously dog-like in their attachment. They thrive in households where someone is home most of the day; lonely Sphynx are unhappy Sphynx. The hairless coat means MORE grooming, not less — skin oils accumulate weekly, indoor-only is mandatory (no UV protection), and they feel cold easily despite being warm to handle. Like all pure-bred cats with a documented cardiac concern, Sphynx need proactive screening — Health Considerations covers what to watch for, especially HCM where the breed has one of the highest rates of any cat breed.",
     summary: "Hairless cats need MORE grooming than coated ones — skin oils have nowhere to wick to and accumulate on the skin, in the ear canals, and between the toes. Hypertrophic cardiomyopathy is breed-prevalent at one of the highest rates of any cat breed; cardiac screening is non-optional.",
+    healthSummary: "HCM is the headline cardiac concern — Sphynx have one of the highest documented rates of any cat breed, and the disease is sometimes more aggressive than in other breeds. Annual echo screening from age 1-2 is non-optional. Skin care (acne, oil buildup, fold dermatitis), sunburn / skin cancer risk if outside, and anesthesia sensitivity round out the headlines.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — Sphynx", url: "https://cfa.org/sphynx/" },
@@ -1890,7 +1914,9 @@ const catBreedData = {
   },
   "devon rex": {
     species: "cat", lifespan: "9-15 years", energy: "high",
+    about: "Curly-coated, elf-faced, and unmistakably mischievous — Devon Rex cats originated from a 1959 spontaneous curly-coat mutation in a feral cat in Devon, England, distinct from the earlier Cornish Rex (different mutation). The breed develops a sparse, soft, curly coat that lies close to the body and feels almost like suede. They're famously playful well into adulthood, vocal in a chirping way, and known for perching on shoulders, climbing curtains, and fetching toys. They thrive in active households and bond hard with their humans. The sparse coat means similar (though milder) care issues as Sphynx — skin oils accumulate, sunburn risk if outdoors, cold-sensitive despite feeling warm to touch. Like all rex breeds, Devon Rex have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for, especially anesthesia sensitivity.",
     summary: "Curly-coated, elf-faced, mischievous. Coat is sparse and oily — care is similar to Sphynx but milder. Hereditary myopathy and HCM are the breed-specific concerns; anesthesia sensitivity is a known issue worth flagging at every vet visit.",
+    healthSummary: "Hereditary myopathy (Devon Rex myopathy) is the breed-specific muscle disease — autosomal recessive, genetic test exists. HCM is present at modest rates. Anesthesia sensitivity is documented for the rex breeds — always tell the vet your cat is a Devon Rex before sedation. Skin and ear oil management round out the daily care.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — Devon Rex", url: "https://cfa.org/devon-rex/" },
@@ -1926,7 +1952,9 @@ const catBreedData = {
   },
   "norwegian forest cat": {
     species: "cat", lifespan: "12-16 years", energy: "moderate",
+    about: "Big, sturdy, and unmistakably built for snow — Norwegian Forest Cats are an old natural breed from Norway, where farm cats evolved over centuries to survive Scandinavian winters with a thick, weatherproof double coat. They're often confused with Maine Coons (similar size and shaggy coat) but are a genetically distinct breed; Wegies (the nickname) trace back to Viking-era ship cats. Personality is independent but affectionate: they bond with their family but don't demand constant attention, climb and explore tirelessly, and famously can swim and don't mind water. They thrive in households with vertical climbing space, regular brushing time for the heavy double coat, and patient introductions to strangers. Like all large pure-bred cats, they have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Big, sturdy, weather-built double coat — the Norwegian cousin of the Maine Coon. Generally a robust breed with one breed-specific genetic disease worth screening for (glycogen storage disease IV) plus standard large-cat concerns.",
+    healthSummary: "Glycogen storage disease IV (GSD IV) is the breed-specific autosomal-recessive concern — most affected kittens die within months. Genetic test exists; reputable breeders screen aggressively. HCM, hip dysplasia (real for the size), PKD, and PK-Def round out the breed-relevant patterns.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Norwegian Forest Cat Fanciers' Association", url: "https://www.nfcfa.org/" },
@@ -1962,7 +1990,9 @@ const catBreedData = {
   },
   "burmese": {
     species: "cat", lifespan: "16-18 years", energy: "moderate-high",
+    about: "Sociable, dog-like, and unmistakably attached — Burmese cats trace back to a single foundation cat named Wong Mau, brought from Burma (modern Myanmar) to the United States in 1930 by Dr. Joseph Thompson, then bred to Siamese cats and selected for the rich brown coat. The breed has split into two distinct lines: traditional / European Burmese (rounder, more moderate features) and contemporary / American Burmese (more pronounced flat-faced look — some lines carry a serious lethal congenital defect). They're famously vocal, demand active interaction with their people, and form deep one-person bonds that can border on co-dependent. Long-lived (16-18 years often). Like all pure breeds with documented genetic concerns, Burmese deserve breeder due diligence — Health Considerations covers what to watch for, especially around the contemporary-line head defect and a markedly elevated diabetes risk.",
     summary: "Sociable, dog-like, vocal, deeply bonded to people. One of the longest-lived pure breeds, but with two important breed-specific concerns: a markedly elevated diabetes risk and a contested 'contemporary' (American) head conformation that's caused congenital cranial deformities in some lines.",
+    healthSummary: "Diabetes mellitus is the headline concern — Burmese have one of the highest documented rates of diabetes of any breed, multiplied by obesity. Burmese head defect is a lethal autosomal-recessive in 'contemporary' (American) lines — reputable breeders screen aggressively. Gangliosidosis and hypokalemic periodic paralysis round out the breed-specific genetic conditions.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — Burmese", url: "https://cfa.org/burmese/" },
@@ -1998,7 +2028,9 @@ const catBreedData = {
   },
   "american shorthair": {
     species: "cat", lifespan: "15-20 years", energy: "moderate",
+    about: "Sturdy, easygoing, and unmistakably American — American Shorthairs trace back to working cats brought to North America by European colonists (some traveled on the Mayflower), refined into a recognized breed in the early 20th century from the existing American working-cat population. They retain that working-cat hardiness: medium-sized, well-muscled, and notably healthy as pure breeds go. Personality is mellow and adaptable: they accept being held, do well with children and other pets, and tolerate a wide range of living situations. They thrive in almost any household and rarely demand special accommodation. Long-lived (15-20 years often) and easy to care for. Like all cats, they benefit from awareness of common feline patterns — Health Considerations covers what to watch for.",
     summary: "Working barn-cat ancestry, sturdy, healthy, easygoing. One of the most low-maintenance pure breeds — long-lived, generally robust, with HCM and obesity as the two main concerns.",
+    healthSummary: "ASH are notably healthy as pure breeds go — no widely-documented breed-specific genetic diseases. HCM is present at modest rates (annual echo from age 2 if a murmur appears). The big-ticket concerns are general feline: obesity (food-motivated breed), diabetes, CKD, periodontal disease, hyperthyroidism in seniors.",
     references: [
       { label: "Cornell Feline Health Center", url: "https://www.vet.cornell.edu/departments-centers-and-institutes/cornell-feline-health-center" },
       { label: "Cat Fanciers' Association — American Shorthair", url: "https://cfa.org/american-shorthair/" },
