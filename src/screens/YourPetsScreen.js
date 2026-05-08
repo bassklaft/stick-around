@@ -147,9 +147,26 @@ export default function YourPetsScreen() {
   if (pets.length === 0) {
     return (
       <View style={s.empty}>
-        <Text style={{ fontSize: 48 }}>🐾</Text>
-        <Text style={s.emptyTitle}>No floofs yet</Text>
-        <Text style={s.emptyBody}>Reset all data and run onboarding to add your first floof.</Text>
+        <View style={s.emptyIconCircle}>
+          <Text style={{ fontSize: 72 }}>🐾</Text>
+        </View>
+        <Text style={s.emptyTitle}>Welcome to FloofLife</Text>
+        <Text style={s.emptyBody}>
+          Better pet parenting, on autopilot. Add your first floof and we'll personalize a weekly checklist, breed-specific health considerations, and insider tips just for them.
+        </Text>
+        <TouchableOpacity
+          onPress={() => navigation.navigate("AddPet")}
+          style={s.emptyCTA}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel="Add your first floof"
+        >
+          <MaterialCommunityIcons name="plus-circle" size={22} color="#fff" />
+          <Text style={s.emptyCTAText}>Add your first floof</Text>
+        </TouchableOpacity>
+        <Text style={s.emptyDisclaimer}>
+          We don't share your pet's info with anyone. Your data stays on this device.
+        </Text>
       </View>
     );
   }
@@ -402,8 +419,12 @@ export default function YourPetsScreen() {
 
 const s = StyleSheet.create({
   empty:        { flex: 1, alignItems: "center", justifyContent: "center", padding: 40, backgroundColor: theme.bg },
-  emptyTitle:   { fontSize: 18, fontWeight: "700", color: theme.fg, marginTop: 14 },
-  emptyBody:    { fontSize: 13, color: theme.muted, marginTop: 6, textAlign: "center" },
+  emptyIconCircle:{ width: 140, height: 140, borderRadius: 70, backgroundColor: theme.accentSoft, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: theme.accent + "33" },
+  emptyTitle:   { fontSize: 24, fontWeight: "800", color: theme.fg, marginTop: 22, letterSpacing: -0.4 },
+  emptyBody:    { fontSize: 14, color: theme.muted, marginTop: 10, textAlign: "center", lineHeight: 21, paddingHorizontal: 16 },
+  emptyCTA:     { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, paddingHorizontal: 28, borderRadius: 12, backgroundColor: theme.accent, marginTop: 28 },
+  emptyCTAText: { color: "#fff", fontWeight: "700", fontSize: 15, letterSpacing: 0.3 },
+  emptyDisclaimer:{ fontSize: 11, color: theme.muted, marginTop: 16, textAlign: "center", fontStyle: "italic" },
   intro:        { fontSize: 13, color: theme.muted, marginBottom: 14, lineHeight: 19 },
   petCard:      { backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.line, padding: 18, marginBottom: 16, position: "relative" },
   petCardActive:{ borderColor: theme.accent, borderWidth: 2 },
