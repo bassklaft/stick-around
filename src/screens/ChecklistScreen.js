@@ -1,13 +1,22 @@
 // Weekly checklist — extracted from the prior YourPets screen so it
-// stands as its own bottom-tab destination.
+// stands as its own bottom-tab destination. The tab is labeled
+// "Pawgress" in the bottom bar (per build 19 smoke-test feedback —
+// "pawgress is supposed to be a fun representation of the checklist")
+// and the screen body opens with a Pawgress activity-ring section
+// above the weekly checklist itself.
 import React, { useEffect, useState, useCallback, useLayoutEffect, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Animated, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
+import { Pawgress, todayKey } from "../lib/pawgress";
 import { track } from "../lib/analytics";
 import { tapMedium, tapLight, notifySuccess } from "../lib/haptics";
+import PawgressPaw from "../components/PawgressPaw";
+
+const WEEKDAY_LABELS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 import ActivePetTitle from "../components/ActivePetTitle";
 import ActivePetChip from "../components/ActivePetChip";
 import PetSwitcherModal from "../components/PetSwitcherModal";
@@ -23,11 +32,13 @@ export default function ChecklistScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const [celebrationVisible, setCelebrationVisible] = useState(false);
+  const [pawgressDay, setPawgressDay] = useState(null);
   const celebrationOpacity = useRef(new Animated.Value(0)).current;
   const celebrationScale = useRef(new Animated.Value(0.6)).current;
   const lastCelebratedKeyRef = useRef(null);
 
   const multiPet = pets.length > 1;
+  const dayLabel = WEEKDAY_LABELS[new Date().getDay()];
 
   const load = useCallback(async () => {
     const p = await Pet.get();
@@ -36,6 +47,9 @@ export default function ChecklistScreen() {
     setPets(all);
     setItems(generateChecklist(p));
     setState(await ChecklistState.get(p?.id));
+    if (p?.id) {
+      setPawgressDay(await Pawgress.getDay(p.id, todayKey()));
+    }
   }, []);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
@@ -134,6 +148,31 @@ export default function ChecklistScreen() {
       contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 40, paddingHorizontal: 20 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
+      {/* Daily Pawgress activity ring — fun representation of the day's
+          care for [pet]. Resets every day. Tap → opens the Pawgress
+          detail modal where the user can fill segments / see streak /
+          peek at the Premium history teaser. Per build 19 smoke-test
+          feedback: tab is now "Pawgress" + the activity ring carries
+          a day-of-week label ("Monday Pawgress" / "Tuesday Pawgress"
+          / ...) since each day is a fresh paw. */}
+      {pawgressDay && (
+        <TouchableOpacity
+          onPress={() => { tapMedium(); navigation.navigate("Pawgress"); }}
+          style={s.pawgressSection}
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={`${dayLabel} Pawgress · ${Pawgress.countCompleted(pawgressDay)} of 5 pads filled · tap to fill more`}
+        >
+          <Text style={s.pawgressEyebrow}>{dayLabel.toUpperCase()} PAWGRESS</Text>
+          <PawgressPaw completion={pawgressDay} size={150} colorMode="today" />
+          <Text style={s.pawgressSubtitle}>
+            {Pawgress.isAllFive(pawgressDay)
+              ? `${pet.name} is set for today 🎉`
+              : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — tap to fill more`}
+          </Text>
+        </TouchableOpacity>
+      )}
+
       <View style={s.progress}>
         <Text style={s.progressLabel}>This week</Text>
         <Text style={s.progressCount}>{completed} of {items.length} done</Text>
@@ -196,6 +235,9 @@ const s = StyleSheet.create({
   celebrationOverlay:{ position: "absolute", top: "40%", left: 24, right: 24, paddingVertical: 22, paddingHorizontal: 18, borderRadius: 18, backgroundColor: theme.card, borderWidth: 2, borderColor: theme.accent, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
   celebrationEmoji:{ fontSize: 48 },
   celebrationText:{ marginTop: 8, fontSize: 16, fontWeight: "700", color: theme.fg, textAlign: "center", textTransform: "capitalize" },
+  pawgressSection:{ alignItems: "center", paddingVertical: 14, paddingHorizontal: 14, borderRadius: 16, backgroundColor: theme.card, borderWidth: 1, borderColor: theme.line, marginBottom: 14 },
+  pawgressEyebrow:{ fontSize: 11, fontWeight: "800", color: theme.muted, letterSpacing: 1.4, marginBottom: 8 },
+  pawgressSubtitle:{ fontSize: 13, color: theme.fg, marginTop: 8, textAlign: "center", fontStyle: "italic" },
   progress:     { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 16, gap: 12 },
   progressLabel:{ color: theme.fg, fontWeight: "700", fontSize: 14, letterSpacing: 0.5 },
   progressCount:{ color: theme.accent, fontWeight: "800", fontSize: 18 },

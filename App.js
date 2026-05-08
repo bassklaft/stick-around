@@ -95,7 +95,7 @@ function MainTabs({ navigation, onMyFloofsLongPress }) {
       })}
     >
       <Tabs.Screen name="Checklist" component={ChecklistScreen}
-        options={{ title: "This Week", tabBarLabel: "Checklist" }}
+        options={{ title: "This Week", tabBarLabel: "Pawgress" }}
         listeners={{ tabPress: () => tapHeavy() }} />
       <Tabs.Screen name="Home"      component={HomeScreen}
         options={{ title: "FloofLife", tabBarLabel: "Home" }}
