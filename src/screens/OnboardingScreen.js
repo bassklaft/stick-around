@@ -138,6 +138,27 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
               ))}
             </View>
 
+            {species === "cat" && (
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    "Tabby, Tortoiseshell, or Calico?",
+                    "These are coat patterns that can appear on many cat breeds — not breeds themselves. If your cat is mixed-breed, pick 'Domestic Shorthair' or 'Mixed Cat' below. If they're a specific breed (like a Maine Coon) with one of these patterns, pick the breed.",
+                    [
+                      { text: "Use Domestic Shorthair", onPress: () => setBreed("domestic shorthair") },
+                      { text: "Use Mixed Cat", onPress: () => setBreed("mixed cat") },
+                      { text: "Cancel", style: "cancel" },
+                    ],
+                  );
+                }}
+                style={s.coatPatternHint}
+              >
+                <Text style={s.coatPatternHintText}>
+                  💡 Is your cat a Tabby, Tortoiseshell, or Calico?
+                </Text>
+              </TouchableOpacity>
+            )}
+
             {isMixed && (
               <View style={{ marginTop: 18 }}>
                 <Text style={s.label}>Mix of (e.g. lab + pit bull)</Text>
@@ -240,6 +261,8 @@ const s = StyleSheet.create({
   breedChipEmoji:     { fontSize: 16 },
   breedChipText:      { color: theme.fg, fontSize: 14 },
   breedChipTextActive:{ color: "#fff", fontWeight: "600" },
+  coatPatternHint:    { marginTop: 14, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, borderWidth: 1, borderColor: theme.line, backgroundColor: theme.accentSoft, alignSelf: "flex-start" },
+  coatPatternHintText:{ fontSize: 13, color: theme.fg, fontWeight: "500" },
   disclaimer:       { marginTop: 24, padding: 14, backgroundColor: theme.accentSoft, borderRadius: 10 },
   disclaimerText:   { fontSize: 12, color: theme.fg, lineHeight: 18 },
   dnaHint:          { fontSize: 11, color: theme.muted, marginTop: 8, lineHeight: 17, fontStyle: "italic" },
