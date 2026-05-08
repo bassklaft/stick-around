@@ -137,6 +137,26 @@ export default function YourPetsScreen() {
     navigation.navigate("EditPet", { petId });
   }
 
+  // Whole-card-tap to select active pet (per build 19 smoke-test
+  // feedback). Tap the NAME row → editPet (above). Tap the PHOTO →
+  // changePhoto (above). Tap anywhere else on the card (whitespace,
+  // breed/age meta, breed cards' empty space) → activate that pet.
+  // Inner TouchableOpacity handlers catch their own taps before this
+  // bubbles up, so nested-pressable behavior is what we want.
+  async function activatePetFromCard(petId) {
+    if (!petId) return;
+    if (petId === activeId) {
+      // Already active — give a light haptic acknowledgment but don't
+      // re-trigger storage write or navigation.
+      tapLight();
+      return;
+    }
+    await Pets.setActive(petId);
+    setActiveId(petId);
+    track("active_pet_switched", { source: "my_floofs_card", pet_count: pets.length });
+    tapMedium();
+  }
+
   function addAnotherPet() {
     if (!isPremium) {
       Alert.alert(
@@ -206,16 +226,33 @@ export default function YourPetsScreen() {
         const mixLabel = mixedBreedLabel(pet);
         const isMultiPet = pets.length > 1;
         const isActive = isMultiPet && activeId === pet.id;
+        // Multi-pet cards are tappable as a whole (whitespace + body)
+        // to set this pet as active. Single-pet households render a
+        // static View since there's no other pet to switch to. Inner
+        // pressables (photo, name, breed-card sections) capture their
+        // own taps and don't bubble up — RN's touch-responder system
+        // handles this without explicit propagation guards.
+        const CardWrap = isMultiPet ? TouchableOpacity : View;
+        const cardWrapProps = isMultiPet
+          ? { onPress: () => activatePetFromCard(pet.id), activeOpacity: 0.92 }
+          : {};
         return (
-          <View
+          <CardWrap
             key={pet.id || idx}
+            {...cardWrapProps}
             style={[s.petCard, isActive && s.petCardActive]}
+            accessibilityRole={isMultiPet ? "button" : undefined}
+            accessibilityLabel={isMultiPet ? `Make ${pet.name} the active floof` : undefined}
+            accessibilityState={isMultiPet ? { selected: isActive } : undefined}
           >
             {isActive && (
               <View style={s.activeBadge}><Text style={s.activeBadgeText}>✓ ACTIVE</Text></View>
             )}
             {idx === 0 && isMultiPet && (
               <View style={s.eldestBadge}><Text style={s.eldestBadgeText}>👑 ELDEST</Text></View>
+            )}
+            {isMultiPet && !isActive && (
+              <Text style={s.tapToSwitchHint}>Tap card to switch active floof</Text>
             )}
 
             <View style={{ alignItems: "center", marginTop: 4 }}>
@@ -412,7 +449,7 @@ export default function YourPetsScreen() {
                 </View>
               );
             })}
-          </View>
+          </CardWrap>
         );
       })}
 
@@ -437,6 +474,7 @@ const s = StyleSheet.create({
   petCard:      { backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.line, padding: 18, marginBottom: 16, position: "relative" },
   petCardActive:{ borderColor: theme.accent, borderWidth: 2 },
   activeBadge:  { position: "absolute", top: 12, left: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
+  tapToSwitchHint:{ fontSize: 10, color: theme.muted, fontStyle: "italic", textAlign: "center", marginTop: 28, marginBottom: -4, letterSpacing: 0.3 },
   activeBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 0.6 },
   petNameRow:   { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 12 },
   eldestBadge:  { position: "absolute", top: 12, right: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
