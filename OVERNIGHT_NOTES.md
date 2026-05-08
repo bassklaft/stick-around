@@ -94,7 +94,24 @@ d6a256f docs: update OVERNIGHT_NOTES with merge resolution log
 
 **Transporter delivery**: ✅ DELIVERED on 2026-05-08 at 2:38 PM via Transporter. ASC processing finished. App ID `6764378399`. No validation errors. The 1.1.0 train-closed rejection from build 18 is fully resolved.
 
-**Same payload as build 18** (the version-bump was the only diff):
+### Build 19 smoke-test feedback (in progress as of 2026-05-08)
+
+User running through the 22-section checklist on TestFlight build 19. Mid-test feedback so far:
+
+**Working** ✓:
+- Chip number capture in onboarding + edit
+- Haptic feel across the app
+- Pet-switcher chip + tappable title at the top of Checklist / Health Tracker (the multi-pet UX refinement landed clean)
+
+**Asks for the next build** (not in build 19; queued for build 20):
+
+1. **"Add Another Floof" button → top of My Floofs page**, above the "💝 The pets you love, sorted oldest first..." intro line. JSX reorder.
+2. **Tap whitespace next to a pet's card on My Floofs → make that pet active.** Restores whole-card-tap-to-select (removed in `8ed4791` when name-tap became the edit path). New rule: tap NAME → edit; tap PHOTO → change photo; tap card body / whitespace → select active.
+3. **Home should show a collage of your whole floof family**, not just the active pet's photo. Multi-pet households only — single-pet keeps current single-pet hero.
+4. **Long-press on My Floofs tab icon → mini list of floofs popup** (release-finger-on-name to switch). Earlier deferred to v1.3 due to needing `react-native-ios-context-menu` for slide-to-select. v1.2.0 pragmatic take: tap-to-select instead of slide-to-select.
+5. **Tosa Inu** still parked — needs neutral framing + BSL country list, separate decision.
+
+
 - Pawgress (data + visuals + screen + Home card integration)
 - Tummy Tracker (entry screens + timeline + recall match service + vet visit suggestion + PDF export + Home card)
 - 43 net-new breeds (12 dogs from late manifest + 3 pit-type with neutral framing + Munchkin with welfare-aware framing + 5 cats + earlier batches)
