@@ -381,8 +381,8 @@ export default function HomeScreen({ navigation }) {
 }
 
 const s = StyleSheet.create({
-  hero:         { width: "100%", height: 320, justifyContent: "flex-end" },
-  heroImage:    { resizeMode: "cover" },
+  hero:         { width: "92%", alignSelf: "center", height: 320, justifyContent: "flex-end", borderRadius: 22, overflow: "hidden", marginTop: 8 },
+  heroImage:    { resizeMode: "cover", borderRadius: 22 },
   heroOverlay:  { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.35)" },
   heroContent:  { padding: 22 },
   heroEyebrow:  { fontSize: 11, fontWeight: "700", color: "#FBE4DC", letterSpacing: 1.6, marginBottom: 4 },

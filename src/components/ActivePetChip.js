@@ -33,7 +33,7 @@ export default function ActivePetChip({ pet, onPress }) {
         <Image source={{ uri: pet.photoUri }} style={s.avatar} />
       ) : (
         <View style={s.avatarFallback}>
-          <Text style={{ fontSize: 14 }}>{breedEmoji(primary)}</Text>
+          <Text style={{ fontSize: 18 }}>{breedEmoji(primary)}</Text>
         </View>
       )}
       <Text style={s.name} numberOfLines={1}>{firstName}</Text>
@@ -42,8 +42,12 @@ export default function ActivePetChip({ pet, onPress }) {
 }
 
 const s = StyleSheet.create({
-  chip:          { flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 999, backgroundColor: theme.accentSoft, borderWidth: 1, borderColor: theme.accent + "55", marginRight: 8, maxWidth: 120 },
-  avatar:        { width: 22, height: 22, borderRadius: 11 },
-  avatarFallback:{ width: 22, height: 22, borderRadius: 11, backgroundColor: theme.card, alignItems: "center", justifyContent: "center" },
-  name:          { fontSize: 12, fontWeight: "700", color: theme.fg, textTransform: "capitalize", maxWidth: 80 },
+  // Larger avatars per build 19 smoke-test feedback ("mini circular
+  // icons are so small that its hard to see him so enlarge"). Bumped
+  // from 22px to 32px; chip background padding adjusted so the
+  // avatar looks at home and the first-name still fits.
+  chip:          { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 6, paddingVertical: 4, borderRadius: 999, backgroundColor: theme.accentSoft, borderWidth: 1.5, borderColor: theme.accent + "66", marginRight: 8, maxWidth: 140 },
+  avatar:        { width: 32, height: 32, borderRadius: 16, borderWidth: 2, borderColor: "#fff" },
+  avatarFallback:{ width: 32, height: 32, borderRadius: 16, backgroundColor: theme.card, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "#fff" },
+  name:          { fontSize: 13, fontWeight: "700", color: theme.fg, textTransform: "capitalize", maxWidth: 80, paddingRight: 8 },
 });
