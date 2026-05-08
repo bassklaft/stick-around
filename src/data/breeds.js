@@ -392,7 +392,9 @@ const dogBreedData = {
     origin: "Northern Asia · ancient lineage (origin actively debated)",
     originStory: "Chow Chow origin is genuinely contested. Three lineages have been proposed in the literature:\n\n• Han Chinese mastiff/working-dog descent — the most common framing in popular accounts and breed-club histories.\n• Tibetan mastiff lineage — proposed by some genetic studies that show shared markers with Tibetan working dogs.\n• Siberian/Russian spitz descent — proposed by other genetic and morphological studies that group Chows closer to the spitz family of Northern Asia.\n\nModern genetic research suggests connections to multiple ancient dog populations across Northern Asia rather than a single point of origin. The breed's exact lineage remains an active area of canine genetic research. The famous purple-blue tongue is genetically linked to oral pigmentation that develops at 8-10 weeks; both Chows and Shar-Peis share this trait.",
     brachycephalic: true,
+    about: "Ancient Northern Asian breed with a lineage stretching back roughly 2,000 years (origin actively debated among scholars). Famous for their blue-black tongue (a trait shared only with Shar-Peis) and their dignified, almost cat-like personality. Chows are aloof with strangers, fiercely loyal to family, and notoriously stubborn — they're not the dog for everyone, but for the right human, they're devoted for life. They thrive in cooler climates given their thick double coat, prefer calm households, and tolerate apartment life if walked twice daily. Most Chows pick a 'best person' in the household and prefer that person above everyone else; this is normal Chow behavior. Like all heavier brachycephalic breeds, joint, eye, and heat-tolerance concerns are real — Health Considerations covers what to watch for.",
     summary: "Aloof, dignified, ancient Northern Asian breed with a famous purple-blue tongue. Reserved with strangers, deeply loyal to family. Brachycephalic snout + thick double coat = serious heat risk. Eye and skin issues are breed-specific concerns.",
+    healthSummary: "The Chow's combination of brachycephalic snout, thick double coat, and deep-set eyes drives the headline concerns: entropion is the most common surgical intervention, heat tolerance is genuinely poor, and the breed has documented vaccine-reaction sensitivities (especially Lepto) worth discussing with your vet.",
     references: [
       { label: "AKC Chow Chow breed standard", url: "https://www.akc.org/dog-breeds/chow-chow/" },
       { label: "Chow Chow Club Inc. (AKC parent club)", url: "https://chowclub.org/" },
@@ -434,7 +436,9 @@ const dogBreedData = {
   },
   "german shorthaired pointer": {
     species: "dog", lifespan: "12-14 years", energy: "very high",
+    about: "Versatile, athletic, and intensely focused — German Shorthaired Pointers were bred in 19th-century Germany as the ideal all-purpose gun dog: they run, swim, point, retrieve, track, and tolerate every weather condition. The 'versatile' isn't marketing copy; it's design intent. They thrive in active families with land to run, water to swim, structured training, and humans who can give them a real job. A GSP without significant daily exercise becomes destructive within weeks; this is not a city apartment breed. They're affectionate with their people, energetic with everyone, and cheerful to a fault. Like all athletic working breeds, GSPs have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Versatile gun dog — runs, swims, points, retrieves. Will literally run themselves to exhaustion if you let them. Not a city apartment breed; needs serious daily exercise and a job to do.",
+    healthSummary: "GSPs are athletic and generally robust, but the deep chest creates real bloat risk and the breed has documented genetic eye conditions and a hereditary lymphedema worth screening for. The headline owner responsibility is stopping exercise before they're tired in the heat — they will not stop themselves.",
     references: [
       { label: "AKC German Shorthaired Pointer breed page", url: "https://www.akc.org/dog-breeds/german-shorthaired-pointer/" },
       { label: "German Shorthaired Pointer Club of America", url: "https://www.gspca.org/" },
@@ -469,7 +473,9 @@ const dogBreedData = {
   },
   "pembroke welsh corgi": {
     species: "dog", lifespan: "12-14 years", energy: "moderate-high",
+    about: "Stocky, vocal, and shaped by working purpose — Pembroke Welsh Corgis are short-legged cattle-herding dogs from Pembrokeshire, Wales, where the long-back-short-leg conformation made them effective at nipping at hooves below the cattle's kick line. They're famously beloved by Queen Elizabeth II (who kept Pembrokes for over 70 years), beloved by the internet (the breed's TikTok presence is significant), and beloved by their humans (corgis bond hard with one or two people). They're food-motivated, smart, and willing to herd children, vacuums, or other dogs without being asked. Like all chondrodystrophic breeds, the long-back-short-leg conformation creates real spine concerns — Health Considerations covers what to watch for, especially around IVDD and degenerative myelopathy.",
     summary: "Stocky, long-backed herder. Famously vocal, food-motivated, and prone to back issues + obesity. The long-back-short-leg conformation is a feature for cattle herding and a liability for the spine.",
+    healthSummary: "The Corgi's long-back-short-leg conformation drives IVDD risk and obesity-aggravation patterns. Degenerative myelopathy (autosomal recessive SOD1 mutation) is the other headline concern — genetic test exists, reputable breeders screen.",
     references: [
       { label: "AKC Pembroke Welsh Corgi breed page", url: "https://www.akc.org/dog-breeds/pembroke-welsh-corgi/" },
       { label: "Pembroke Welsh Corgi Club of America", url: "https://pembrokecorgi.org/" },
@@ -505,7 +511,9 @@ const dogBreedData = {
   },
   "australian shepherd": {
     species: "dog", lifespan: "12-15 years", energy: "very high",
+    about: "Brilliant, athletic, and intensely focused — Aussies are working herding dogs developed (despite the name) primarily in the western United States, refined for ranch work in California and the mountain west. They're scary-smart, need a real job, and possess herding instincts that turn unexpected things into livestock — children, cars, vacuums, light reflections. They thrive with active families willing to do agility, herding trials, advanced obedience, scent work, or any other working purpose. An under-stimulated Aussie is anxious, often destructive, and prone to compulsive behaviors. The merle coat is unmistakable, but merle-to-merle breeding produces double-merles with serious defects — reputable breeders never do this. Like all working herders, Aussies have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for, including a critical drug-sensitivity gene worth testing every Aussie for.",
     summary: "Working herder, intensely smart, needs a job. Without one, they herd children, cars, and vacuums. The MDR1 gene mutation is the most actionable health concern for the breed — every Aussie owner should know their dog's status.",
+    healthSummary: "The MDR1 (ABCB1) gene mutation is the most actionable single concern: affected Aussies can have life-threatening reactions to common drugs (ivermectin, loperamide, acepromazine). Genetic test is inexpensive and definitive — every Aussie should be tested. Hip dysplasia, epilepsy, and hereditary eye conditions round out the breed's headline concerns.",
     references: [
       { label: "AKC Australian Shepherd breed page", url: "https://www.akc.org/dog-breeds/australian-shepherd/" },
       { label: "United States Australian Shepherd Association", url: "https://www.australianshepherds.org/" },
@@ -540,7 +548,9 @@ const dogBreedData = {
   },
   "cavalier king charles spaniel": {
     species: "dog", lifespan: "9-14 years", energy: "moderate",
+    about: "Affectionate, gentle, and people-bonded to the point of physical attachment — Cavaliers were bred as lap companions for English aristocracy (Charles II famously refused to go anywhere without his), and the breed retains the temperament. They're sweet with children, sweet with strangers, sweet with other dogs, and notably uninterested in being alone. They thrive in households where someone's home most of the day; they're not a working-from-the-office breed. Cavaliers will follow you to the bathroom, sleep on your feet, and consider every couch a personal designated space. Like all small companion breeds bred from a narrow gene pool, they have well-documented structural predispositions worth tracking — Health Considerations covers what to watch for from puppyhood onward.",
     summary: "Affectionate lap dog, gentle, loves people. Cardiac and neurologic screening are part of responsible ownership — the breed has well-documented structural predispositions worth tracking from puppyhood.",
+    healthSummary: "Mitral valve disease (MVD) is the breed-defining concern — roughly half of Cavaliers have a heart murmur by age 5. Syringomyelia from a skull-too-small malformation is the second headline. Both are catchable with the right screening cadence; reputable breeders publish MRI + cardiologist clearance for both parents.",
     references: [
       { label: "AKC Cavalier King Charles Spaniel breed page", url: "https://www.akc.org/dog-breeds/cavalier-king-charles-spaniel/" },
       { label: "ACKCSC — health resources", url: "https://www.ackcsc.org/health" },
@@ -575,7 +585,9 @@ const dogBreedData = {
   },
   "doberman pinscher": {
     species: "dog", lifespan: "10-13 years", energy: "high",
+    about: "Loyal, alert, and substantially athletic — Dobermans were bred in late-19th-century Germany by Karl Friedrich Louis Dobermann, a tax collector who needed a protective companion on his rounds. The result is a breed that bonds intensely with their humans, possesses high working drive, and benefits from real jobs — agility, obedience, protection sport, scent work. Dobermans are reserved with strangers, gentle with their family (often inexplicably so), and famously prone to leaning their full body weight against their chosen person. They're not a first-time-owner breed; they need confident handling and structured training. Like all athletic working breeds with documented cardiac risks, Dobermans deserve proactive screening — Health Considerations covers what to watch for, including the annual Holter monitor protocol that is the breed-club standard.",
     summary: "Loyal, alert, athletic. Cardiac screening from age 2 is the breed's most important health practice — Dobermans have one of the highest rates of dilated cardiomyopathy in any breed, and proactive screening genuinely extends life.",
+    healthSummary: "Dilated cardiomyopathy (DCM) is the breed-defining cardiac concern — roughly half of Dobermans develop DCM in their lifetime, and many die suddenly from arrhythmia before any symptoms appear. The DPCA recommends annual echocardiogram + 24-hour Holter monitor starting at age 2. Von Willebrand disease (bleeding disorder) is the other headline — genetic test exists, important to confirm before any surgery.",
     references: [
       { label: "AKC Doberman Pinscher breed page", url: "https://www.akc.org/dog-breeds/doberman-pinscher/" },
       { label: "Doberman Pinscher Club of America — health", url: "https://dpca.org/health/" },
@@ -612,7 +624,9 @@ const dogBreedData = {
   },
   "boxer": {
     species: "dog", lifespan: "10-12 years", energy: "high",
+    about: "Playful, exuberant, and famously young at heart — Boxers descend from German hunting and working dogs (refined in 19th-century Munich) and retain a working drive that stays surprisingly active well into adulthood. They're notoriously bouncy, deeply attached to their family, and possess a goofy enthusiasm that earns them their nickname (the 'boxer' name comes from their habit of standing on hind legs and pawing with the front, like a boxing stance). They're great with children, can be reserved with strangers, and benefit from structured training plus daily real exercise. Heat tolerance is genuinely poor — they're slightly brachycephalic, which is real, not cosmetic. Like all athletic breeds with documented cancer and cardiac risks, Boxers benefit from proactive screening — Health Considerations covers what to watch for, including the Holter-monitor protocol for ARVC (Boxer cardiomyopathy).",
     summary: "Playful, exuberant, slightly-brachycephalic. The breed has well-documented cancer and cardiac patterns that owners should know about — monthly lump-checks and annual cardiac screening genuinely matter.",
+    healthSummary: "Mast cell tumors are the headline — Boxers are the #1 breed for MCT, and tumors can look like bug bites, skin tags, or 'just a bump'. Boxer cardiomyopathy (arrhythmogenic right ventricular cardiomyopathy, ARVC) is the other big-ticket concern; only a 24-hour Holter monitor reliably screens. The American Boxer Club recommends annual Holter starting at age 3.",
     references: [
       { label: "AKC Boxer breed page", url: "https://www.akc.org/dog-breeds/boxer/" },
       { label: "American Boxer Club — health", url: "https://americanboxerclub.org/health-resources" },
@@ -648,7 +662,9 @@ const dogBreedData = {
   },
   "siberian husky": {
     species: "dog", lifespan: "12-14 years", energy: "very high",
+    about: "Vocal, pack-bonded, and built for snow — Siberian Huskies are sled dogs developed by the Chukchi people of northeastern Asia and brought to Alaska in the early 20th century, where they became famous through the 1925 Serum Run to Nome. They're affectionate with their family but reserved with strangers, possess a remarkable vocal repertoire (the 'Husky talking back' is real and intense), and require serious daily exercise plus extreme escape-proofing — Huskies dig under fences, jump 6+ ft, and famously prioritize their freedom-of-movement instincts above any recall command. They're built for cold weather and overheat fast in temperatures most owners consider mild. Like all working sled breeds, Huskies have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for, especially around eye conditions where the breed has documented elevated rates.",
     summary: "Pack dog, escape artist, vocal. Built for cold weather — heat is genuinely dangerous. Long-lived overall but with breed-specific eye conditions and a famous tendency to roam that drives most of the safety planning.",
+    healthSummary: "Huskies are long-lived and generally robust, but they have one of the highest documented rates of hereditary eye disease of any breed (juvenile cataracts, corneal dystrophy, uveodermatologic syndrome). The other headline owner-responsibility is escape-prevention: Huskies are the top breed in lost-dog statistics, and 'my Husky has perfect recall' is famous last words.",
     references: [
       { label: "AKC Siberian Husky breed page", url: "https://www.akc.org/dog-breeds/siberian-husky/" },
       { label: "Siberian Husky Club of America — health", url: "https://www.shca.org/" },
@@ -686,7 +702,9 @@ const dogBreedData = {
   },
   "great dane": {
     species: "dog", lifespan: "8-10 years", energy: "moderate",
+    about: "Gentle, dignified, and unmistakably enormous — Great Danes are German boar-hunting dogs (despite the misleading 'Dane' name; their German breed name is Deutsche Dogge) refined into one of the largest dog breeds in the world. Adults reach 28-32 inches at the shoulder and 100-200 lb; standing on hind legs they can be 7+ feet tall. Despite the size they're gentle, family-oriented, and famously good with children — the 'gentle giant' label is earned. They thrive in households with space (especially for the tail, which clears coffee tables), structured exercise, and humans who can budget for the food and vet costs of a giant breed. Lifespans run 8-10 years; their size compresses a normal dog's life into a shorter window. Like all giant breeds, Danes need proactive bloat and cardiac and orthopedic care from day one — Health Considerations covers what to watch for.",
     summary: "Gentle giant. Their size compresses a normal dog's lifespan into 8-10 years and means proactive bloat, cardiac, and orthopedic care matters from day one.",
+    healthSummary: "Bloat (GDV) is the highest-risk concern — Great Danes have the highest lifetime bloat risk of any breed (40%+). Prophylactic gastropexy at spay/neuter is standard practice. DCM, osteosarcoma, and joint disease round out the breed's headline risks. Most catchable with the right cadence; bloat awareness is non-negotiable for owners.",
     references: [
       { label: "AKC Great Dane breed page", url: "https://www.akc.org/dog-breeds/great-dane/" },
       { label: "Great Dane Club of America — health", url: "https://gdca.org/health/" },
@@ -723,7 +741,9 @@ const dogBreedData = {
   },
   "shih tzu": {
     species: "dog", lifespan: "10-16 years", energy: "low-moderate",
+    about: "Affectionate, indoor-oriented, and unmistakably regal — Shih Tzus were bred in the Chinese imperial court (the name translates as 'lion dog' in reference to Buddhist symbolism), where they served as companion dogs for emperors and high-ranking officials. The personality is intact: confident, slightly haughty, and devoted to their humans without being clingy. They thrive in apartments, prefer calm households, and accept short walks plus indoor play as adequate exercise. The flat face is real, and eye care is a daily routine because of how shallow the eyes sit in the orbit. Long-lived (10-16 years) when daily care routines are followed. Like all brachycephalic breeds, Shih Tzus need extra care around airway, eyes, dental, and heat — Health Considerations covers what to watch for.",
     summary: "Affectionate lap breed, brachycephalic with prominent eyes. Eye protection, dental care, and heat awareness are the three daily routines that drive the breed's quality of life.",
+    healthSummary: "The Shih Tzu's flat-face conformation drives the headline concerns: brachycephalic respiratory issues (typically milder than Frenchie/Bulldog but still real), corneal ulcers and proptosis from shallow-set eyes, and dental disease from a small crowded mouth. Daily eye wipes + daily tooth brushing + heat awareness are the foundation of good Shih Tzu care.",
     references: [
       { label: "AKC Shih Tzu breed page", url: "https://www.akc.org/dog-breeds/shih-tzu/" },
       { label: "American Shih Tzu Club — health", url: "https://www.americanshihtzuclub.org/health" },
