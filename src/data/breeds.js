@@ -780,7 +780,9 @@ const dogBreedData = {
   },
   "bernese mountain dog": {
     species: "dog", lifespan: "7-10 years", energy: "moderate",
+    about: "Calm, devoted, and unmistakably striking — Bernese Mountain Dogs are tri-color farm dogs from the canton of Bern in the Swiss Alps, where they pulled carts and worked alongside dairy farmers (the breed name is Berner Sennenhund — Bernese alpine herder). They're famously gentle with children, deeply attached to their family, and possess a calm presence that makes them welcome in households where other large breeds would be overwhelming. They thrive in cooler climates given their thick black double-coat and prefer households where someone is home; Berners do not handle being left alone well. Lifespans run 7-10 years — heartbreakingly short — and the cancer-mortality rate is the highest documented of any breed. The Berner-Garde Foundation tracks breed health data and is a strong resource for owners. Health Considerations covers what to watch for and what proactive screening looks like.",
     summary: "Calm giant, family-oriented, devoted. The breed has a tragically high cancer mortality rate — about half of Berners die of cancer, and roughly a quarter from histiocytic sarcoma specifically. Owners benefit from knowing the patterns and screening schedule.",
+    healthSummary: "About half of Berners die of cancer — the highest documented breed cancer mortality rate. Histiocytic sarcoma is the breed-specific concern. The Berner-Garde Foundation collects health data for genetic studies; pet insurance before age 2 is a financially sane choice for the breed.",
     references: [
       { label: "AKC Bernese Mountain Dog breed page", url: "https://www.akc.org/dog-breeds/bernese-mountain-dog/" },
       { label: "Bernese Mountain Dog Club of America", url: "https://www.bmdca.org/" },
@@ -817,7 +819,9 @@ const dogBreedData = {
   },
   "pomeranian": {
     species: "dog", lifespan: "12-16 years", energy: "moderate",
+    about: "Tiny, puffball-shaped, and unmistakably confident — Pomeranians are descendants of much larger Spitz-type sled dogs from Pomerania (a region between modern Germany and Poland), miniaturized progressively across the 18th and 19th centuries until reaching the toy size known today. Queen Victoria's Pomeranian Marco famously kicked off the small-Pom trend in the 1890s. The personality is bigger than the body: confident, vocal, opinionated, devoted to their human, and willing to challenge much larger dogs. They thrive in apartments, prefer households where they are clearly the center of attention, and require regular professional grooming for the signature double coat. Long-lived (12-16 years) when daily care is followed. Like all toy breeds, Poms have a cluster of small-breed health concerns worth knowing — Health Considerations covers what to watch for.",
     summary: "Tiny puffball with a big personality. The trifecta of small-breed concerns — dental disease, tracheal collapse, and patellar luxation — drives most of the care plan, plus a breed-specific coat condition (Alopecia X) that's largely cosmetic but distressing for owners.",
+    healthSummary: "The standard toy-breed cluster: severe periodontal disease, tracheal collapse (use a harness, never a collar), patellar luxation. The breed-specific concern is Alopecia X — symmetric hair loss that's cosmetic but distressing. Reputable breeders avoid shaving the double coat because regrowth can fail.",
     references: [
       { label: "AKC Pomeranian breed page", url: "https://www.akc.org/dog-breeds/pomeranian/" },
       { label: "American Pomeranian Club", url: "https://americanpomeranianclub.org/" },
@@ -856,7 +860,9 @@ const dogBreedData = {
     species: "dog", lifespan: "11-13 years", energy: "moderate",
     displayName: "Boston Terriers", brachycephalic: true,
     origin: "Boston, USA · 1870s",
+    about: "Friendly, dapper, and unmistakably American — Boston Terriers are one of only a handful of breeds developed entirely in the United States, originating in 1870s Boston from a Bulldog-Terrier cross. They earned the nickname 'the American Gentleman' for the tuxedo-like markings and famously affable temperament. They're great with children, sociable with strangers, and work well in apartments because their exercise needs are moderate. The flat face is real, the eyes sit shallow and prominent, and heat tolerance is genuinely poor. Like all brachycephalic breeds, they need extra care around airway, eyes, and heat — Health Considerations covers what to watch for, especially the corneal ulcer risk that puts Bostons at the top of ER eye stats.",
     summary: "Friendly, mostly indoor breed, brachycephalic with notably prominent eyes. Eye trauma protection is a daily concern; BOAS and heat sensitivity are the other big-ticket items.",
+    healthSummary: "Boston Terriers have prominent shallow-set eyes, which means corneal ulcers, cherry eye, and proptosis are all over-represented. BOAS (typically milder than Frenchie/Bulldog), heat stroke risk, and patellar luxation round out the big-ticket concerns.",
     references: [
       { label: "AKC Boston Terrier breed page", url: "https://www.akc.org/dog-breeds/boston-terrier/" },
       { label: "Boston Terrier Club of America", url: "https://www.bostonterrierclubofamerica.org/" },
@@ -893,7 +899,9 @@ const dogBreedData = {
   },
   "havanese": {
     species: "dog", lifespan: "14-16 years", energy: "moderate",
+    about: "Cheerful, social, and famously trainable — Havanese are the national dog of Cuba, descended from Mediterranean lap dogs brought to the island by Spanish colonists in the 1500s. They almost went extinct after the Cuban Revolution sent many breeders into exile in the United States; today's worldwide population descends from a small founding group. They're affectionate, sociable, and possess remarkable trainability — they're competition-circuit regulars in agility and obedience despite their small size. They thrive in apartments, do well with children, and rarely meet a stranger. The signature long silky coat needs daily brushing. Long-lived (14-16 years) when care routines are followed. Like all small breeds, Havanese have a cluster of small-breed health concerns worth knowing — Health Considerations covers what to watch for.",
     summary: "Cheerful, low-shedding lap breed. One of the longer-lived AKC breeds at 14-16 years; small-breed orthopedic and eye conditions dominate the care plan.",
+    healthSummary: "Havanese are generally one of the healthiest small breeds. Patellar luxation, hereditary cataracts/PRA, hip dysplasia (modest rates for a small breed), and Legg-Calvé-Perthes are the headline concerns. Reputable breeders run OFA hip + ACVO eye + BAER hearing as a standard panel.",
     references: [
       { label: "AKC Havanese breed page", url: "https://www.akc.org/dog-breeds/havanese/" },
       { label: "Havanese Club of America — health", url: "https://havanese.org/health/" },
@@ -930,7 +938,9 @@ const dogBreedData = {
   },
   "border collie": {
     species: "dog", lifespan: "12-15 years", energy: "very high",
+    about: "Brilliant, intense, and unmistakably purposeful — Border Collies were bred along the Anglo-Scottish border to herd sheep across rough terrain, and the result is widely considered the most intelligent dog breed on earth. Studies routinely place them at the top of working/obedience intelligence rankings, but the gift comes with an obligation: a Border Collie without a real job will invent one, often involving herding household members, vehicles, or shadows. They thrive in active families willing to do agility, herding trials, advanced obedience, scent work, or all of the above. They're not a casual-pet breed; under-stimulated Border Collies become anxious, destructive, and prone to compulsive behaviors. Like all working herders, they have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for, including a critical drug-sensitivity gene worth testing every Border Collie for.",
     summary: "The world's smartest dog breed. Without a job, they invent stressful ones — herding cars, vacuums, children, light reflections. Mental work is as critical as physical exercise. Eye and gene-sensitivity issues are the main breed-specific health items.",
+    healthSummary: "Collie eye anomaly (CEA) is the breed-specific eye condition; genetic test exists. MDR1 (ABCB1) gene sensitivity is the second actionable concern — every Border Collie should be tested before any new medication. Idiopathic epilepsy and a handful of breed-specific neurodegenerative conditions (TNS, NCL) round out the headlines.",
     references: [
       { label: "AKC Border Collie breed page", url: "https://www.akc.org/dog-breeds/border-collie/" },
       { label: "Border Collie Society of America — health", url: "https://www.bordercolliesociety.com/" },
@@ -966,7 +976,9 @@ const dogBreedData = {
   },
   "shetland sheepdog": {
     species: "dog", lifespan: "12-14 years", energy: "high",
+    about: "Affectionate, trainable, and famously vocal — Shetland Sheepdogs are small herding dogs from Scotland's remote Shetland Islands, where the harsh terrain and small available livestock favored a smaller, agile herder. They're often confused with Rough Collies (the Lassie breed) but they're a distinct breed at about a third the size. Shelties bond hard with their family, accept strangers reluctantly, and possess strong herding instincts that can manifest as nipping at heels of joggers, cyclists, or running children. They thrive in active homes with structured training; agility and obedience are natural fits. Like all working herders, they have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for, including a notable autoimmune skin condition (dermatomyositis) and the same MDR1 drug-sensitivity gene as Collies and Border Collies.",
     summary: "Smaller, vocal cousin of the Collie. Eye conditions, gene-drug sensitivity, and a breed-specific autoimmune skin disease (dermatomyositis) are the main concerns.",
+    healthSummary: "Collie eye anomaly (CEA) and the MDR1 (ABCB1) drug-sensitivity gene are both shared with Collies and Border Collies. Shelties also have a breed-specific autoimmune skin condition (dermatomyositis) presenting as crusting on the bridge of the nose, ear tips, and tail tip — early intervention preserves coat and skin.",
     references: [
       { label: "AKC Shetland Sheepdog breed page", url: "https://www.akc.org/dog-breeds/shetland-sheepdog/" },
       { label: "American Shetland Sheepdog Association", url: "https://www.assa.org/" },
@@ -1003,7 +1015,9 @@ const dogBreedData = {
   },
   "miniature schnauzer": {
     species: "dog", lifespan: "12-15 years", energy: "moderate",
+    about: "Spunky, alert, and famously bearded — Miniature Schnauzers are German farm dogs miniaturized from the Standard Schnauzer in the late 19th century, originally bred as ratters and farm watchdogs. They retain the bold terrier-style personality (despite technically being grouped with Working/Toy in some registries): confident, vocal, suspicious of strangers, and devoted to their family. The signature wiry coat plus the pronounced mustache make them instantly recognizable. They thrive in active households (apartments work fine if exercise is daily), are typically good with children, and benefit from structured training to manage the bark. Long-lived (12-15 years) when diet discipline is followed; they have a documented lipid-metabolism quirk that makes diet management a real care item, not a casual one. Like all small terriers, they have a cluster of breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Spunky, alert, hypoallergenic-ish wiry coat. Lipid metabolism is the breed's defining medical issue — Mini Schnauzers run high triglycerides and develop pancreatitis on a fatty meal more readily than most breeds. Diet discipline is the difference between healthy and ER-bound.",
+    healthSummary: "Hyperlipidemia → pancreatitis is the breed-defining concern: Mini Schnauzers have a heritable defect in lipid metabolism, run high baseline triglycerides, and develop pancreatitis on a fatty meal more readily than most breeds. Set a hard household 'no scraps' rule. Bladder stones, diabetes, Cushing's, and sick sinus syndrome round out the headlines.",
     references: [
       { label: "AKC Miniature Schnauzer breed page", url: "https://www.akc.org/dog-breeds/miniature-schnauzer/" },
       { label: "American Miniature Schnauzer Club — health", url: "https://amsc.us/" },
@@ -1039,7 +1053,9 @@ const dogBreedData = {
   },
   "cocker spaniel": {
     species: "dog", lifespan: "12-15 years", energy: "moderate",
+    about: "Sweet, sensitive, and unmistakably floppy-eared — Cocker Spaniels are mid-sized hunting spaniels developed in 19th-century England specifically to flush out woodcock (hence the name), then refined into two distinct lines: the American Cocker Spaniel (smaller, more domed skull) and the English Cocker Spaniel (taller, longer muzzle, closer to working type). They're affectionate with their family, gentle with children, and possess a famously expressive face. Daily ear care is non-negotiable; the long heavy ears trap moisture and chronic otitis is breed-defining without preventive routine. They thrive in active families with structured grooming time and humans who can keep up with the daily eye-and-ear care. Like all heavy-eared breeds, Cockers have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Sweet, sensitive, floppy-eared. Ear care, eye exams, and consistent grooming are non-negotiable for this breed.",
+    healthSummary: "Chronic otitis externa is the breed-defining concern — long heavy ears trap moisture and infections become chronic without prevention. The eye-disease cluster (primary glaucoma, hereditary cataracts, KCS, PRA) is also over-represented; ACVO eye exam annually is standard. Skin (seborrhea + atopy), thyroid, and AIHA round out the breed's known patterns.",
     references: [
       { label: "AKC Cocker Spaniel breed page", url: "https://www.akc.org/dog-breeds/cocker-spaniel/" },
       { label: "American Spaniel Club — health resources", url: "https://www.asc-cockerspaniel.org/health" },
@@ -1071,7 +1087,9 @@ const dogBreedData = {
   },
   "english springer spaniel": {
     species: "dog", lifespan: "12-14 years", energy: "high",
+    about: "Birdy, athletic, and famously family-oriented — English Springer Spaniels are mid-sized hunting spaniels developed in 19th-century England to 'spring' birds from cover for the hunter. They retain that working drive: high-energy, water-loving, scent-driven, and happiest with a real job. The breed has split into two distinct lines — field-trial breeding lines that are leaner, more athletic, and closer to working type; show / bench lines that are blockier and tend to be calmer. Springers thrive in active families with land to roam, water nearby, structured exercise, and grooming time for the ears. Like all heavy-eared sporting breeds, Springers share a few patterns with Cockers (ears, eyes, joints) plus a few breed-specific genetic conditions — Health Considerations covers what to watch for.",
     summary: "Birdy, athletic, family-oriented. Working / field lines and show / bench lines have diverged in conformation; health concerns overlap with the Cocker (ears, eyes, joints) plus a few breed-specific genetic conditions worth screening for.",
+    healthSummary: "Chronic otitis externa from heavy ears + frequent fieldwork is the daily care concern. PRA and hereditary cataracts run in some lines (annual ACVO eye exam recommended). Phosphofructokinase deficiency is the breed-specific metabolic concern; genetic test exists. Field-trial breeding lines often have better hips than show-line dogs.",
     references: [
       { label: "AKC English Springer Spaniel breed page", url: "https://www.akc.org/dog-breeds/english-springer-spaniel/" },
       { label: "English Springer Spaniel Field Trial Association", url: "https://www.essfta.org/" },
@@ -1108,7 +1126,9 @@ const dogBreedData = {
   },
   "brittany": {
     species: "dog", lifespan: "12-14 years", energy: "very high",
+    about: "Compact, athletic, and famously versatile — Brittanys are pointer-spaniel hybrids from the Brittany region of France, where 19th-century hunters bred them to point birds AND retrieve them, packed into a smaller body than English pointers. They run, they swim, they point, they retrieve, and they tolerate every weather and terrain a hunter can throw at them. They're affectionate with their family, energetic with everyone, and possess a cheerful disposition that makes them easy to live with — IF the daily exercise is real. A Brittany without significant exercise becomes destructive within weeks. They thrive in active families with land to roam, structured fieldwork or sport, and humans who can match their energy. Like all athletic working breeds, Brittanys have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Compact, athletic gun dog — versatile pointer that retrieves and runs all day. Generally one of the healthier sporting breeds, but needs serious daily exercise and has a few specific patterns to watch for.",
+    healthSummary: "Brittanys are generally one of the healthier sporting breeds. Idiopathic epilepsy is the headline breed-specific concern; first seizures typically 1-5 years of age. PRA and cataracts are other breed-relevant eye conditions. Heat-stroke risk during hot fieldwork is real — they will not stop themselves.",
     references: [
       { label: "AKC Brittany breed page", url: "https://www.akc.org/dog-breeds/brittany/" },
       { label: "American Brittany Club — health", url: "https://clubs.akc.org/brit/" },
@@ -1144,7 +1164,9 @@ const dogBreedData = {
   },
   "cane corso": {
     species: "dog", lifespan: "9-12 years", energy: "moderate",
+    about: "Powerful, deeply bonded, and unmistakably substantial — Cane Corsos are Italian mastiffs descended from Roman war dogs (the breed name derives from Latin Cohors, meaning 'protector of the courtyard'), refined over centuries into all-purpose farm guardians and herders in southern Italy. They're not aggressive by default, but they are protective, reserved with strangers, and wired for vigilance. They thrive with confident handlers willing to do extensive socialization from puppyhood and structured training throughout adolescence. Adult Corsos can reach 100-110 lb and have substantial physical presence; this is not a first-time-owner breed and not a breed to underestimate. They're devoted to their family, gentle with their humans, and famously good with children in their household. Like all giant working breeds, they have a meaningful list of large-breed health concerns worth knowing — Health Considerations covers what to watch for.",
     summary: "Italian mastiff, working guardian, deeply bonded. Substantial size, substantial training commitment, and a meaningful list of large-breed health concerns to plan for.",
+    healthSummary: "Hip and elbow dysplasia, GDV (bloat) — deep-chested giant with high risk; gastropexy at spay/neuter is standard practice — and idiopathic epilepsy are the headline concerns. Cardiac auscultation by a board-certified cardiologist on every puppy is the breed-club recommendation given DCM and aortic stenosis prevalence.",
     references: [
       { label: "AKC Cane Corso breed page", url: "https://www.akc.org/dog-breeds/cane-corso/" },
       { label: "Cane Corso Association of America — health", url: "https://www.canecorso.org/" },
