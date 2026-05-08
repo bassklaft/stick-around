@@ -12,7 +12,7 @@ Everything below this section is historical detail from the earlier overnight ru
 
 | Area | Summary |
 |---|---|
-| **Breed catalog** | 78 dog entries + 33 cat entries = **111 total breeds**, all with audit-quality content (about + healthSummary + 6-7 health bullets + references + grooming + exercise + checklist + tips). 31 breeds added net-new in v1.2 across overnight runs + manifest batches. |
+| **Breed catalog** | 78 dog entries + 33 cat entries + 12 new in the late manifest (Bull Terrier, Cardigan Welsh Corgi, English Mastiff, Great Pyrenees, Jack Russell Terrier, Pekingese, Rhodesian Ridgeback, Scottish Terrier, Standard Schnauzer, Tibetan Mastiff, Westie, Xoloitzcuintli) + 3 pit-type breeds (APBT, AmStaff, Staffie) + Munchkin cat + American Curl + Savannah + Selkirk Rex = **123 total breeds**, all audit-quality. ~43 breeds added net-new in v1.2. |
 | **Brand-name compliance** | Zero brand-name medications across entire breeds.js. All allergy-related bullets use "modern allergy medications — discuss with your vet whether oral medications, injectable options, or allergen-specific immunotherapy fit." Pimobendan kept as generic class name (Vetmedin parenthetical dropped). |
 | **Pit-type breeds (3 entries)** | American Pit Bull Terrier, American Staffordshire Terrier, Staffordshire Bull Terrier — all with neutral framing per Apple-rejection-risk guardrails (no aggression/fighting/tough/guard-dog language; BSL implications mentioned only as practical owner considerations re housing + insurance + travel). |
 | **Welfare-aware framing** | Munchkin cat added with the Scottish Fold pattern: honest about the chondrodysplasia welfare debate, citing ICatCare + RSPCA + BVA + GCCF + FIFe positions, balanced care guidance for current owners, "if you have one... if you're considering buying one..." closing. |
@@ -21,6 +21,8 @@ Everything below this section is historical detail from the earlier overnight ru
 | **Microchip Phase 1** | New onboarding step + edit screen capturing microchipStatus (`confirmed` / `pending` / `none` / `unsure`) + microchipNumber (15-digit ISO 11784/11785). Existing pets soft-migrate to `microchipStatus: 'unsure'` via fallback default in editMode pre-fill. No alert integration in v1.x. |
 | **Light gamification polish** | Smooth LayoutAnimation expand/collapse on About / Health / Tips / Sources / Origin Story cards; celebratory animation + notifySuccess haptic when ALL daily checklist items complete (de-duped per pet/date/itemcount); tapLight haptic on every tab switch. Zero new screens, zero new deps. |
 | **v1.1.2-work merge** | 16 conflicts hand-resolved (RLS-style 3-way merges on YourPetsScreen, HomeScreen, OnboardingScreen, App.js, V1_REMOVED_FEATURES.md, package files). Caught and fixed a duplicate-toggleAbout-function bug from the auto-merge that would have silently broken mixed-breed sectionId state. |
+| **Pawgress Indicator (NEW)** | Daily-care gamification per docs/features/pawgress-indicator.md. Five-segment paw SVG (4 toe pads + main pad), tap-to-toggle in the modal detail screen, streak counter (consecutive all-5 days, today not required to be complete), Home card, animated celebration overlay (12 floating particles + headline pop) when all 5 fill, Premium history-view teaser. Storage shape mirrors future Supabase `pawgress_days` table per security doc + spec. |
+| **Tummy Tracker (NEW)** | Per-pet stool + diet log per docs/features/tummy-tracker.md. Stool entry: Bristol Stool Scale 1-7 with abstract line-art icons (NOT photographic per Apple-review guideline; flagged as v1.3 design polish), color enum, volume, modifiers (mucus / blood / foreign material / undigested food), photo via camera or library, free-text note (LOCAL ONLY). Diet entry: meal type + brand + product + amount + note + SavedFoods autocomplete cache. **FDA recall match: ALWAYS FREE** — fetches openFDA food/enforcement + animalandveterinary endpoints, runs LOCAL fuzzy match against logged foods (third party never sees what user logged). **Vet visit suggestion: ALWAYS FREE** — anomaly detection on stool entries (3+ Bristol 1-2 / 3+ Bristol 6-7 in 48h, blood, black, red_tinged, sudden volume change). Premium gates: 90/365/all-time timeline ranges + PDF export with photos embedded + multi-pet comparison (TBD; not in v1.2 MVP). PDF via expo-print HTML→PDF + expo-sharing iOS share sheet. |
 
 ## Commit log (v1.2-work since v1.1.2-work merge)
 
@@ -126,8 +128,17 @@ The microchip number is **User Content** under Apple's privacy taxonomy. Verify 
 
 5. **Honest content edits.** Brand-name medications (Apoquel, Cytopoint, etc.) replaced across 9 breed entries with the medication CLASS — owners get the same medical understanding without inadvertently endorsing specific products.
 
+**Updated for the late-manifest additions** — Pawgress + Tummy Tracker are the headline features, breeds catalog is supporting:
+
+1. **Pawgress** — daily-care gamification. Tap a paw segment as you go through the day; complete all five for the celebration. Streak counter for the consistent humans. Premium unlocks weekly / monthly / yearly history.
+2. **Tummy Tracker** — per-pet stool + diet log with Bristol Stool Scale + color + volume + modifiers + photo. **FDA recall match (always free)**: when a brand you've logged appears in an active FDA recall, you see a banner. **Vet visit suggestion (always free)**: anomaly detection flags patterns worth discussing — 3+ days of soft stool, blood, melena, sudden volume change. Premium unlocks 90-day / yearly / lifetime views + a vet-friendly PDF export with photos embedded.
+3. 40+ new breeds including the pit-type breeds with neutral framing, Munchkin with welfare-aware copy modeled on Scottish Fold, ancient breeds like Xoloitzcuintli + Tibetan Mastiff, and the long-tail mid-popularity dogs (Bull Terrier, Westie, Scottie, Jack Russell, Pekingese, Cardigan Welsh Corgi, etc.). 123 total breed entries.
+4. **Cleaner multi-pet UX** — pet name is the obvious tap target → edit profile. Active-pet chip in nav bar of pet-scoped screens. Pet-name nav titles ("Falafel's Checklist") for context.
+5. **Microchip onboarding** — new step in onboarding capturing chip status with four options. Useful for vet visits + future lost-pet recovery.
+6. **Polish that adds up** — smooth expand/collapse on every breed card, celebratory haptic when you complete the day's checklist, light tap on every tab switch, welcoming first-time-user empty state.
+
 **App Store "What's New" copy (~150 chars)**:
-> v1.2: 30+ new breeds (including pit-type with neutral framing + Munchkin with welfare-aware copy), smoother multi-pet UX, microchip onboarding, polish.
+> v1.2: Pawgress daily tracker, Tummy Tracker (stool + diet log with FDA recall match — always free), 40+ new breeds, smoother multi-pet UX.
 
 **Tone**: confident but not boastful. Specific (numbers, named features). No emoji in the title bar. Saves emoji for the in-app celebration moments.
 
@@ -408,7 +419,63 @@ The whole-card tap on My Floofs was REMOVED. Active-pet switching now lives on t
 - [ ] Trip Planning screen renders
 - [ ] Age Calculator (DogAge route) renders + gives a multi-factor result for Falafel
 
-**Pass criteria**: all 10 sections green. If any item fails, do NOT submit build 18 — fix and rebuild first.
+**Pass criteria**: sections 1-22 green. If any item fails, do NOT submit build 18 — fix and rebuild first.
+
+**16. Pawgress Indicator (NEW in v1.2.0)**
+- [ ] Home tab: Pawgress card visible above QUICK ACCESS heading; renders a small 56px paw SVG with completion summary
+- [ ] Tap card → Pawgress modal opens with 220px paw at top + "TODAY'S PADS" section (5 tappable rows)
+- [ ] Daily Special pad shows day-of-week-rotating label (e.g., Monday = "Brush teeth or dental chew")
+- [ ] Tap a pad row → segment toggles, AnimatedCheckmark draws in, paw segment animates fill
+- [ ] Complete all 5 pads → celebration overlay fires once with floating 🐾 / 💛 / 🎉 / ✨ particles + "[Pet] is set for today" headline + notifySuccess haptic
+- [ ] Re-toggling the last pad does NOT re-fire celebration (de-duped per pet+date)
+- [ ] Streak counter (🔥 X-day streak) appears when streak > 0
+- [ ] Free user: "See [pet]'s history" Premium teaser visible at bottom; tap → Premium screen
+
+**17. Tummy Tracker — first entry (NEW in v1.2.0)**
+- [ ] Home tab → tap "Tummy Tracker" card → Tummy Tracker screen opens
+- [ ] Empty state: paw emoji + "Log [pet]'s first poop" + value-prop body + "always free" mention of recall + vet suggestions
+- [ ] Tap "Log poop" → LogStool modal opens
+- [ ] Bristol picker: tap each of 1-7 → BristolIcon highlights + numeric label updates + description text under the row updates
+- [ ] Color chips: tap each color → highlights; black + red_tinged have a watch-color border
+- [ ] Volume row: small / normal / large select cleanly
+- [ ] Modifier toggles: mucus / blood / foreign material / undigested food — toggling blood shows inline "discuss with your vet" hint
+- [ ] Photo button: tap → ActionSheet ("Take photo" / "Choose from library" / "Cancel"). On iPhone, both options reach the relevant native picker
+- [ ] After photo: small thumbnail in dashed-border box; "Remove photo" removes it
+- [ ] Optional note text input
+- [ ] "Log this poop" button saves + dismisses modal + returns to Tummy Tracker
+- [ ] Photo file persists across app restart (sandbox storage in documentDirectory/pets/[id]/tummy/)
+
+**18. Tummy Tracker — diet entry (NEW)**
+- [ ] Tap "Log meal" → LogDiet modal opens
+- [ ] Meal-type chips select cleanly (kibble / wet / raw / treat / supplement / scraps / human_food / water_only)
+- [ ] After at least one diet entry: QUICK ADD row appears with most-recent foods. Tap a quick-add chip → fills brand + product fields
+- [ ] Brand + product + amount + note inputs work
+- [ ] "Log this meal" saves + dismisses
+
+**19. Tummy Tracker — recall match banner (NEW, ALWAYS FREE)**
+- [ ] Log a diet entry with a brand likely to match an active FDA recall (e.g., search openFDA food/enforcement results manually first to find a current example)
+- [ ] Recall banner appears at top of Tummy Tracker screen with red background + alert-octagon icon + recall date + reason + "Last logged" date + "Discuss with your vet"
+- [ ] If cache is older than 7 days: stale-data warning appears below the banner
+- [ ] Recall match runs OFFLINE if a previous fetch is cached (try airplane mode; banner still shows from cache)
+
+**20. Tummy Tracker — vet suggestion banner (NEW, ALWAYS FREE)**
+- [ ] Log 3 stool entries with Bristol 6 or 7 within 48 hours (or 1 entry with blood checked) — banner appears at top of Tummy Tracker
+- [ ] Banner has accent background + stethoscope icon + "Pattern detected: ..." + "Discuss with your vet."
+- [ ] Banner does NOT appear if criteria not met (1 normal stool entry, e.g., Bristol 4)
+
+**21. Tummy Tracker — Premium gating (NEW)**
+- [ ] As a non-Premium user: 30-day range pre-selected; 90 / Year / All-time ranges show lock icon
+- [ ] Tap 90 / Year / All-time → Premium upsell Alert appears with "Maybe later" / "See Premium"
+- [ ] Tap "Export" → Premium upsell Alert
+- [ ] As Premium user (founder override): all four range buttons selectable; Export button generates a PDF + opens iOS share sheet
+- [ ] PDF includes pet name header, recall + vet banners (if any), interleaved stool + diet timeline, photos embedded inline at reasonable size, footer disclaimer
+
+**22. Tummy Tracker — privacy contract (NEW)**
+- [ ] Verify in PostHog dashboard: stool log events fire `tummy_tracker_stool_log_created` with bristol_scale, color, has_photo, has_blood, pet_species — NEVER notes verbatim, NEVER photo URI, NEVER pet name
+- [ ] Diet log events fire `tummy_tracker_diet_log_created` with meal_type, has_brand, pet_species — NEVER brand strings, NEVER product names, NEVER notes verbatim
+- [ ] Recall match event fires `tummy_tracker_recall_match_shown` with brand_match (bool) + recall_age_days
+- [ ] Vet suggestion event fires `tummy_tracker_vet_suggestion_shown` with trigger_type only (not pet_id, not entry details)
+- [ ] Photo capture event fires `tummy_tracker_photo_captured` with source (camera/library) only
 
 ---
 

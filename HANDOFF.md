@@ -61,33 +61,30 @@ Across the v1.2-work branch (since the v1.1.2-work merge):
 
 9. **Pawgress data layer** (`5e1cc09`) — `src/lib/pawgress.js` storage helper. AsyncStorage shape mirrors future Supabase `pawgress_days` table. API: `getDay`, `toggleSegment`, `setSegment`, `getRange`, `getStreak`, `countCompleted`, `isAllFive`. Daily-special rotation by day-of-week.
 
-### v1.2.0 manifest — what's IN PROGRESS / PENDING
+### v1.2.0 manifest — Pawgress + Tummy Tracker LANDED
 
-The user's most recent manifest (in conversation FloofLife 2 / current) added two big features to the v1.2.0 scope:
+**Pawgress Indicator** ✅ landed:
+- ✅ Data layer `src/lib/pawgress.js` — segment defs, daily-special rotation, getDay/toggleSegment/getStreak/getRange (commit `5e1cc09`)
+- ✅ Visual components `src/components/PawgressPaw.js` (5-segment SVG) + `src/components/AnimatedCheckmark.js` (drawn-in stroke) + `src/components/PawgressCelebration.js` (12-particle floating overlay) (commit `77dc710`)
+- ✅ `src/screens/PawgressScreen.js` modal detail + streak counter + Premium history teaser, registered as RootStack route (commit `7347be6`)
+- ✅ HomeScreen card integration with small paw + completion summary (commit `7347be6`)
+- ⚠ NOT shipped (defer to v1.3): Premium history grid (week/month/year visual layouts), share-card export, multi-pet ring layout
+- Color-mode tokens (today/week/month/year) implemented in PawgressPaw — used today only on Home for v1.2.0; weekly/monthly grids in v1.3
 
-**Pawgress Indicator (cluster of commits)**:
-- ✅ Data layer (committed `5e1cc09`)
-- ⏳ Pawprint SVG component (multi-segment, color-mode prop) — PENDING
-- ⏳ Checkmark SVG component (drawn-in animation) — PENDING
-- ⏳ Confetti + hearts celebration component — PENDING
-- ⏳ HomeScreen + ChecklistScreen integration — PENDING
-- ⏳ Expanded modal + streak counter — PENDING
-- ⏳ Theme tokens for day/week/month/year colors — PENDING
-
-**Tummy Tracker (separate cluster)** — MAJOR feature, full spec at `docs/features/tummy-tracker.md`:
-- ⏳ Data model + AsyncStorage hooks — PENDING
-- ⏳ Stool log entry screen (Bristol scale 1-7, color enum, volume enum, modifiers, photo, walk context) — PENDING
-- ⏳ Diet log entry screen — PENDING
-- ⏳ Photo capture menu component — PENDING
-- ⏳ Tummy Tracker main screen (timeline view) — PENDING
-- ⏳ FDA recall match service + banner — PENDING (fetch from `https://api.fda.gov/animalandveterinary/event.json`)
-- ⏳ Vet visit suggestion service + banner — PENDING (3+ Bristol 1-2 / 3+ Bristol 6-7 / blood / black or red-tinged / volume change)
-- ⏳ Export PDF feature (Premium, via expo-print HTML→PDF) — PENDING
-- ⏳ Premium gating for time-range views (30d free / 90d, 365d, all-time Premium) — PENDING
-- ⏳ Pet profile + HomeScreen integration — PENDING
+**Tummy Tracker** ✅ landed (commit `3e39368`):
+- ✅ Data layer `src/lib/tummy.js` — StoolLog, DietLog, SavedFoods, detectVetSuggestion(), all entries include syncStatus: 'pending' for backend sync
+- ✅ FDA recall match `src/lib/recallMatch.js` — fetches openFDA food/enforcement + animalandveterinary, normalizes + dedupes, 24h cache with stale-fallback for offline. Local fuzzy match (substring + word-overlap, no third-party fuzzy lib). Privacy: third party never sees what user logged.
+- ✅ Bristol icons `src/components/BristolIcon.js` — abstract line-art SVG 1-7 (placeholder visuals; spec flags commissioned illustrations as v1.3 design polish)
+- ✅ Photo capture extension `src/lib/photoPicker.js` — adds pickTummyPhoto({ petId, source }) supporting camera + library; persists to documentDirectory/pets/[id]/tummy/; never writes to camera roll
+- ✅ `src/screens/LogStoolScreen.js` — Bristol picker + color chips + volume + modifier toggles (mucus / blood / foreign / undigested) + photo + note
+- ✅ `src/screens/LogDietScreen.js` — meal type + brand + product + amount + note + SavedFoods autocomplete
+- ✅ `src/screens/TummyTrackerScreen.js` — recall + vet banners (always free), range selector with Premium gating, action row, interleaved timeline, empty state with friendly framing, PDF export via expo-print + expo-sharing
+- ✅ HomeScreen card integration
+- ⚠ NOT shipped (defer to v1.3): CSV export, multi-pet comparison view, anomaly history dashboard (Premium feature listing past vet-suggested events), pet-profile entry on YourPetsScreen (Home card is sufficient access for v1.2.0)
 
 **Final**:
-- ⏳ OVERNIGHT_NOTES.md update with full v1.2.0 final manifest, manual smoke test additions for both features, marketing brief — PENDING
+- ✅ OVERNIGHT_NOTES.md updated with v1.2.0 final manifest, smoke test sections 16-22, updated marketing brief
+- ✅ HANDOFF.md (this file) updated with current state
 
 ---
 
@@ -298,12 +295,12 @@ From `OVERNIGHT_NOTES.md` (read it for full context):
 
 ## Last known state (snapshot)
 
-- v1.2-work HEAD: `5e1cc09` (Pawgress data layer)
+- v1.2-work HEAD: `3e39368` (Tummy Tracker MVP cluster)
 - All commits pushed to `origin/v1.2-work`
 - Working tree clean except `screenshots-app-store/` (intentionally untracked)
-- Build 18 NOT YET TRIGGERED. Manifest still has Pawgress + Tummy Tracker pending.
-- Conversation context: this is FloofLife 2 (the user is creating FloofLife 3 to continue beyond message limits). Paste this HANDOFF.md as initial context in the new conversation.
+- Build 18 NOT YET TRIGGERED. v1.2.0 manifest is essentially complete — both Pawgress and Tummy Tracker MVPs landed.
+- Conversation context: this is FloofLife 2 (the user mentioned creating FloofLife 3 to continue beyond message limits). Paste this HANDOFF.md as initial context in the new conversation.
 
 **Continuation prompt for FloofLife 3** (paste alongside the file):
 
-> Picking up from FloofLife 2. v1.2-work HEAD is `5e1cc09`. We've shipped breeds catalog expansion (now 111 entries), brand-name compliance audit, multi-pet UX refinement, microchip Phase 1, empty-state polish, and gamification polish. Pawgress data layer landed (`src/lib/pawgress.js`); UI components, integration, modal, and streak counter still pending. Tummy Tracker entirely pending — full spec at `docs/features/tummy-tracker.md`. Hard rules in `HANDOFF.md`. Read `OVERNIGHT_NOTES.md` for state. Continue the v1.2.0 manifest autonomously per the user's most recent instructions. NO BUILD TRIGGER until manual smoke test approval.
+> Picking up from FloofLife 2. v1.2-work HEAD is `3e39368`. v1.2.0 manifest essentially complete: 123-breed catalog (incl. pit-type with neutral framing + Munchkin with welfare-aware framing + 12 dogs from late manifest), brand-name compliance, multi-pet UX refinement (name-as-button + chip switcher + nav title), microchip Phase 1, empty state polish, gamification polish, **Pawgress** (data layer + 5-segment paw SVG + checkmark + celebration + modal screen + Home card), **Tummy Tracker** (stool + diet log entry screens + main timeline + Bristol icons + FDA recall match service ALWAYS FREE + vet visit suggestion ALWAYS FREE + Premium-gated range views + PDF export). Read HANDOFF.md + OVERNIGHT_NOTES.md for state and the PRE-BUILD-18 manual checklist (sections 1-22). Pre-build-18 visual smoke test pending — needs physical device. Hard rules in HANDOFF.md. NO BUILD TRIGGER until user approval.
