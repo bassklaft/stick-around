@@ -211,7 +211,19 @@ export default function App() {
           }
         }}
       >
-        <RootStack.Navigator screenOptions={{ headerShown: false }}>
+        <RootStack.Navigator
+          screenOptions={{ headerShown: false }}
+          screenListeners={{
+            transitionEnd: (e) => {
+              // Haptic on back-navigation (swipe-from-left-edge OR
+              // header back-button OR programmatic goBack). Native-
+              // stack emits transitionEnd with data.closing=true when
+              // a screen is being popped. Light tap so it confirms
+              // the gesture without being noisy.
+              if (e?.data?.closing) tapLight();
+            },
+          }}
+        >
           {!onboarded ? (
             <RootStack.Screen name="Onboarding">
               {(props) => <OnboardingScreen {...props} onDone={() => setOnboarded(true)} />}
