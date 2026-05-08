@@ -1300,7 +1300,7 @@ const dogBreedData = {
       { label: "OFA — Bichon Frise breed statistics", url: "https://www.ofa.org/diseases/breed-statistics" },
     ],
     health: [
-      "Atopic dermatitis — environmental allergies are over-represented; presents as itchy paws, recurrent ear infections, chewing, hot spots. Many adult Bichons are on long-term Apoquel/Cytopoint or allergen-specific immunotherapy.",
+      "Atopic dermatitis — environmental allergies are over-represented; presents as itchy paws, recurrent ear infections, chewing, hot spots. Modern allergy medications have transformed quality of life for the breed — discuss with your vet whether oral medications, injectable options, or allergen-specific immunotherapy might fit your Bichon.",
       "Patellar luxation — small-breed standard; surgery for grade 3-4 luxation before secondary arthritis develops.",
       "Hereditary cataracts — autosomal dominant in some lines; can present in young adults. Annual ACVO eye exam recommended.",
       "Bladder stones (calcium oxalate + struvite) — over-represented; presents as straining to urinate, blood in urine. Dietary management + adequate water access reduces recurrence.",
@@ -1311,13 +1311,13 @@ const dogBreedData = {
     grooming: "Daily brushing for the curly coat; pro grooming every 4-6 weeks",
     exercise: "30-45 min/day",
     checklist: [
-      { title: "Watch for itchy paws, ear infections, chronic chewing, or hot spots", why: "Atopic dermatitis is breed-defining; early intervention with Apoquel/Cytopoint or immunotherapy keeps quality of life high.", cadence: "weekly", category: "observe" },
+      { title: "Watch for itchy paws, ear infections, chronic chewing, or hot spots", why: "Atopic dermatitis is breed-defining; early intervention with oral medications, injectable options, or allergen-specific immunotherapy keeps quality of life high. Discuss approach with your vet.", cadence: "weekly", category: "observe" },
       { title: "Brush teeth daily; annual dental cleaning under anesthesia from age 2", why: "Periodontal disease standard for small breeds.", cadence: "daily", category: "care" },
       { title: "Watch for straining to urinate or blood-tinged urine", why: "Bladder stones are over-represented; ER visit for males due to obstruction risk.", cadence: "always", category: "safety" },
       { title: "ACVO eye exam from puppyhood + annually", why: "Hereditary cataracts can appear in young adults; reputable breeders screen.", cadence: "yearly", category: "vet" },
     ],
     tips: [
-      "Bichons are notoriously itchy. If your Bichon is chewing paws, scratching, or developing recurrent ear infections by age 2-3, ask the vet about atopic dermatitis specifically. Modern medications (Apoquel, Cytopoint) transformed quality of life for the breed.",
+      "Bichons are notoriously itchy. If your Bichon is chewing paws, scratching, or developing recurrent ear infections by age 2-3, discuss atopic dermatitis with your vet. Modern allergy medications have transformed quality of life for the breed — talk to your vet about whether oral medications, injectable options, or allergen-specific immunotherapy might fit your dog.",
       "Daily tooth brushing from puppyhood. The small mouth + curly coat make periodontal disease + dental fistulas common in middle age.",
       "Don't shave a Bichon to manage shedding; they shed minimally to begin with. Regular professional grooming every 4-6 weeks keeps the coat healthy and tangle-free.",
       "Bichons are companion dogs, not independent dogs. If you're working long hours away from home, this is not the breed for you — separation anxiety is breed-prevalent.",

@@ -145,3 +145,96 @@ esbuild parse-clean across all 12 affected JS/JSX files. No leftover conflict ma
    - Origin Story + Sources collapsibles work inside each About card
    - Tips card collapsible header reads correctly
    - Active pet ✓ ACTIVE / 👑 ELDEST badges render
+
+## Visual verification pass — 2026-05-08
+
+**Constraint**: no iOS simulator runtime is installed on this dev machine (already noted in V1_REMOVED_FEATURES.md). Installing one (~6-7 GB Xcode runtime) requires user approval and a meaningful disk hit. `expo start --web` doesn't work either — adding `react-dom` + `react-native-web` would be a non-trivial dep install I shouldn't make autonomously.
+
+What was verified — **static analysis only**:
+
+✅ **esbuild parse-clean** across 12 affected JS/JSX files (App.js, all 5 merged screens, breeds.js, all 3 merged lib files).
+
+✅ **No leftover conflict markers** anywhere in the tree.
+
+✅ **No stale references** in OnboardingScreen.js — zero remaining `setBreed(...)` / `pet.breed` / `isMixed` references (the merge correctly purged all v1.1.2 single-breed code paths in favor of v1.2-work's `selectedBreeds[]` / `showMixDetails` model).
+
+✅ **No stale references** in HomeScreen.js — zero remaining `titleCase(pet.breed)` references; all replaced with multi-breed-aware `breedDisplay`.
+
+✅ **YourPetsScreen.js mental traces**:
+   - Single-breed: `getPetBreeds(falafel)` returns `["chow chow"]`; `breedKeys.map` runs once; `sectionId = "p_falafel:chow chow"`; `aboutOpen[sectionId] ?? true` → expanded; `healthOpen[sectionId]` → undefined → collapsed. ✓
+   - Mixed-breed: `getPetBreeds(labradoodle)` returns `["labrador retriever", "poodle"]`; `breedKeys.map` runs twice; sectionIds are `"p_dood:labrador retriever"` and `"p_dood:poodle"`; each card has independent state. ✓
+   - Active pet switcher: tap card → `activatePet(pet.id)` → `Pets.setActive(petId)` AsyncStorage write + `setActiveId(petId)` + navigate to Home. State `aboutOpen[sectionId]` keyed by `${pet.id}:${breedKey}` so pet A and pet B never share state. ✓
+
+✅ **founderOverride.js**: contains `981F7B5B-46DF-4B89-AF5D-49B812EB939D` at line 41 of `FOUNDER_DEVICE_IDS`. `isFounderDevice()` returns true for that IDFV.
+
+✅ **SettingsScreen.js**: `PRIVACY_URL` → `https://bassklaft.github.io/floof-life/legal/privacy-policy.html`, `TERMS_URL` → `https://bassklaft.github.io/floof-life/legal/terms-of-service.html`. Both wired through `Linking.openURL` (lines 160-161). Send Feedback composes a `mailto:` with diagnostics (lines 40-69), wired through `Linking.canOpenURL` + `Linking.openURL`.
+
+✅ **haptics.js**: comments explicitly state "All calls are silent no-ops on platforms / devices where haptics aren't supported." Won't error in simulator.
+
+✅ **analytics.js**: `initAnalytics()` is a no-op when `EXPO_PUBLIC_POSTHOG_KEY` is missing; helpers guard against uninitialized client. Won't error in dev builds.
+
+What was NOT verified — **explicit gaps requiring a real device or simulator runtime**:
+
+❌ Pixel-level rendering of the merged YourPetsScreen.js card — no visual confirmation that `breedSectionHd` + mixed-breed section labels render where intended.
+
+❌ Active pet switcher animation (TouchableOpacity activeOpacity=0.9 feel).
+
+❌ Haptic feedback firing on toggles (won't fire in simulator anyway).
+
+❌ Real RevenueCat offering fetch (PremiumScreen depends on live App Store Connect + RevenueCat dashboard state).
+
+❌ Real WeatherKit / location-permission flows on RiskScreen.
+
+❌ Real Apple Mail composer rendering for Send Feedback.
+
+❌ Onboarding flow on a fresh install with empty AsyncStorage.
+
+**Recommendation**: trust the static analysis enough to move forward with the H1-H3 audit (which I've now also done — see below). Do the visual pass on the next physical-device build (build 18 candidate) before TestFlight upload. The merge is mechanical and parse-clean — pixel regression risk is low — but irreplaceable until someone runs the app.
+
+---
+
+## H1-H3 brand-name audit — 2026-05-08
+
+Per Path C language guardrails, brand-name medications must be replaced with medication CLASS or treatment APPROACH. Scope per task: H1-H3 batches (Pug → Bullmastiff). Revision pattern applied: drop the brand entirely, replace with class/approach, close with vet-discussion framing, never imply specific recommendation.
+
+### Findings — IN SCOPE (H1-H3)
+
+Only **Bichon Frise** had brand-name violations across all 15 H1-H3 dog entries. 3 occurrences total:
+
+| Location | Section | Brand mentioned | Fix |
+|---|---|---|---|
+| Line 1303 | health bullet | Apoquel/Cytopoint | "Modern allergy medications have transformed quality of life for the breed — discuss with your vet whether oral medications, injectable options, or allergen-specific immunotherapy might fit your Bichon." |
+| Line 1314 | checklist tip (`why` field) | Apoquel/Cytopoint | "early intervention with oral medications, injectable options, or allergen-specific immunotherapy keeps quality of life high. Discuss approach with your vet." |
+| Line 1320 | tips section | Apoquel, Cytopoint | "Modern allergy medications have transformed quality of life for the breed — talk to your vet about whether oral medications, injectable options, or allergen-specific immunotherapy might fit your dog." |
+
+**Status**: all 3 fixed and committed. Bichon Frise entry verified brand-name clean. breeds.js parses.
+
+The other 14 H1-H3 dog entries (Pug, Chihuahua, Maltese, Whippet, Vizsla, Weimaraner, Greyhound, Italian Greyhound, Bloodhound, Akita, Shiba Inu, Shar-Pei, Belgian Malinois, Bullmastiff) had ZERO brand-name violations — all were written brand-name-clean during the H1-H3 batch even before Path C guardrails arrived mid-overnight. Good news.
+
+### Findings — OUT OF SCOPE (other breeds with brand-name violations)
+
+These 6 entries also have brand names but are out of the H1-H3 audit scope. Flagging for the next audit pass:
+
+| Line | Breed | Section | Brand mentioned |
+|---|---|---|---|
+| 26 | Labrador Retriever | health bullet | Apoquel/Cytopoint |
+| 65 | French Bulldog | health bullet | Apoquel/Cytopoint |
+| 580 | Cavalier King Charles Spaniel | health bullet (long-form) | Pimobendan (Vetmedin) — note: Pimobendan is the generic name, Vetmedin the brand. Could be revised to drop the brand-name parenthetical and keep the generic. |
+| 619 | Doberman Pinscher | health bullet | Pimobendan (Vetmedin) — same generic-vs-brand pattern. |
+| 763 | Shih Tzu | health bullet | Apoquel |
+| 1146 | Brittany | health bullet | Apoquel |
+
+**Recommendation**: do these 6 in a separate audit pass before v1.2.0 ships. The Pimobendan/Vetmedin pattern is borderline — Pimobendan is the generic class, Vetmedin the brand — but per Path C the brand parenthetical should still drop. Estimate: 30-45 minutes of focused work.
+
+### Future feature (NOT in scope, just documenting the idea)
+
+**My Vet contact integration** — the vet-discussion framing across the app would be more actionable if Settings had a saved "My Vet" profile (name, phone, email) and every "discuss with your vet" prompt had a one-tap "Call your vet" / "Email your vet" button.
+
+- **Settings → My Vet**: form with vet practice name, phone, email, address, after-hours emergency contact.
+- **Per vet-discussion prompt**: a small "Call your vet" / "Email your vet" CTA when a saved vet exists; falls back to `Vets Near Me` when none saved.
+- **Email pre-fill**: when emailing the vet from a Tummy Tracker / Tick log / Seizure log thread, auto-attach the relevant log export as a vet-friendly summary.
+- **Multi-vet support**: a household with a primary vet + an emergency vet + a specialist (cardiologist, ophthalmologist, behaviorist) should be able to save all three.
+- **Schedule**: v1.4 or later. Probably groups well with the Tummy Tracker spec since both feed the same vet-handoff workflow.
+- **Schema**: `pawrent_vets_v1` AsyncStorage key, shape `{ primary: VetContact, emergency?: VetContact, specialists?: VetContact[] }` where `VetContact = { name, phone, email, address, notes }`. Backend table `vets` FK'd to `auth.users`, RLS user-owns-own.
+
+Just documenting — not building. Could be its own spec doc under `docs/features/my-vet-contact.md` if the user wants it formally specced.
