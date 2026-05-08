@@ -103,6 +103,30 @@ User running through the 22-section checklist on TestFlight build 19. Mid-test f
 - Haptic feel across the app
 - Pet-switcher chip + tappable title at the top of Checklist / Health Tracker (the multi-pet UX refinement landed clean)
 
+**DEFERRED to its own focused session — multi-photo / photobooth onboarding (big scope)**:
+
+User asked: "the app asks you to upload 5 pics of your pet and itll use different ones in different places so its not stale always looking at the same pic of your pet". Each upload prompted with a cute reel-style cue:
+1. "the day you met"
+2. "them in their happy place"
+3. "a silly one"
+4. "looking their finest"
+5. "latest pic of them"
+
+Plus: at the end, a photobooth-printer animation showing the 5 photos printing onto a reel, the reel spinning, then disappearing — landing user on My Floofs.
+
+Plus: tapping the active-pet banner on Home should let you ADD or REMOVE photos from that 5-photo collection (banner currently has no tap action).
+
+**Why this is its own focused session, not folded into the smoke-test batches**:
+- Schema change: `pet.photoUri: string` → `pet.photos: string[]` with `pet.photoUri` retained as a backward-compat mirror of `photos[0]`. Touches storage layer + every read site.
+- Onboarding redesign: replace the single photo step with 5 sequential cued steps, each with custom prompt text + skippable per-step.
+- Photobooth animation: real motion design — 5 photos emerging from a "printer" stack at the top, joining a reel that scrolls + rotates + fades. Probably 30-60 min of focused animation work.
+- Photo manager UI: a new screen / modal where the user can see their 5 photos for a given pet, replace any one, add a new one, remove (with constraints — can't go below 1).
+- Banner-tap-to-edit: depends on the photo manager existing.
+- Multi-site photo rotation: pick a different photo URI for different display sites (Home hero / My Floofs card avatar / chip avatar / fan-out circle / breed card photo). Needs a deterministic rotation strategy so the same pet doesn't show the same photo in two adjacent places.
+- Migration: existing v1.0/v1.1/v1.2 pets get `photos: [photoUri]` on first read. Edit-pet pre-fill needs to handle both shapes.
+
+Estimated 2-3 hours focused work. Worth doing properly as one cohesive feature commit cluster rather than scattered partial work. Will scope when the user asks.
+
 **Asks for the next build** (not in build 19; queued for build 20):
 
 1. **"Add Another Floof" button → top of My Floofs page**, above the "💝 The pets you love, sorted oldest first..." intro line. JSX reorder.
