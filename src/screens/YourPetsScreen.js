@@ -23,6 +23,9 @@ export default function YourPetsScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [aboutOpen, setAboutOpen] = useState({});
   const [healthOpen, setHealthOpen] = useState({});
+  const [tipsOpen, setTipsOpen] = useState({});
+  const [sourcesOpen, setSourcesOpen] = useState({});
+  const [originStoryOpen, setOriginStoryOpen] = useState({});
   const { isPremium } = usePurchases();
 
   const load = useCallback(async () => {
@@ -159,9 +162,25 @@ export default function YourPetsScreen() {
                 {breed.origin && <Text style={s.breedOrigin}>📍 {breed.origin}</Text>}
                 <Text style={s.breedBody}>{breed.summary}</Text>
                 {breed.originStory && (
-                  <Text style={[s.breedBody, { marginTop: 10, fontStyle: "italic" }]}>
-                    {breed.originStory}
-                  </Text>
+                  <View style={{ marginTop: 10 }}>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => setOriginStoryOpen(prev => {
+                        const next = !prev[pet.id];
+                        if (next) track("origin_story_expanded");
+                        return { ...prev, [pet.id]: next };
+                      })}
+                      style={s.subSectionHeader}
+                    >
+                      <Text style={s.subSectionTitle} numberOfLines={2}>📖 Origin Story · How the {breedDisplayName(pet.breed)} became the {breedDisplayName(pet.breed)}</Text>
+                      <Text style={s.subSectionHint}>{originStoryOpen[pet.id] ? "Hide" : "Show"}</Text>
+                    </TouchableOpacity>
+                    {originStoryOpen[pet.id] && (
+                      <Text style={[s.breedBody, { marginTop: 8, fontStyle: "italic" }]}>
+                        {breed.originStory}
+                      </Text>
+                    )}
+                  </View>
                 )}
                 {(breed.origin || breed.originStory) && (
                   <Text style={s.originNote}>
@@ -170,12 +189,27 @@ export default function YourPetsScreen() {
                 )}
                 {Array.isArray(breed.references) && breed.references.length > 0 && (
                   <View style={{ marginTop: 12 }}>
-                    <Text style={s.breedRefHd}>SOURCES & DEEP DIVES</Text>
-                    {breed.references.map((r, i) => (
-                      <TouchableOpacity key={i} onPress={() => Linking.openURL(r.url)} style={{ paddingVertical: 4 }}>
-                        <Text style={s.breedRefText}>↗ {r.label}</Text>
-                      </TouchableOpacity>
-                    ))}
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => setSourcesOpen(prev => {
+                        const next = !prev[pet.id];
+                        if (next) track("sources_expanded");
+                        return { ...prev, [pet.id]: next };
+                      })}
+                      style={s.subSectionHeader}
+                    >
+                      <Text style={s.subSectionTitle}>📚 Sources · {breed.references.length} {breed.references.length === 1 ? "reference" : "references"}</Text>
+                      <Text style={s.subSectionHint}>{sourcesOpen[pet.id] ? "Hide" : "Show"}</Text>
+                    </TouchableOpacity>
+                    {sourcesOpen[pet.id] && (
+                      <View style={{ marginTop: 4 }}>
+                        {breed.references.map((r, i) => (
+                          <TouchableOpacity key={i} onPress={() => Linking.openURL(r.url)} style={{ paddingVertical: 4 }}>
+                            <Text style={s.breedRefText}>↗ {r.label}</Text>
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    )}
                   </View>
                 )}
                 {breed.brachycephalic && (
@@ -224,14 +258,29 @@ export default function YourPetsScreen() {
 
             {Array.isArray(breed?.tips) && breed.tips.length > 0 && (
               <View style={s.tipsCard}>
-                <Text style={s.tipsTitle}>💡 Insider tips for {breedDisplayName(pet.breed)}</Text>
-                <Text style={s.tipsSub}>From owner communities, breed clubs, and vet references.</Text>
-                {breed.tips.map((tip, i) => (
-                  <View key={i} style={s.tipRow}>
-                    <Text style={s.tipBullet}>›</Text>
-                    <Text style={s.tipBody}>{tip}</Text>
-                  </View>
-                ))}
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => setTipsOpen(prev => {
+                    const next = !prev[pet.id];
+                    if (next) track("insider_tips_expanded");
+                    return { ...prev, [pet.id]: next };
+                  })}
+                  style={s.tipsHeader}
+                >
+                  <Text style={s.tipsTitle} numberOfLines={2}>💡 Insider Tips · {breed.tips.length} {breed.tips.length === 1 ? "thing" : "things"} only {breedDisplayName(pet.breed)} owners know</Text>
+                  <Text style={s.tipsHeaderHint}>{tipsOpen[pet.id] ? "Tap to hide" : "Tap to show"}</Text>
+                </TouchableOpacity>
+                {tipsOpen[pet.id] && (
+                  <>
+                    <Text style={s.tipsSub}>From owner communities, breed clubs, and vet references.</Text>
+                    {breed.tips.map((tip, i) => (
+                      <View key={i} style={s.tipRow}>
+                        <Text style={s.tipBullet}>›</Text>
+                        <Text style={s.tipBody}>{tip}</Text>
+                      </View>
+                    ))}
+                  </>
+                )}
               </View>
             )}
           </CardWrapper>
@@ -298,8 +347,13 @@ const s = StyleSheet.create({
   healthBody:      { flex: 1, fontSize: 12, color: theme.fg, lineHeight: 18 },
   healthFooter:    { fontSize: 11, color: theme.muted, fontStyle: "italic", marginTop: 6, lineHeight: 16 },
   tipsCard:      { marginTop: 12, padding: 14, backgroundColor: theme.accentSoft, borderRadius: 12, borderWidth: 1, borderColor: theme.accent + "44" },
-  tipsTitle:     { fontWeight: "800", color: theme.fg, fontSize: 14, marginBottom: 4 },
-  tipsSub:       { fontSize: 11, color: theme.muted, lineHeight: 16, marginBottom: 10, fontStyle: "italic" },
+  tipsHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
+  tipsTitle:     { flex: 1, fontWeight: "800", color: theme.fg, fontSize: 14 },
+  tipsHeaderHint:{ flexShrink: 0, fontSize: 11, color: theme.accent, fontWeight: "600" },
+  tipsSub:       { fontSize: 11, color: theme.muted, lineHeight: 16, marginTop: 6, marginBottom: 10, fontStyle: "italic" },
+  subSectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12, paddingVertical: 4 },
+  subSectionTitle: { flex: 1, fontSize: 12, fontWeight: "700", color: theme.fg, letterSpacing: 0.2 },
+  subSectionHint:  { flexShrink: 0, fontSize: 11, color: theme.accent, fontWeight: "600" },
   tipRow:        { flexDirection: "row", marginBottom: 8 },
   tipBullet:     { color: theme.accent, fontWeight: "800", marginRight: 8, fontSize: 14, lineHeight: 19 },
   tipBody:       { flex: 1, fontSize: 13, color: theme.fg, lineHeight: 19 },
