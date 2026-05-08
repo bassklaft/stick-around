@@ -191,6 +191,81 @@ What was NOT verified — **explicit gaps requiring a real device or simulator r
 
 **Recommendation**: trust the static analysis enough to move forward with the H1-H3 audit (which I've now also done — see below). Do the visual pass on the next physical-device build (build 18 candidate) before TestFlight upload. The merge is mechanical and parse-clean — pixel regression risk is low — but irreplaceable until someone runs the app.
 
+### PRE-BUILD-18 MANUAL CHECKLIST
+
+Walk through this on the physical device after build 18 lands in TestFlight, before submitting to App Review. Each item is a 30-60 second smoke test. If anything fails, fix and re-build before submission.
+
+**1. Onboarding (fresh install — clear app data first or install on a clean test device)**
+- [ ] App launches without crash
+- [ ] Onboarding step 1: Name + species selection works; "Next" enabled when name entered
+- [ ] Onboarding step 2: breed picker — single-breed dog selection works; chip toggles selected/unselected; Maximum-of-3-breeds enforced when picking 4th
+- [ ] **Cat-coat-pattern hint**: switch species to cat → tap "Tabby, Tortoiseshell, or Calico?" hint → confirm Alert appears with 3 options → "Use Domestic Shorthair" pre-selects domestic shorthair → "Use Mixed Cat" pre-selects mixed cat → both work
+- [ ] Onboarding step 3: photo picker opens; "Skip for now" works
+- [ ] Onboarding step 4: age + weight inputs accept decimals; finish creates pet successfully; redirects to Home
+
+**2. Single-breed dog (Falafel = Chow Chow, your primary test pet)**
+- [ ] My Floofs tab → Falafel's card renders with photo, name, breed, age
+- [ ] **About card defaults expanded** — visible immediately when opening the card
+- [ ] **Health Considerations card defaults collapsed** — only the header visible; tap to expand → all 6-7 health bullets render
+- [ ] Tap About card header → collapses; tap again → re-expands. State persists when scrolling.
+- [ ] Inside About card (when expanded): Origin Story + Sources are collapsible sub-sections; tap each → expands inline; tap again → collapses
+- [ ] Tips card: collapsed by default; header reads "💡 Insider Tips · X things only Chow Chow owners know"; tap → expands
+
+**3. Mixed-breed dog (test by adding a hypothetical Goldendoodle pet via "Add another pet")**
+- [ ] Add another floof → onboarding → pick "Labrador Retriever" + "Poodle" (or any 2 breeds — "Goldendoodle" itself is a valid single breed in our catalog, so for true mixed-breed testing pick TWO different ones)
+- [ ] My Floofs tab → 2 pets visible
+- [ ] On the mixed-breed card: TWO separate About cards render (one per breed), TWO separate Health Considerations cards
+- [ ] Each About card has its own breed-section header (small label with emoji + breed name)
+- [ ] **Independent state**: expand About on breed 1, collapse About on breed 2 → confirm they're independent (toggling breed 1 doesn't toggle breed 2)
+- [ ] Same independence on Health Considerations and Tips
+
+**4. Active pet switcher (multi-pet only)**
+- [ ] My Floofs tab with 2+ pets: cards show "Tap card to make active" hint
+- [ ] Currently active pet shows "✓ ACTIVE" badge + green border
+- [ ] Eldest pet shows "👑 ELDEST" badge
+- [ ] Tap a non-active card → haptic fires (light tap on physical device) → app navigates to Home tab → that pet is now the active hero
+- [ ] Home hero shows "Tap to switch floof ↓" hint at bottom in multi-pet mode
+- [ ] Tap Home hero → back to My Floofs
+- [ ] Per-pet checklist state: switch from pet A to pet B → confirm pet B's checklist reflects pet B's checks, not pet A's (Falafel's "brushed teeth" check should NOT appear on a different pet's checklist)
+
+**5. Premium screen + founder override**
+- [ ] Settings → Premium → Premium screen opens as modal
+- [ ] On Max's iPhone (IDFV `981F7B5B-46DF-4B89-AF5D-49B812EB939D`): screen shows premium-active state — annual + monthly cards both render but the purchase CTA is replaced or grayed appropriately (founder override active)
+- [ ] On a non-founder device: both annual and monthly cards are tappable; selected card highlighted; purchase button enabled
+
+**6. Settings — Privacy / Terms / Feedback**
+- [ ] Settings tab → tap "Privacy policy" → Safari opens to `bassklaft.github.io/floof-life/legal/privacy-policy.html` and the page loads
+- [ ] Settings tab → tap "Terms of service" → Safari opens to `bassklaft.github.io/floof-life/legal/terms-of-service.html` and the page loads
+- [ ] Settings tab → tap "Send feedback" → iOS Mail composer opens with prefilled subject "FloofLife Feedback" + body containing app version + iOS version + pet count
+- [ ] Settings tab → tap "Haptic feedback" row → toggles On / Subtle / Off; subsequent taps in the app use the new haptic preference
+
+**7. Haptics (physical device only)**
+- [ ] Setting Haptic feedback to "On" → tapping any About/Health/Tips toggle fires a light tap haptic
+- [ ] Setting Haptic feedback to "Subtle" → only light + success haptics fire; medium/heavy collapse to light
+- [ ] Setting Haptic feedback to "Off" → no haptics anywhere
+
+**8. Analytics (verify in PostHog dashboard, not just console)**
+- [ ] Open PostHog dashboard → Live Events → confirm the test session shows: `app_opened`, `screen_viewed`, `about_breed_expanded`, `health_considerations_expanded`, `origin_story_expanded`, `sources_expanded`, `insider_tips_expanded`, `active_pet_switched`, `pet_photo_picked`
+- [ ] No PII leakage: confirm none of the events contain `pet.name`, breed-key strings (only `species: "dog"|"cat"`), or photo URIs
+
+**9. Health Tracker (v1.2 feature — confirm it landed in the merge)**
+- [ ] My Floofs → tap a pet → "Health Tracker" row visible
+- [ ] Tap → opens Health Tracker screen for that pet
+- [ ] "Add health record" works; record persists across app restart
+
+**10. Critical regression checks (anything that was already working should still work)**
+- [ ] Toxic Foods & Plants screen renders
+- [ ] Recalls screen renders + items link to FDA pages
+- [ ] Vets Near Me opens Maps
+- [ ] Risk Map renders + location permission handles correctly
+- [ ] Emergency Resources screen renders + poison-control hotline numbers tap-to-call
+- [ ] Diet & Care screen renders
+- [ ] Training Exercises screen renders
+- [ ] Trip Planning screen renders
+- [ ] Age Calculator (DogAge route) renders + gives a multi-factor result for Falafel
+
+**Pass criteria**: all 10 sections green. If any item fails, do NOT submit build 18 — fix and rebuild first.
+
 ---
 
 ## H1-H3 brand-name audit — 2026-05-08
