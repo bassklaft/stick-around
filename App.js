@@ -10,7 +10,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { initAnalytics, screen as trackScreen, track } from "./src/lib/analytics";
 import { initHaptics, tapLight, tapMedium, tapHeavy } from "./src/lib/haptics";
 import { Pets } from "./src/lib/storage";
-import PetSwitcherModal from "./src/components/PetSwitcherModal";
+import FloofFanOverlay from "./src/components/FloofFanOverlay";
 
 import Logo from "./src/components/Logo";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -273,11 +273,12 @@ export default function App() {
         </RootStack.Navigator>
       </NavigationContainer>
       </PurchasesProvider>
-      {/* Long-press-on-My-Floofs-tab pet-switcher popup. Rendered at App
-          root so it overlays any tab without being scoped to a single
-          screen's lifecycle. Single-pet households never see it
+      {/* Long-press-on-My-Floofs-tab fan-out overlay. Pet profile-photo
+          circles fan in an arc from above the My Floofs tab; tap a
+          circle to switch active pet. Rendered at App root so it
+          overlays any tab. Single-pet households never see it
           (showLongPressSwitcher early-returns). */}
-      <PetSwitcherModal
+      <FloofFanOverlay
         visible={longPressSwitcherVisible}
         onClose={() => setLongPressSwitcherVisible(false)}
         pets={longPressPets}
