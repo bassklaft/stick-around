@@ -7,8 +7,10 @@ import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, TouchableOpacity, View, Text, Platform } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { initAnalytics, screen as trackScreen } from "./src/lib/analytics";
-import { initHaptics, tapLight } from "./src/lib/haptics";
+import { initAnalytics, screen as trackScreen, track } from "./src/lib/analytics";
+import { initHaptics, tapLight, tapMedium } from "./src/lib/haptics";
+import { Pets } from "./src/lib/storage";
+import PetSwitcherModal from "./src/components/PetSwitcherModal";
 
 import Logo from "./src/components/Logo";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -69,7 +71,7 @@ function tabIcon(routeName) {
 // Three tabs: Checklist | Home (center) | Your Pets. Home is the hub
 // that links out to Toxic, Vets, Diet, Recalls (each pushed from the
 // root stack, not in the tab bar).
-function MainTabs({ navigation }) {
+function MainTabs({ navigation, onMyFloofsLongPress }) {
   return (
     <Tabs.Navigator
       initialRouteName="Home"
@@ -100,7 +102,15 @@ function MainTabs({ navigation }) {
         listeners={{ tabPress: () => tapLight() }} />
       <Tabs.Screen name="YourPets"  component={YourPetsScreen}
         options={{ title: "My Floofs", tabBarLabel: "My Floofs" }}
-        listeners={{ tabPress: () => tapLight() }} />
+        listeners={{
+          tabPress: () => tapLight(),
+          tabLongPress: () => {
+            // Long-press the My Floofs tab → opens a quick pet switcher
+            // popup (App-root state, see App() below). Multi-pet
+            // households only — single-pet households get a no-op.
+            if (onMyFloofsLongPress) onMyFloofsLongPress();
+          },
+        }} />
     </Tabs.Navigator>
   );
 }
@@ -121,6 +131,47 @@ export default function App() {
 
   useEffect(() => { initAnalytics(); }, []);
   useEffect(() => { initHaptics(); }, []);
+
+  // Long-press-on-My-Floofs-tab quick-switcher. Hoisted to App root so
+  // it can render over any tab. Fetches pets+activeId fresh each time
+  // so it always reflects current storage state.
+  const [longPressSwitcherVisible, setLongPressSwitcherVisible] = useState(false);
+  const [longPressPets, setLongPressPets] = useState([]);
+  const [longPressActiveId, setLongPressActiveId] = useState(null);
+
+  async function showLongPressSwitcher() {
+    const list = await Pets.listSortedOldestFirst();
+    if (list.length <= 1) return; // no-op for single-pet households
+    let active = await Pets.getActiveId();
+    if (!active || !list.find((p) => p.id === active)) {
+      active = list[0]?.id || null;
+    }
+    setLongPressPets(list);
+    setLongPressActiveId(active);
+    setLongPressSwitcherVisible(true);
+    tapMedium();
+    track("active_pet_switcher_opened", { source: "tab_long_press" });
+  }
+
+  async function handleLongPressPick(petId) {
+    if (!petId || petId === longPressActiveId) {
+      setLongPressSwitcherVisible(false);
+      return;
+    }
+    await Pets.setActive(petId);
+    track("active_pet_switched", { source: "tab_long_press", pet_count: longPressPets.length });
+    tapLight();
+    setLongPressSwitcherVisible(false);
+    // Refresh nav so the now-active pet's data shows on the active screen
+    // (Home / Checklist / Health Tracker all re-load on focus).
+    if (navRef.current?.getCurrentRoute) {
+      // Force a focus event by navigating to Home (lands the user on
+      // the freshly-active pet's hero/checklist).
+      try {
+        navRef.current.navigate("Main", { screen: "Home" });
+      } catch {}
+    }
+  }
 
   if (!ready) {
     return (
@@ -167,7 +218,9 @@ export default function App() {
             </RootStack.Screen>
           ) : (
             <>
-              <RootStack.Screen name="Main" component={MainTabs} />
+              <RootStack.Screen name="Main">
+                {(props) => <MainTabs {...props} onMyFloofsLongPress={showLongPressSwitcher} />}
+              </RootStack.Screen>
               <RootStack.Screen name="Toxic"    component={ToxicScreen}    options={{ ...pushScreenOptions, title: "Toxic Foods & Plants" }} />
               <RootStack.Screen name="Vets"     component={VetsScreen}     options={{ ...pushScreenOptions, title: "Vets Near Me" }} />
               <RootStack.Screen name="Diet"     component={DietScreen}     options={{ ...pushScreenOptions, title: "Diet & Care" }} />
@@ -208,6 +261,17 @@ export default function App() {
         </RootStack.Navigator>
       </NavigationContainer>
       </PurchasesProvider>
+      {/* Long-press-on-My-Floofs-tab pet-switcher popup. Rendered at App
+          root so it overlays any tab without being scoped to a single
+          screen's lifecycle. Single-pet households never see it
+          (showLongPressSwitcher early-returns). */}
+      <PetSwitcherModal
+        visible={longPressSwitcherVisible}
+        onClose={() => setLongPressSwitcherVisible(false)}
+        pets={longPressPets}
+        activeId={longPressActiveId}
+        onPick={handleLongPressPick}
+      />
     </SafeAreaProvider>
   );
 }
