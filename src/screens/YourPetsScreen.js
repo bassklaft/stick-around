@@ -185,6 +185,16 @@ export default function YourPetsScreen() {
       contentContainerStyle={{ paddingTop: 12, paddingBottom: insets.bottom + 60, paddingHorizontal: 20 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
+      <TouchableOpacity onPress={addAnotherPet} style={s.addBtn} activeOpacity={0.8}>
+        <MaterialCommunityIcons name="plus-circle-outline" size={22} color={theme.accent} />
+        <Text style={s.addBtnText}>Add another floof</Text>
+        {!isPremium && (
+          <View style={s.premiumBadge}>
+            <Text style={s.premiumBadgeText}>PREMIUM</Text>
+          </View>
+        )}
+      </TouchableOpacity>
+
       <Text style={s.intro}>
         💝 The pets you love, sorted oldest first — they've been around the longest, they get the spotlight.
       </Text>
@@ -405,16 +415,6 @@ export default function YourPetsScreen() {
           </View>
         );
       })}
-
-      <TouchableOpacity onPress={addAnotherPet} style={s.addBtn} activeOpacity={0.8}>
-        <MaterialCommunityIcons name="plus-circle-outline" size={22} color={theme.accent} />
-        <Text style={s.addBtnText}>Add another floof</Text>
-        {!isPremium && (
-          <View style={s.premiumBadge}>
-            <Text style={s.premiumBadgeText}>PREMIUM</Text>
-          </View>
-        )}
-      </TouchableOpacity>
 
       <View style={s.disclaimer}>
         <Text style={s.disclaimerText}>
