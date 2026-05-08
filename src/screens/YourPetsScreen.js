@@ -11,6 +11,7 @@ import { usePurchases } from "../lib/purchasesContext";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { track } from "../lib/analytics";
+import { tapLight, tapMedium } from "../lib/haptics";
 import { theme } from "../theme";
 
 const titleCase = s => (s || "").split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -47,6 +48,7 @@ export default function YourPetsScreen() {
     if (!uri) return;
     await Pets.update(petId, { photoUri: uri });
     track("pet_photo_picked", { context: "my_floofs" });
+    tapMedium();
     load();
   }
 
@@ -54,6 +56,7 @@ export default function YourPetsScreen() {
     await Pets.setActive(petId);
     setActiveId(petId);
     track("active_pet_switched", { pet_count: pets.length });
+    tapMedium();
     navigation.navigate("Main", { screen: "Home" });
   }
 
@@ -63,6 +66,7 @@ export default function YourPetsScreen() {
       if (next) track("about_breed_expanded");
       return { ...prev, [petId]: next };
     });
+    tapLight();
   }
 
   function addAnotherPet() {
@@ -165,11 +169,14 @@ export default function YourPetsScreen() {
                   <View style={{ marginTop: 10 }}>
                     <TouchableOpacity
                       activeOpacity={0.7}
-                      onPress={() => setOriginStoryOpen(prev => {
-                        const next = !prev[pet.id];
-                        if (next) track("origin_story_expanded");
-                        return { ...prev, [pet.id]: next };
-                      })}
+                      onPress={() => {
+                        tapLight();
+                        setOriginStoryOpen(prev => {
+                          const next = !prev[pet.id];
+                          if (next) track("origin_story_expanded");
+                          return { ...prev, [pet.id]: next };
+                        });
+                      }}
                       style={s.subSectionHeader}
                     >
                       <Text style={s.subSectionTitle} numberOfLines={2}>📖 Origin Story · How the {breedDisplayName(pet.breed)} became the {breedDisplayName(pet.breed)}</Text>
@@ -191,11 +198,14 @@ export default function YourPetsScreen() {
                   <View style={{ marginTop: 12 }}>
                     <TouchableOpacity
                       activeOpacity={0.7}
-                      onPress={() => setSourcesOpen(prev => {
-                        const next = !prev[pet.id];
-                        if (next) track("sources_expanded");
-                        return { ...prev, [pet.id]: next };
-                      })}
+                      onPress={() => {
+                        tapLight();
+                        setSourcesOpen(prev => {
+                          const next = !prev[pet.id];
+                          if (next) track("sources_expanded");
+                          return { ...prev, [pet.id]: next };
+                        });
+                      }}
                       style={s.subSectionHeader}
                     >
                       <Text style={s.subSectionTitle}>📚 Sources · {breed.references.length} {breed.references.length === 1 ? "reference" : "references"}</Text>
@@ -223,7 +233,7 @@ export default function YourPetsScreen() {
                 {Array.isArray(breed.health) && breed.health.length > 0 && (
                   <TouchableOpacity
                     activeOpacity={0.7}
-                    onPress={() => setHealthOpen(prev => ({ ...prev, [pet.id]: !prev[pet.id] }))}
+                    onPress={() => { tapLight(); setHealthOpen(prev => ({ ...prev, [pet.id]: !prev[pet.id] })); }}
                     style={s.healthDisclosure}
                   >
                     <View style={s.healthHeader}>
@@ -260,11 +270,14 @@ export default function YourPetsScreen() {
               <View style={s.tipsCard}>
                 <TouchableOpacity
                   activeOpacity={0.7}
-                  onPress={() => setTipsOpen(prev => {
-                    const next = !prev[pet.id];
-                    if (next) track("insider_tips_expanded");
-                    return { ...prev, [pet.id]: next };
-                  })}
+                  onPress={() => {
+                    tapLight();
+                    setTipsOpen(prev => {
+                      const next = !prev[pet.id];
+                      if (next) track("insider_tips_expanded");
+                      return { ...prev, [pet.id]: next };
+                    });
+                  }}
                   style={s.tipsHeader}
                 >
                   <Text style={s.tipsTitle} numberOfLines={2}>💡 Insider Tips · {breed.tips.length} {breed.tips.length === 1 ? "thing" : "things"} only {breedDisplayName(pet.breed)} owners know</Text>

@@ -8,6 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, TouchableOpacity, View, Text, Platform } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { initAnalytics, screen as trackScreen } from "./src/lib/analytics";
+import { initHaptics } from "./src/lib/haptics";
 
 import Logo from "./src/components/Logo";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -110,6 +111,7 @@ export default function App() {
   }, []);
 
   useEffect(() => { initAnalytics(); }, []);
+  useEffect(() => { initHaptics(); }, []);
 
   if (!ready) {
     return (

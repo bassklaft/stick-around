@@ -10,6 +10,7 @@ import Purchases from "react-native-purchases";
 import { usePurchases } from "../lib/purchasesContext";
 import { PREMIUM_ENTITLEMENT_ID } from "../lib/config";
 import { track } from "../lib/analytics";
+import { tapMedium, tapHeavy, notifySuccess, notifyError } from "../lib/haptics";
 import { theme } from "../theme";
 
 const FREE = [
@@ -92,6 +93,7 @@ export default function PremiumScreen({ navigation }) {
 
   async function purchase() {
     track("premium_purchase_initiated", { plan: selected });
+    tapMedium();
     // Resolution chain (silent — no diagnostic alerts):
     //   1. selectedPkg from resolvePkg() against the offering
     //   2. fallback to first availablePackage if resolver missed
@@ -118,6 +120,8 @@ export default function PremiumScreen({ navigation }) {
             const nowPremium = !!result?.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
             if (nowPremium) {
               track("premium_purchase_completed", { plan: selected, path: "direct_product" });
+              tapHeavy();
+              notifySuccess();
               Alert.alert(
                 "Welcome to Premium",
                 "Thanks for supporting FloofLife. Your premium features are unlocked.",
@@ -129,6 +133,7 @@ export default function PremiumScreen({ navigation }) {
               track("premium_purchase_cancelled", { plan: selected });
             } else {
               track("premium_purchase_failed", { plan: selected, reason: err?.code || "unknown" });
+      notifyError();
               Alert.alert("Purchase failed", err?.message ?? "Apple couldn't process the payment. Please try again.");
             }
           } finally {
@@ -154,6 +159,8 @@ export default function PremiumScreen({ navigation }) {
       const nowPremium = !!result?.customerInfo?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
       if (nowPremium) {
         track("premium_purchase_completed", { plan: selected, path: "package" });
+        tapHeavy();
+        notifySuccess();
         Alert.alert(
           "Welcome to Premium",
           "Thanks for supporting FloofLife. Your premium features are unlocked.",
@@ -167,6 +174,7 @@ export default function PremiumScreen({ navigation }) {
       }
       const msg = err?.message ?? "";
       track("premium_purchase_failed", { plan: selected, reason: err?.code || "unknown" });
+      notifyError();
       if (/network|connection|offline/i.test(msg)) {
         Alert.alert("Network error", "Couldn't reach the App Store. Try again on a stable connection.");
       } else {
@@ -179,12 +187,14 @@ export default function PremiumScreen({ navigation }) {
 
   async function restore() {
     track("premium_restore_initiated");
+    tapHeavy();
     setWorking(true);
     try {
       const info = await Purchases.restorePurchases();
       await refresh();
       const restored = !!info?.entitlements?.active?.[PREMIUM_ENTITLEMENT_ID];
       track("premium_restore_result", { restored });
+      if (restored) notifySuccess();
       Alert.alert(
         restored ? "Purchases restored" : "Nothing to restore",
         restored

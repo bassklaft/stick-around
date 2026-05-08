@@ -7,6 +7,7 @@ import { Pet, Pets } from "../lib/storage";
 import { usePurchases } from "../lib/purchasesContext";
 import { getDeviceId } from "../lib/founderOverride";
 import { track, resetAnalytics } from "../lib/analytics";
+import { tapLight, tapHeavy, getHapticsPref, setHapticsPref } from "../lib/haptics";
 import { theme } from "../theme";
 
 const FEEDBACK_EMAIL = "streetparkinfo@gmail.com";
@@ -20,11 +21,21 @@ export default function SettingsScreen({ navigation }) {
   const [pet, setPet] = useState(null);
   const [petCount, setPetCount] = useState(0);
   const [deviceId, setDeviceId] = useState("");
+  const [hapticsPref, setHapticsPrefState] = useState("on");
   const { isPremium, isFounderDevice } = usePurchases();
 
   useEffect(() => { Pet.get().then(setPet); }, []);
   useEffect(() => { Pets.list().then(arr => setPetCount(arr.length)); }, []);
   useEffect(() => { getDeviceId().then(setDeviceId); }, []);
+  useEffect(() => { getHapticsPref().then(setHapticsPrefState); }, []);
+
+  function cycleHapticsPref() {
+    const next = hapticsPref === "on" ? "subtle" : hapticsPref === "subtle" ? "off" : "on";
+    setHapticsPrefState(next);
+    setHapticsPref(next);
+    if (next !== "off") tapLight();
+    track("haptics_pref_changed", { value: next });
+  }
 
   // Compose a mailto: link with diagnostic context (app version, OS,
   // pet count). No pet names, photos, or other identifying data — see
@@ -32,6 +43,7 @@ export default function SettingsScreen({ navigation }) {
   // device has no configured mail client.
   async function sendFeedback() {
     track("send_feedback_tapped", { pet_count: petCount });
+    tapLight();
     const version = Application.nativeApplicationVersion || "unknown";
     const build = Application.nativeBuildVersion || "?";
     const os = `${Platform.OS} ${Platform.Version}`;
@@ -122,6 +134,15 @@ export default function SettingsScreen({ navigation }) {
       <Row label="Story · About this app" onPress={() => navigation.navigate("About")} />
       <Row label="Send Feedback" icon="message-text-outline" onPress={sendFeedback} />
 
+      <Text style={s.sectionHd}>NOTIFICATIONS</Text>
+      <TouchableOpacity onPress={cycleHapticsPref} style={s.row}>
+        <MaterialCommunityIcons name="vibrate" size={18} color={theme.muted} />
+        <Text style={s.rowLabel}>Haptic feedback</Text>
+        <Text style={[s.sub, { textTransform: "none" }]}>
+          {hapticsPref === "on" ? "On" : hapticsPref === "subtle" ? "Subtle" : "Off"}
+        </Text>
+      </TouchableOpacity>
+
       {isFounderDevice && (
         <>
           <Text style={s.sectionHd}>DEBUG</Text>
@@ -142,7 +163,7 @@ export default function SettingsScreen({ navigation }) {
       <Text style={s.sectionHd}>DANGER ZONE</Text>
       <TouchableOpacity onPress={() => Alert.alert("Reset FloofLife?", "This deletes your pet profile and all checklist data. Cannot be undone.", [
         { text: "Cancel" },
-        { text: "Delete", style: "destructive", onPress: async () => { track("reset_all_data_confirmed"); await Pet.clear(); resetAnalytics(); Alert.alert("Done", "Restart the app."); } },
+        { text: "Delete", style: "destructive", onPress: async () => { track("reset_all_data_confirmed"); tapHeavy(); await Pet.clear(); resetAnalytics(); Alert.alert("Done", "Restart the app."); } },
       ])} style={[s.card, { borderColor: theme.red }]}>
         <Text style={[s.body, { color: theme.red, fontWeight: "700" }]}>Reset all data</Text>
       </TouchableOpacity>

@@ -7,6 +7,7 @@ import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { track } from "../lib/analytics";
+import { tapMedium, tapLight } from "../lib/haptics";
 import { theme } from "../theme";
 
 export default function ChecklistScreen() {
@@ -34,6 +35,8 @@ export default function ChecklistScreen() {
     const next = await ChecklistState.setItem(pet.id, id, status);
     setState(next);
     track("checklist_item_toggled", { action: status });
+    if (status === "done") tapMedium();
+    else tapLight();
   }
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;

@@ -6,6 +6,7 @@ import { Pet, Pets } from "../lib/storage";
 import { breedFacts, dogBreeds, catBreeds, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { track } from "../lib/analytics";
+import { tapMedium, notifySuccess } from "../lib/haptics";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -33,6 +34,7 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
     if (uri) {
       setPhotoUri(uri);
       track("pet_photo_picked", { context: "onboarding" });
+      tapMedium();
     }
   }
 
@@ -60,6 +62,7 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
         has_weight: payload.weightLbs != null,
         is_mix: !!payload.mixOf,
       });
+      notifySuccess();
     } else {
       await Pet.set(payload);
       track("onboarding_completed", {
@@ -69,6 +72,7 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
         has_weight: payload.weightLbs != null,
         is_mix: !!payload.mixOf,
       });
+      notifySuccess();
     }
     onDone();
   }
