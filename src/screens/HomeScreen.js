@@ -19,10 +19,102 @@ import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
+// Multi-pet hero collage. Adapts layout to family size:
+//   2 pets: side-by-side 50/50
+//   3 pets: 1 photo top, 2 photos bottom (50/50)
+//   4 pets: 2x2 grid
+//   5+ pets: 2x2 grid with the 4th tile showing "+N more" overlay
+// Active pet's tile gets a subtle accent-color border so it reads as
+// "this is who's active right now" without forcing a single-photo
+// hero again. Photos come from each pet's stored documentDirectory
+// URI; pets without a photo get a breed-emoji placeholder tile.
+function CollageTile({ pet, active, overflow = 0 }) {
+  const primary = getPrimaryBreed(pet);
+  const placeholderEmoji = pet?.species === "cat" ? "🐈" : "🐕";
+  return (
+    <View style={[collageStyles.tile, active && collageStyles.tileActive]}>
+      {pet.photoUri ? (
+        <ImageBackground source={{ uri: pet.photoUri }} style={collageStyles.tileImage} imageStyle={collageStyles.tileImageInner}>
+          {overflow > 0 && (
+            <View style={collageStyles.overflowOverlay}>
+              <Text style={collageStyles.overflowText}>+{overflow} more</Text>
+            </View>
+          )}
+        </ImageBackground>
+      ) : (
+        <View style={collageStyles.tileFallback}>
+          <Text style={{ fontSize: 42 }}>{placeholderEmoji}</Text>
+          {overflow > 0 && (
+            <View style={collageStyles.overflowOverlay}>
+              <Text style={collageStyles.overflowText}>+{overflow} more</Text>
+            </View>
+          )}
+        </View>
+      )}
+    </View>
+  );
+}
+
+function FloofCollage({ pets, activeId }) {
+  const n = pets.length;
+  if (n === 2) {
+    return (
+      <View style={[collageStyles.fill, { flexDirection: "row" }]}>
+        {pets.slice(0, 2).map((p) => (
+          <CollageTile key={p.id} pet={p} active={p.id === activeId} />
+        ))}
+      </View>
+    );
+  }
+  if (n === 3) {
+    return (
+      <View style={[collageStyles.fill, { flexDirection: "column" }]}>
+        <View style={{ flex: 1, flexDirection: "row" }}>
+          <CollageTile pet={pets[0]} active={pets[0].id === activeId} />
+        </View>
+        <View style={{ flex: 1, flexDirection: "row" }}>
+          <CollageTile pet={pets[1]} active={pets[1].id === activeId} />
+          <CollageTile pet={pets[2]} active={pets[2].id === activeId} />
+        </View>
+      </View>
+    );
+  }
+  // 4+
+  const visible = pets.slice(0, 4);
+  const overflow = Math.max(0, n - 4);
+  return (
+    <View style={[collageStyles.fill, { flexDirection: "column" }]}>
+      <View style={{ flex: 1, flexDirection: "row" }}>
+        <CollageTile pet={visible[0]} active={visible[0].id === activeId} />
+        <CollageTile pet={visible[1]} active={visible[1].id === activeId} />
+      </View>
+      <View style={{ flex: 1, flexDirection: "row" }}>
+        <CollageTile pet={visible[2]} active={visible[2].id === activeId} />
+        <CollageTile
+          pet={visible[3]}
+          active={visible[3].id === activeId}
+          overflow={overflow}
+        />
+      </View>
+    </View>
+  );
+}
+
+const collageStyles = StyleSheet.create({
+  fill:           { ...StyleSheet.absoluteFillObject },
+  tile:           { flex: 1, overflow: "hidden" },
+  tileActive:     { borderWidth: 3, borderColor: theme.accent },
+  tileImage:      { flex: 1 },
+  tileImageInner: { resizeMode: "cover" },
+  tileFallback:   { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.accentSoft },
+  overflowOverlay:{ ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.55)", alignItems: "center", justifyContent: "center" },
+  overflowText:   { color: "#fff", fontSize: 18, fontWeight: "800", letterSpacing: 0.4 },
+});
+
 export default function HomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
   const [pet, setPet] = useState(null);
-  const [petsCount, setPetsCount] = useState(0);
+  const [pets, setPets] = useState([]);
   const [items, setItems] = useState([]);
   const [state, setState] = useState({});
   const [refreshing, setRefreshing] = useState(false);
@@ -32,8 +124,8 @@ export default function HomeScreen({ navigation }) {
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
-    const all = await Pets.list();
-    setPetsCount(all.length);
+    const all = await Pets.listSortedOldestFirst();
+    setPets(all);
     setItems(generateChecklist(p));
     setState(await ChecklistState.get(p?.id));
     if (p?.id) {
@@ -41,6 +133,8 @@ export default function HomeScreen({ navigation }) {
       setPawgressDay(await Pawgress.getDay(p.id, todayKey()));
     }
   }, []);
+
+  const petsCount = pets.length;
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -93,13 +187,48 @@ export default function HomeScreen({ navigation }) {
       contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
-      {/* Hero — pet photo background with darkening gradient + overlay text */}
+      {/* Hero — single-pet households see the active pet's photo full-
+          bleed (current behavior). Multi-pet households see a collage
+          of all floof photos with the active pet emphasized; text
+          overlay shows family names with active pet in accent color.
+          Tap → switcher (My Floofs tab) for active-pet swap. */}
       {(() => {
         const isMultiPet = petsCount > 1;
         const HeroWrap = isMultiPet ? TouchableOpacity : View;
         const wrapProps = isMultiPet
           ? { onPress: () => navigation.navigate("Main", { screen: "YourPets" }), activeOpacity: 0.85 }
           : {};
+
+        if (isMultiPet) {
+          // Multi-pet collage hero. Layout adapts to family size.
+          return (
+            <HeroWrap {...wrapProps}>
+              <View style={s.hero}>
+                <FloofCollage pets={pets} activeId={pet.id} />
+                <View style={s.heroOverlay} />
+                <View style={s.heroContent}>
+                  <Text style={s.heroEyebrow}>YOUR FLOOFS</Text>
+                  <Text style={s.heroFamilyNames} numberOfLines={2}>
+                    {pets.map((p, i) => (
+                      <Text
+                        key={p.id || i}
+                        style={p.id === pet.id ? s.heroFamilyNameActive : s.heroFamilyName}
+                      >
+                        {p.name}{i < pets.length - 1 ? "  ·  " : ""}
+                      </Text>
+                    ))}
+                  </Text>
+                  <Text style={s.heroMeta} numberOfLines={1}>
+                    Active: {pet.name} · {breedDisplay}
+                  </Text>
+                  <Text style={s.heroSwitch}>Tap to switch floof ↓</Text>
+                </View>
+              </View>
+            </HeroWrap>
+          );
+        }
+
+        // Single-pet households: existing single-photo hero.
         if (hasPhoto) {
           return (
             <HeroWrap {...wrapProps}>
@@ -111,7 +240,6 @@ export default function HomeScreen({ navigation }) {
                   <Text style={s.heroMeta}>
                     {breedDisplay} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
                   </Text>
-                  {isMultiPet && <Text style={s.heroSwitch}>Tap to switch floof ↓</Text>}
                 </View>
               </ImageBackground>
             </HeroWrap>
@@ -121,7 +249,6 @@ export default function HomeScreen({ navigation }) {
           <HeroWrap {...wrapProps} style={s.heroFallback}>
             <Text style={s.greet}>Hi, {pet.name}'s human 👋</Text>
             <Text style={s.species}>{breedDisplay} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
-            {isMultiPet && <Text style={[s.heroSwitch, { color: theme.accent, marginTop: 6 }]}>Tap to switch floof ↓</Text>}
           </HeroWrap>
         );
       })()}
@@ -220,6 +347,9 @@ const s = StyleSheet.create({
   heroContent:  { padding: 22 },
   heroEyebrow:  { fontSize: 11, fontWeight: "700", color: "#FBE4DC", letterSpacing: 1.6, marginBottom: 4 },
   heroName:     { fontSize: 38, fontWeight: "800", color: "#fff", letterSpacing: -0.5, textShadowColor: "rgba(0,0,0,0.4)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  heroFamilyNames: { fontSize: 22, fontWeight: "800", color: "#fff", letterSpacing: -0.3, textShadowColor: "rgba(0,0,0,0.4)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
+  heroFamilyName:      { color: "#fff", fontWeight: "700" },
+  heroFamilyNameActive:{ color: theme.accent, fontWeight: "900", textShadowColor: "rgba(255,255,255,0.6)", textShadowOffset: { width: 0, height: 0 }, textShadowRadius: 6 },
   heroMeta:     { fontSize: 14, color: "#fff", marginTop: 2, opacity: 0.95, textTransform: "capitalize" },
   heroFallback: { paddingHorizontal: 20, paddingTop: 16, paddingBottom: 4 },
   heroSwitch:   { fontSize: 11, fontWeight: "700", color: "#fff", opacity: 0.95, marginTop: 6, letterSpacing: 0.6, textShadowColor: "rgba(0,0,0,0.4)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 },
