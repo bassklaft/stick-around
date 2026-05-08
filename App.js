@@ -11,6 +11,9 @@ import { initAnalytics, screen as trackScreen, track } from "./src/lib/analytics
 import { initHaptics, tapLight, tapMedium, tapHeavy } from "./src/lib/haptics";
 import { Pets } from "./src/lib/storage";
 import FloofFanOverlay from "./src/components/FloofFanOverlay";
+import FirstRunTutorial from "./src/components/FirstRunTutorial";
+
+const TUTORIAL_SEEN_KEY = "pawrent_tutorial_seen_v1";
 
 import Logo from "./src/components/Logo";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -118,6 +121,7 @@ function MainTabs({ navigation, onMyFloofsLongPress }) {
 export default function App() {
   const [ready, setReady] = useState(false);
   const [onboarded, setOnboarded] = useState(false);
+  const [tutorialVisible, setTutorialVisible] = useState(false);
   const navRef = useRef(null);
   const lastRouteRef = useRef(null);
 
@@ -126,8 +130,24 @@ export default function App() {
       const profile = await AsyncStorage.getItem("pawrent_pet");
       setOnboarded(!!profile);
       setReady(true);
+      // First-run tutorial: show once after the user has a pet but
+      // hasn't yet seen the welcome card. Per build 19 smoke-test
+      // feedback ("brief tutorial for new users").
+      if (profile) {
+        const seen = await AsyncStorage.getItem(TUTORIAL_SEEN_KEY);
+        if (!seen) {
+          // Slight delay so the home screen is rendered before the
+          // overlay appears — the user sees the app behind the modal.
+          setTimeout(() => setTutorialVisible(true), 400);
+        }
+      }
     })();
   }, []);
+
+  async function dismissTutorial() {
+    setTutorialVisible(false);
+    await AsyncStorage.setItem(TUTORIAL_SEEN_KEY, "1");
+  }
 
   useEffect(() => { initAnalytics(); }, []);
   useEffect(() => { initHaptics(); }, []);
@@ -226,7 +246,12 @@ export default function App() {
         >
           {!onboarded ? (
             <RootStack.Screen name="Onboarding">
-              {(props) => <OnboardingScreen {...props} onDone={() => setOnboarded(true)} />}
+              {(props) => <OnboardingScreen {...props} onDone={() => {
+                setOnboarded(true);
+                // Show tutorial after a brief delay so Home renders
+                // before the welcome modal appears.
+                setTimeout(() => setTutorialVisible(true), 400);
+              }} />}
             </RootStack.Screen>
           ) : (
             <>
@@ -284,6 +309,14 @@ export default function App() {
         pets={longPressPets}
         activeId={longPressActiveId}
         onPick={handleLongPressPick}
+      />
+      {/* First-run tutorial — shown once after onboarding completes,
+          plus once for any existing user who hasn't seen it (the
+          AsyncStorage flag is the gate). Tap "Got it" → flag is set
+          and the overlay never re-appears. */}
+      <FirstRunTutorial
+        visible={tutorialVisible}
+        onClose={dismissTutorial}
       />
     </SafeAreaProvider>
   );
