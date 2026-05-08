@@ -62,10 +62,7 @@ export default function YourPetsScreen() {
 
   function toggleAbout(petId) {
     setAboutOpen(prev => {
-      // About defaults to expanded (undefined → expanded → tap = collapse).
-      // Inverted from healthOpen which defaults collapsed.
-      const currentlyExpanded = prev[petId] ?? true;
-      const next = !currentlyExpanded;
+      const next = !prev[petId];
       if (next) track("about_breed_expanded");
       return { ...prev, [petId]: next };
     });
@@ -153,137 +150,120 @@ export default function YourPetsScreen() {
             </Text>
             {pet.mixOf && <Text style={s.mixMeta}>Mix of: {pet.mixOf}</Text>}
 
-            {/* About card — default expanded; warm narrative, origin
-                story, sources, and brachycephalic warning. NO specific
-                medical content. Reads `breed.about` (the new warm-only
-                field) with fallback to `breed.summary` for breeds that
-                haven't been split yet. */}
-            {(breed?.about || breed?.summary) && (() => {
-              const isExpanded = aboutOpen[pet.id] ?? true;
-              return (
-                <View style={s.breedCard}>
-                  <TouchableOpacity
-                    activeOpacity={0.7}
-                    onPress={() => toggleAbout(pet.id)}
-                    style={s.breedHeader}
-                  >
-                    <Text style={s.breedTitle}>About {breedDisplayName(pet.breed)}</Text>
-                    <Text style={s.breedHeaderHint}>
-                      {isExpanded ? "Tap to hide" : "Tap to expand"}
-                    </Text>
-                  </TouchableOpacity>
-                  {isExpanded && (<>
-                    {breed.origin && <Text style={s.breedOrigin}>📍 {breed.origin}</Text>}
-                    <Text style={s.breedBody}>{breed.about ?? breed.summary}</Text>
-                    {breed.originStory && (
-                      <View style={{ marginTop: 10 }}>
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => {
-                            tapLight();
-                            setOriginStoryOpen(prev => {
-                              const next = !prev[pet.id];
-                              if (next) track("origin_story_expanded");
-                              return { ...prev, [pet.id]: next };
-                            });
-                          }}
-                          style={s.subSectionHeader}
-                        >
-                          <Text style={s.subSectionTitle} numberOfLines={2}>📖 Origin Story · How the {breedDisplayName(pet.breed)} became the {breedDisplayName(pet.breed)}</Text>
-                          <Text style={s.subSectionHint}>{originStoryOpen[pet.id] ? "Hide" : "Show"}</Text>
-                        </TouchableOpacity>
-                        {originStoryOpen[pet.id] && (
-                          <Text style={[s.breedBody, { marginTop: 8, fontStyle: "italic" }]}>
-                            {breed.originStory}
-                          </Text>
-                        )}
-                      </View>
-                    )}
-                    {(breed.origin || breed.originStory) && (
-                      <Text style={s.originNote}>
-                        Origin information reflects current scholarly consensus where available, and acknowledged debate where it exists.
-                      </Text>
-                    )}
-                    {Array.isArray(breed.references) && breed.references.length > 0 && (
-                      <View style={{ marginTop: 12 }}>
-                        <TouchableOpacity
-                          activeOpacity={0.7}
-                          onPress={() => {
-                            tapLight();
-                            setSourcesOpen(prev => {
-                              const next = !prev[pet.id];
-                              if (next) track("sources_expanded");
-                              return { ...prev, [pet.id]: next };
-                            });
-                          }}
-                          style={s.subSectionHeader}
-                        >
-                          <Text style={s.subSectionTitle}>📚 Sources · {breed.references.length} {breed.references.length === 1 ? "reference" : "references"}</Text>
-                          <Text style={s.subSectionHint}>{sourcesOpen[pet.id] ? "Hide" : "Show"}</Text>
-                        </TouchableOpacity>
-                        {sourcesOpen[pet.id] && (
-                          <View style={{ marginTop: 4 }}>
-                            {breed.references.map((r, i) => (
-                              <TouchableOpacity key={i} onPress={() => Linking.openURL(r.url)} style={{ paddingVertical: 4 }}>
-                                <Text style={s.breedRefText}>↗ {r.label}</Text>
-                              </TouchableOpacity>
-                            ))}
-                          </View>
-                        )}
-                      </View>
-                    )}
-                    {breed.brachycephalic && (
-                      <View style={s.brachyWarn}>
-                        <Text style={s.brachyText}>
-                          ⚠ Short-snout (brachycephalic) breed. Most airlines refuse them as cargo, heat above 80°F is dangerous, and BOAS surgery is a common breed-specific intervention.
-                        </Text>
-                      </View>
-                    )}
-                  </>)}
-                </View>
-              );
-            })()}
-
-            {/* Health Considerations card — default collapsed; serious,
-                audit-quality medical content. Separate top-level card,
-                not a sub-section of About. Reads `breed.healthSummary`
-                (optional one-line opener) and `breed.health` (detailed
-                bullets). */}
-            {Array.isArray(breed?.health) && breed.health.length > 0 && (
-              <TouchableOpacity
-                activeOpacity={0.7}
-                onPress={() => { tapLight(); setHealthOpen(prev => ({ ...prev, [pet.id]: !prev[pet.id] })); }}
-                style={s.healthCard}
-              >
-                <View style={s.healthHeader}>
-                  <Text style={s.healthHeaderText}>
-                    💛 Health Considerations · {breed.health.length} to know about for {breedDisplayName(pet.breed)}
+            {breed?.summary && (
+              <View style={s.breedCard}>
+                <TouchableOpacity
+                  activeOpacity={0.7}
+                  onPress={() => toggleAbout(pet.id)}
+                  style={s.breedHeader}
+                >
+                  <Text style={s.breedTitle}>About {breedDisplayName(pet.breed)}</Text>
+                  <Text style={s.breedHeaderHint}>
+                    {aboutOpen[pet.id] ? "Tap to hide" : "Tap to learn more"}
                   </Text>
-                  <Text style={s.healthHeaderHint}>
-                    {healthOpen[pet.id] ? "Tap to hide" : "Tap to expand"}
-                  </Text>
-                </View>
-                {healthOpen[pet.id] && (
+                </TouchableOpacity>
+                {aboutOpen[pet.id] && (<>
+                {breed.origin && <Text style={s.breedOrigin}>📍 {breed.origin}</Text>}
+                <Text style={s.breedBody}>{breed.summary}</Text>
+                {breed.originStory && (
                   <View style={{ marginTop: 10 }}>
-                    {breed.healthSummary ? (
-                      <Text style={s.healthIntro}>{breed.healthSummary}</Text>
-                    ) : (
-                      <Text style={s.healthIntro}>
-                        Every breed has health patterns worth knowing — being aware lets you screen early and stay ahead of issues.
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        tapLight();
+                        setOriginStoryOpen(prev => {
+                          const next = !prev[pet.id];
+                          if (next) track("origin_story_expanded");
+                          return { ...prev, [pet.id]: next };
+                        });
+                      }}
+                      style={s.subSectionHeader}
+                    >
+                      <Text style={s.subSectionTitle} numberOfLines={2}>📖 Origin Story · How the {breedDisplayName(pet.breed)} became the {breedDisplayName(pet.breed)}</Text>
+                      <Text style={s.subSectionHint}>{originStoryOpen[pet.id] ? "Hide" : "Show"}</Text>
+                    </TouchableOpacity>
+                    {originStoryOpen[pet.id] && (
+                      <Text style={[s.breedBody, { marginTop: 8, fontStyle: "italic" }]}>
+                        {breed.originStory}
                       </Text>
                     )}
-                    {breed.health.map((h, i) => (
-                      <View key={i} style={s.healthRow}>
-                        <Text style={s.healthBullet}>›</Text>
-                        <Text style={s.healthBody}>{h}</Text>
+                  </View>
+                )}
+                {(breed.origin || breed.originStory) && (
+                  <Text style={s.originNote}>
+                    Origin information reflects current scholarly consensus where available, and acknowledged debate where it exists.
+                  </Text>
+                )}
+                {Array.isArray(breed.references) && breed.references.length > 0 && (
+                  <View style={{ marginTop: 12 }}>
+                    <TouchableOpacity
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        tapLight();
+                        setSourcesOpen(prev => {
+                          const next = !prev[pet.id];
+                          if (next) track("sources_expanded");
+                          return { ...prev, [pet.id]: next };
+                        });
+                      }}
+                      style={s.subSectionHeader}
+                    >
+                      <Text style={s.subSectionTitle}>📚 Sources · {breed.references.length} {breed.references.length === 1 ? "reference" : "references"}</Text>
+                      <Text style={s.subSectionHint}>{sourcesOpen[pet.id] ? "Hide" : "Show"}</Text>
+                    </TouchableOpacity>
+                    {sourcesOpen[pet.id] && (
+                      <View style={{ marginTop: 4 }}>
+                        {breed.references.map((r, i) => (
+                          <TouchableOpacity key={i} onPress={() => Linking.openURL(r.url)} style={{ paddingVertical: 4 }}>
+                            <Text style={s.breedRefText}>↗ {r.label}</Text>
+                          </TouchableOpacity>
+                        ))}
                       </View>
-                    ))}
-                    <Text style={s.healthFooter}>
-                      Discuss screening cadence with your vet — most of these are catchable early.
+                    )}
+                  </View>
+                )}
+                {breed.brachycephalic && (
+                  <View style={s.brachyWarn}>
+                    <Text style={s.brachyText}>
+                      ⚠ Short-snout (brachycephalic) breed. Most airlines refuse them as cargo, heat above 80°F is dangerous, and BOAS surgery is a common breed-specific intervention.
                     </Text>
                   </View>
                 )}
-              </TouchableOpacity>
+
+                {Array.isArray(breed.health) && breed.health.length > 0 && (
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => { tapLight(); setHealthOpen(prev => ({ ...prev, [pet.id]: !prev[pet.id] })); }}
+                    style={s.healthDisclosure}
+                  >
+                    <View style={s.healthHeader}>
+                      <Text style={s.healthHeaderText}>
+                        💛 Health considerations to know
+                      </Text>
+                      <Text style={s.healthHeaderHint}>
+                        {healthOpen[pet.id] ? "Tap to hide" : "Tap to learn more"}
+                      </Text>
+                    </View>
+                    {healthOpen[pet.id] && (
+                      <View style={{ marginTop: 10 }}>
+                        <Text style={s.healthIntro}>
+                          Every breed has health patterns worth knowing — being aware lets you screen early and stay ahead of issues.
+                        </Text>
+                        {breed.health.map((h, i) => (
+                          <View key={i} style={s.healthRow}>
+                            <Text style={s.healthBullet}>›</Text>
+                            <Text style={s.healthBody}>{h}</Text>
+                          </View>
+                        ))}
+                        <Text style={s.healthFooter}>
+                          Discuss screening cadence with your vet — most of these are catchable early.
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                )}
+                </>)}
+              </View>
             )}
 
             {Array.isArray(breed?.tips) && breed.tips.length > 0 && (
@@ -371,7 +351,6 @@ const s = StyleSheet.create({
   brachyWarn:    { marginTop: 12, padding: 10, backgroundColor: "#FCE9C8", borderRadius: 8, borderWidth: 1, borderColor: "#E0A82E" },
   brachyText:    { fontSize: 12, color: "#5A3F0A", lineHeight: 18 },
   healthDisclosure:{ marginTop: 12, padding: 12, backgroundColor: theme.bg, borderRadius: 10, borderWidth: 1, borderColor: theme.line },
-  healthCard:      { marginTop: 12, padding: 14, backgroundColor: theme.card, borderRadius: 12, borderWidth: 1, borderColor: theme.line },
   healthHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
   healthHeaderText:{ flex: 1, fontSize: 13, fontWeight: "700", color: theme.fg },
   healthHeaderHint:{ flexShrink: 0, fontSize: 11, color: theme.accent, fontWeight: "600" },
