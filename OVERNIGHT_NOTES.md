@@ -92,6 +92,8 @@ d6a256f docs: update OVERNIGHT_NOTES with merge resolution log
 
 **EAS-build confirmation rule applied** (per the new memory rule from this session): user explicitly confirmed the trigger ("i confirm") before the command ran. Pay-as-you-go billing was enabled at this point — ~$2/build.
 
+**Transporter delivery**: ✅ DELIVERED on 2026-05-08 at 2:38 PM via Transporter. ASC processing finished. App ID `6764378399`. No validation errors. The 1.1.0 train-closed rejection from build 18 is fully resolved.
+
 **Same payload as build 18** (the version-bump was the only diff):
 - Pawgress (data + visuals + screen + Home card integration)
 - Tummy Tracker (entry screens + timeline + recall match service + vet visit suggestion + PDF export + Home card)

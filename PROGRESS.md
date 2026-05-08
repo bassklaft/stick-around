@@ -139,7 +139,8 @@ A personal record of what got built, when, and what it took.
 - Bumped app.json to "1.2.0", committed, pushed
 - Enabled pay-as-you-go billing on EAS ($2/build) since the failed v1.1.0 build had eaten the discretionary credit
 - Triggered build 19 → ✅ **finished successfully** as `1.2.0 (19)`. .ipa at https://expo.dev/artifacts/eas/9qLj9nk4Y8nxJ1RDBmMmsL.ipa
-- Same payload as build 18 (version-bump was the only diff). Ready for Transporter upload + Apple validation should pass this time (fresh 1.2.0 train, no closed-train conflict)
+- Same payload as build 18 (version-bump was the only diff). Apple validation passed cleanly this time (fresh 1.2.0 train, no closed-train conflict)
+- ✅ Transporter delivered build 19 to App Store Connect at 2:38 PM. ASC processing finished. Ready to add to TestFlight
 - Lesson committed to project memory: bump `app.json` version BEFORE triggering EAS for major releases. Auto-increment handles build numbers; humans handle marketing versions.
 - New rule committed to project memory: every `eas build` trigger needs an explicit "yes" confirmation including the cost. Even when I said "go" 5 minutes ago. Even for emergency rebuilds. The $ cost makes builds categorically different from code edits.
 
