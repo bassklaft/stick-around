@@ -8,7 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, TouchableOpacity, View, Text, Platform } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { initAnalytics, screen as trackScreen } from "./src/lib/analytics";
-import { initHaptics } from "./src/lib/haptics";
+import { initHaptics, tapLight } from "./src/lib/haptics";
 
 import Logo from "./src/components/Logo";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -89,11 +89,14 @@ function MainTabs({ navigation }) {
       })}
     >
       <Tabs.Screen name="Checklist" component={ChecklistScreen}
-        options={{ title: "This Week", tabBarLabel: "Checklist" }} />
+        options={{ title: "This Week", tabBarLabel: "Checklist" }}
+        listeners={{ tabPress: () => tapLight() }} />
       <Tabs.Screen name="Home"      component={HomeScreen}
-        options={{ title: "FloofLife", tabBarLabel: "Home" }} />
+        options={{ title: "FloofLife", tabBarLabel: "Home" }}
+        listeners={{ tabPress: () => tapLight() }} />
       <Tabs.Screen name="YourPets"  component={YourPetsScreen}
-        options={{ title: "My Floofs", tabBarLabel: "My Floofs" }} />
+        options={{ title: "My Floofs", tabBarLabel: "My Floofs" }}
+        listeners={{ tabPress: () => tapLight() }} />
     </Tabs.Navigator>
   );
 }

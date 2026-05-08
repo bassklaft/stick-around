@@ -2,7 +2,12 @@
 // avatar (tap to set/change photo), name, breed badge, breed summary
 // + insider tips. Tap "Add another pet" to onboard a second.
 import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl, Linking, Alert, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl, Linking, Alert, LayoutAnimation, Platform, UIManager, StyleSheet } from "react-native";
+
+// Enable LayoutAnimation on Android (iOS has it on by default).
+if (Platform.OS === "android" && UIManager.setLayoutAnimationEnabledExperimental) {
+  UIManager.setLayoutAnimationEnabledExperimental(true);
+}
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -72,6 +77,7 @@ export default function YourPetsScreen() {
   const { isPremium } = usePurchases();
 
   function toggleAbout(sectionId) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setAboutOpen(prev => {
       // About defaults expanded — undefined ⇒ expanded → tap collapses.
       const currentlyExpanded = prev[sectionId] ?? true;
@@ -83,6 +89,7 @@ export default function YourPetsScreen() {
   }
 
   function toggleHealth(sectionId) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setHealthOpen(prev => {
       const next = !prev[sectionId];
       if (next) track("health_considerations_expanded");
@@ -92,6 +99,7 @@ export default function YourPetsScreen() {
   }
 
   function toggleSubSection(setter, sectionId, eventName) {
+    LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setter(prev => {
       const next = !prev[sectionId];
       if (next && eventName) track(eventName);

@@ -1,13 +1,13 @@
 // Weekly checklist — extracted from the prior YourPets screen so it
 // stands as its own bottom-tab destination.
-import React, { useEffect, useState, useCallback, useLayoutEffect } from "react";
-import { View, Text, ScrollView, TouchableOpacity, RefreshControl, StyleSheet } from "react-native";
+import React, { useEffect, useState, useCallback, useLayoutEffect, useRef } from "react";
+import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Animated, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { track } from "../lib/analytics";
-import { tapMedium, tapLight } from "../lib/haptics";
+import { tapMedium, tapLight, notifySuccess } from "../lib/haptics";
 import ActivePetTitle from "../components/ActivePetTitle";
 import ActivePetChip from "../components/ActivePetChip";
 import PetSwitcherModal from "../components/PetSwitcherModal";
@@ -22,6 +22,10 @@ export default function ChecklistScreen() {
   const [state, setState] = useState({});
   const [refreshing, setRefreshing] = useState(false);
   const [switcherVisible, setSwitcherVisible] = useState(false);
+  const [celebrationVisible, setCelebrationVisible] = useState(false);
+  const celebrationOpacity = useRef(new Animated.Value(0)).current;
+  const celebrationScale = useRef(new Animated.Value(0.6)).current;
+  const lastCelebratedKeyRef = useRef(null);
 
   const multiPet = pets.length > 1;
 
@@ -74,6 +78,42 @@ export default function ChecklistScreen() {
     track("checklist_item_toggled", { action: status });
     if (status === "done") tapMedium();
     else tapLight();
+
+    // Celebrate the moment the user completes ALL items for this pet.
+    // De-dup so re-toggling the last item doesn't fire repeatedly:
+    // one celebration per pet+date+itemcount combo per session.
+    if (status === "done" && items.length > 0) {
+      const stillUndone = items.some(i => {
+        if (i.id === id) return false; // the just-toggled item
+        return effectiveStatus(i, next[i.id]) !== "done";
+      });
+      if (!stillUndone) {
+        const today = new Date().toISOString().slice(0, 10);
+        const key = `${pet.id}:${today}:${items.length}`;
+        if (lastCelebratedKeyRef.current !== key) {
+          lastCelebratedKeyRef.current = key;
+          fireCelebration();
+        }
+      }
+    }
+  }
+
+  function fireCelebration() {
+    track("checklist_all_done");
+    notifySuccess();
+    setCelebrationVisible(true);
+    celebrationOpacity.setValue(0);
+    celebrationScale.setValue(0.6);
+    Animated.parallel([
+      Animated.timing(celebrationOpacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+      Animated.spring(celebrationScale, { toValue: 1, friction: 5, useNativeDriver: true }),
+    ]).start(() => {
+      // Hold visible for ~1.4s, then fade out.
+      setTimeout(() => {
+        Animated.timing(celebrationOpacity, { toValue: 0, duration: 350, useNativeDriver: true })
+          .start(() => setCelebrationVisible(false));
+      }, 1400);
+    });
   }
 
   if (!pet) return <View style={{ flex: 1, backgroundColor: theme.bg }} />;
@@ -128,11 +168,26 @@ export default function ChecklistScreen() {
       activeId={pet?.id}
       onPick={handlePickPet}
     />
+    {celebrationVisible && (
+      <Animated.View
+        pointerEvents="none"
+        style={[
+          s.celebrationOverlay,
+          { opacity: celebrationOpacity, transform: [{ scale: celebrationScale }] },
+        ]}
+      >
+        <Text style={s.celebrationEmoji}>🎉</Text>
+        <Text style={s.celebrationText}>{pet?.name ? `${pet.name} is set for today` : "All set for today"}</Text>
+      </Animated.View>
+    )}
     </>
   );
 }
 
 const s = StyleSheet.create({
+  celebrationOverlay:{ position: "absolute", top: "40%", left: 24, right: 24, paddingVertical: 22, paddingHorizontal: 18, borderRadius: 18, backgroundColor: theme.card, borderWidth: 2, borderColor: theme.accent, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
+  celebrationEmoji:{ fontSize: 48 },
+  celebrationText:{ marginTop: 8, fontSize: 16, fontWeight: "700", color: theme.fg, textAlign: "center", textTransform: "capitalize" },
   progress:     { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 16, gap: 12 },
   progressLabel:{ color: theme.fg, fontWeight: "700", fontSize: 14, letterSpacing: 0.5 },
   progressCount:{ color: theme.accent, fontWeight: "800", fontSize: 18 },
