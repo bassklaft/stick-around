@@ -2,8 +2,8 @@
 // The hero is the emotional anchor: a big photo of the pet behind a
 // gentle dark gradient, name + breed overlaid. FloofLife exists to
 // keep that face around for more years.
-import React, { useEffect, useState, useCallback } from "react";
-import { View, Text, ScrollView, TouchableOpacity, ImageBackground, RefreshControl, Linking, Platform, StyleSheet } from "react-native";
+import React, { useEffect, useState, useCallback, useRef } from "react";
+import { View, Text, ScrollView, TouchableOpacity, ImageBackground, RefreshControl, Linking, Platform, Animated, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -98,6 +98,43 @@ function FloofCollage({ pets, activeId }) {
         />
       </View>
     </View>
+  );
+}
+
+// Subtle idle wobble for the Quick Access cards. Each card wobbles
+// once every ~6-10 seconds with a random offset so the row doesn't
+// move in unison. Soft enough to invite tap, not jarring. Per build
+// 19 smoke-test feedback ("bounce a little or shake a little — soft
+// and fun and silly, dont move too far from origin").
+function WobbleCard({ children, idleSeconds = 7 }) {
+  const wobble = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    let mounted = true;
+    let timer = null;
+    function tick() {
+      if (!mounted) return;
+      Animated.sequence([
+        Animated.timing(wobble, { toValue: 1,    duration: 140, useNativeDriver: true }),
+        Animated.timing(wobble, { toValue: -1,   duration: 160, useNativeDriver: true }),
+        Animated.timing(wobble, { toValue: 0.4,  duration: 120, useNativeDriver: true }),
+        Animated.timing(wobble, { toValue: 0,    duration: 100, useNativeDriver: true }),
+      ]).start(() => {
+        const next = idleSeconds * 1000 + Math.random() * 3000;
+        timer = setTimeout(tick, next);
+      });
+    }
+    // Initial delay randomized so cards don't all wobble at the same time
+    timer = setTimeout(tick, Math.random() * 4000 + 2000);
+    return () => { mounted = false; if (timer) clearTimeout(timer); };
+  }, [idleSeconds, wobble]);
+  const rotate = wobble.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ["-2.5deg", "0deg", "2.5deg"],
+  });
+  return (
+    <Animated.View style={{ transform: [{ rotate }] }}>
+      {children}
+    </Animated.View>
   );
 }
 
@@ -296,19 +333,21 @@ export default function HomeScreen({ navigation }) {
 
         <Text style={s.sectionHd}>QUICK ACCESS</Text>
         {cards.map(c => (
-          <TouchableOpacity key={c.key} onPress={() => { tapMedium(); c.onPress(); }} style={s.card} activeOpacity={0.7}>
-            <View style={[s.iconCircle, { backgroundColor: c.tint + "1f" }]}>
-              <MaterialCommunityIcons name={c.icon} size={26} color={c.tint} />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={s.cardTitle}>{c.title}</Text>
-              <Text style={s.cardSubtitle}>{c.subtitle}</Text>
-            </View>
-            {c.badge ? (
-              <View style={s.cardBadge}><Text style={s.cardBadgeText}>{c.badge}</Text></View>
-            ) : null}
-            <MaterialCommunityIcons name="chevron-right" size={22} color={theme.muted} />
-          </TouchableOpacity>
+          <WobbleCard key={c.key}>
+            <TouchableOpacity onPress={() => { tapMedium(); c.onPress(); }} style={s.card} activeOpacity={0.7}>
+              <View style={[s.iconCircle, { backgroundColor: c.tint + "1f" }]}>
+                <MaterialCommunityIcons name={c.icon} size={26} color={c.tint} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={s.cardTitle}>{c.title}</Text>
+                <Text style={s.cardSubtitle}>{c.subtitle}</Text>
+              </View>
+              {c.badge ? (
+                <View style={s.cardBadge}><Text style={s.cardBadgeText}>{c.badge}</Text></View>
+              ) : null}
+              <MaterialCommunityIcons name="chevron-right" size={22} color={theme.muted} />
+            </TouchableOpacity>
+          </WobbleCard>
         ))}
 
         {Array.isArray(breed?.tips) && breed.tips.length > 0 && (
