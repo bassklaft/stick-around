@@ -93,7 +93,10 @@ export default function PremiumScreen({ navigation }) {
 
   async function purchase() {
     track("premium_purchase_initiated", { plan: selected });
-    tapMedium();
+    // Hard haptic on the actual payment moment per build 19 smoke-test
+    // feedback — payment is the kind of action that warrants strong
+    // tactile confirmation.
+    tapHeavy();
     // Resolution chain (silent — no diagnostic alerts):
     //   1. selectedPkg from resolvePkg() against the offering
     //   2. fallback to first availablePackage if resolver missed

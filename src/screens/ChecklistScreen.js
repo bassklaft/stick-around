@@ -54,7 +54,15 @@ export default function ChecklistScreen() {
         />
       ),
       headerRight: multiPet
-        ? () => <ActivePetChip pet={pet} onPress={() => setSwitcherVisible(true)} />
+        ? () => <ActivePetChip pet={pet} onPress={() => {
+            // Per build 19 smoke-test feedback: chip tap goes to the
+            // pet's profile page (My Floofs tab). Title-tap (with
+            // chevron-down) is the switcher modal; chip-tap is the
+            // profile-jump. Two visually-distinct tap targets, two
+            // distinct destinations.
+            tapLight();
+            navigation.navigate("Main", { screen: "YourPets" });
+          }} />
         : undefined,
     });
   }, [navigation, pet, multiPet]);

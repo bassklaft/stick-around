@@ -14,6 +14,7 @@ import { getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "
 import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
 import { Pawgress, todayKey } from "../lib/pawgress";
 import { openMapsSearch } from "../lib/maps";
+import { tapMedium, tapHeavy } from "../lib/haptics";
 import PawgressPaw from "../components/PawgressPaw";
 import { theme } from "../theme";
 
@@ -260,7 +261,7 @@ export default function HomeScreen({ navigation }) {
         </TouchableOpacity>
 
         {/* Emergency pinned at the top — needs to be findable in 2 seconds */}
-        <TouchableOpacity onPress={() => navigation.navigate("Emergency")} style={s.emergencyCard} activeOpacity={0.7}>
+        <TouchableOpacity onPress={() => { tapHeavy(); navigation.navigate("Emergency"); }} style={s.emergencyCard} activeOpacity={0.7}>
           <View style={s.emergencyIcon}>
             <MaterialCommunityIcons name="hospital-box" size={28} color="#fff" />
           </View>
@@ -295,7 +296,7 @@ export default function HomeScreen({ navigation }) {
 
         <Text style={s.sectionHd}>QUICK ACCESS</Text>
         {cards.map(c => (
-          <TouchableOpacity key={c.key} onPress={c.onPress} style={s.card} activeOpacity={0.7}>
+          <TouchableOpacity key={c.key} onPress={() => { tapMedium(); c.onPress(); }} style={s.card} activeOpacity={0.7}>
             <View style={[s.iconCircle, { backgroundColor: c.tint + "1f" }]}>
               <MaterialCommunityIcons name={c.icon} size={26} color={c.tint} />
             </View>

@@ -90,7 +90,10 @@ export default function HealthTrackerScreen({ navigation, route }) {
         />
       ),
       headerRight: multiPet
-        ? () => <ActivePetChip pet={pet} onPress={() => setSwitcherVisible(true)} />
+        ? () => <ActivePetChip pet={pet} onPress={() => {
+            tapLight();
+            navigation.navigate("Main", { screen: "YourPets" });
+          }} />
         : undefined,
     });
   }, [navigation, pet, multiPet]);

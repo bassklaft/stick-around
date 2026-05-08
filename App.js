@@ -8,7 +8,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ActivityIndicator, TouchableOpacity, View, Text, Platform } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { initAnalytics, screen as trackScreen, track } from "./src/lib/analytics";
-import { initHaptics, tapLight, tapMedium } from "./src/lib/haptics";
+import { initHaptics, tapLight, tapMedium, tapHeavy } from "./src/lib/haptics";
 import { Pets } from "./src/lib/storage";
 import PetSwitcherModal from "./src/components/PetSwitcherModal";
 
@@ -96,10 +96,10 @@ function MainTabs({ navigation, onMyFloofsLongPress }) {
     >
       <Tabs.Screen name="Checklist" component={ChecklistScreen}
         options={{ title: "This Week", tabBarLabel: "Checklist" }}
-        listeners={{ tabPress: () => tapLight() }} />
+        listeners={{ tabPress: () => tapHeavy() }} />
       <Tabs.Screen name="Home"      component={HomeScreen}
         options={{ title: "FloofLife", tabBarLabel: "Home" }}
-        listeners={{ tabPress: () => tapLight() }} />
+        listeners={{ tabPress: () => tapHeavy() }} />
       <Tabs.Screen name="YourPets"  component={YourPetsScreen}
         options={{ title: "My Floofs", tabBarLabel: "My Floofs" }}
         listeners={{
