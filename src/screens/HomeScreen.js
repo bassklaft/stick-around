@@ -399,14 +399,18 @@ const s = StyleSheet.create({
   progressLabel:{ color: theme.fg, fontWeight: "700", fontSize: 14, letterSpacing: 0.5 },
   progressCount:{ color: theme.accent, fontWeight: "800", fontSize: 16 },
   sectionHd:    { marginTop: 22, marginBottom: 10, fontSize: 11, fontWeight: "700", color: theme.muted, letterSpacing: 1.2 },
-  emergencyCard:    { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: "#C04A2C", borderRadius: 14, marginTop: 18, gap: 14 },
-  pawgressCard:     { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: theme.card, borderRadius: 14, marginTop: 12, borderWidth: 1, borderColor: theme.line },
+  // Soft shadow language across cards — makes them lift off the cream
+  // background. Per build 19 smoke-test feedback ("feels a little flat
+  // texturally"). Standard iOS HIG-friendly card depth: low opacity
+  // black, modest radius, slight downward offset.
+  emergencyCard:    { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: "#C04A2C", borderRadius: 14, marginTop: 18, gap: 14, shadowColor: "#7A2A14", shadowOpacity: 0.25, shadowRadius: 10, shadowOffset: { width: 0, height: 4 }, elevation: 5 },
+  pawgressCard:     { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: theme.card, borderRadius: 14, marginTop: 12, borderWidth: 1, borderColor: theme.line, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 8, shadowOffset: { width: 0, height: 2 }, elevation: 2 },
   pawgressTitle:    { fontSize: 14, fontWeight: "700", color: theme.fg },
   pawgressSubtitle: { fontSize: 12, color: theme.muted, marginTop: 3, lineHeight: 16 },
   emergencyIcon:    { width: 50, height: 50, borderRadius: 25, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" },
   emergencyTitle:   { fontSize: 14, fontWeight: "800", color: "#fff", letterSpacing: 0.5 },
   emergencySubtitle:{ fontSize: 11, color: "rgba(255,255,255,0.9)", marginTop: 3, lineHeight: 15 },
-  card:         { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: theme.card, borderRadius: 14, borderWidth: 1, borderColor: theme.line, marginBottom: 10, gap: 14 },
+  card:         { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: theme.card, borderRadius: 14, borderWidth: 1, borderColor: theme.line, marginBottom: 10, gap: 14, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 6, shadowOffset: { width: 0, height: 2 }, elevation: 1 },
   cardBadge:    { backgroundColor: theme.red, minWidth: 22, height: 22, borderRadius: 11, paddingHorizontal: 6, alignItems: "center", justifyContent: "center", marginRight: 4 },
   cardBadgeText:{ color: "#fff", fontSize: 11, fontWeight: "800" },
   iconCircle:   { width: 48, height: 48, borderRadius: 24, alignItems: "center", justifyContent: "center" },

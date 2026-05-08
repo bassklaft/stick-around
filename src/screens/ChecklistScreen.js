@@ -235,7 +235,7 @@ const s = StyleSheet.create({
   celebrationOverlay:{ position: "absolute", top: "40%", left: 24, right: 24, paddingVertical: 22, paddingHorizontal: 18, borderRadius: 18, backgroundColor: theme.card, borderWidth: 2, borderColor: theme.accent, alignItems: "center", justifyContent: "center", shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 6 }, elevation: 8 },
   celebrationEmoji:{ fontSize: 48 },
   celebrationText:{ marginTop: 8, fontSize: 16, fontWeight: "700", color: theme.fg, textAlign: "center", textTransform: "capitalize" },
-  pawgressSection:{ alignItems: "center", paddingVertical: 14, paddingHorizontal: 14, borderRadius: 16, backgroundColor: theme.card, borderWidth: 1, borderColor: theme.line, marginBottom: 14 },
+  pawgressSection:{ alignItems: "center", paddingVertical: 14, paddingHorizontal: 14, borderRadius: 16, backgroundColor: theme.card, borderWidth: 1, borderColor: theme.line, marginBottom: 14, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   pawgressEyebrow:{ fontSize: 11, fontWeight: "800", color: theme.muted, letterSpacing: 1.4, marginBottom: 8 },
   pawgressSubtitle:{ fontSize: 13, color: theme.fg, marginTop: 8, textAlign: "center", fontStyle: "italic" },
   progress:     { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 16, gap: 12 },

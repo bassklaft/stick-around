@@ -471,7 +471,7 @@ const s = StyleSheet.create({
   emptyCTAText: { color: "#fff", fontWeight: "700", fontSize: 15, letterSpacing: 0.3 },
   emptyDisclaimer:{ fontSize: 11, color: theme.muted, marginTop: 16, textAlign: "center", fontStyle: "italic" },
   intro:        { fontSize: 13, color: theme.muted, marginBottom: 14, lineHeight: 19 },
-  petCard:      { backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.line, padding: 18, marginBottom: 16, position: "relative" },
+  petCard:      { backgroundColor: theme.card, borderRadius: 16, borderWidth: 1, borderColor: theme.line, padding: 18, marginBottom: 16, position: "relative", shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
   petCardActive:{ borderColor: theme.accent, borderWidth: 2 },
   activeBadge:  { position: "absolute", top: 12, left: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   tapToSwitchHint:{ fontSize: 10, color: theme.muted, fontStyle: "italic", textAlign: "center", marginTop: 28, marginBottom: -4, letterSpacing: 0.3 },
