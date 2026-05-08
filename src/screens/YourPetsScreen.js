@@ -20,6 +20,7 @@ import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { track } from "../lib/analytics";
 import { tapLight, tapMedium } from "../lib/haptics";
+import PhotoManagerSheet from "../components/PhotoManagerSheet";
 import { theme } from "../theme";
 
 const titleCase = s => (s || "").split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -75,6 +76,8 @@ export default function YourPetsScreen() {
   const [tipsOpen, setTipsOpen] = useState({});
   const [sourcesOpen, setSourcesOpen] = useState({});
   const [originStoryOpen, setOriginStoryOpen] = useState({});
+  // Pet ID currently being edited in the photo manager sheet, or null.
+  const [photoMgrPetId, setPhotoMgrPetId] = useState(null);
   const { isPremium } = usePurchases();
 
   function toggleAbout(sectionId) {
@@ -293,6 +296,17 @@ export default function YourPetsScreen() {
                         ? (photoCount > 1 ? `Tap to add another · ${photoCount}/${MAX_PHOTOS_PER_PET}` : "Tap to add another photo")
                         : "Tap to add a photo"}
                     </Text>
+                    {photoCount > 0 && (
+                      <TouchableOpacity
+                        onPress={() => { tapLight(); setPhotoMgrPetId(pet.id); }}
+                        style={s.managePhotosLink}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Manage ${pet.name}'s photos`}
+                      >
+                        <MaterialCommunityIcons name="image-multiple-outline" size={14} color={theme.accent} />
+                        <Text style={s.managePhotosText}>Manage photos</Text>
+                      </TouchableOpacity>
+                    )}
                   </>
                 );
               })()}
@@ -485,6 +499,16 @@ export default function YourPetsScreen() {
           FloofLife guidance is not a substitute for veterinary advice. When something feels wrong, call your vet.
         </Text>
       </View>
+      <PhotoManagerSheet
+        visible={!!photoMgrPetId}
+        pet={pets.find((p) => p.id === photoMgrPetId) || null}
+        onClose={() => setPhotoMgrPetId(null)}
+        onChange={async (next) => {
+          if (!photoMgrPetId) return;
+          await Pets.update(photoMgrPetId, { photos: next, photoUri: next[0] || null });
+          await load();
+        }}
+      />
     </ScrollView>
   );
 }
@@ -511,6 +535,8 @@ const s = StyleSheet.create({
   avatarFallback:{ width: 130, height: 130, borderRadius: 65, backgroundColor: theme.accentSoft, alignItems: "center", justifyContent: "center" },
   avatarBadge:   { position: "absolute", bottom: 4, right: 4, width: 32, height: 32, borderRadius: 16, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: theme.card },
   avatarHint:    { fontSize: 11, color: theme.muted, marginTop: 8, fontStyle: "italic" },
+  managePhotosLink:{ flexDirection: "row", alignItems: "center", gap: 4, marginTop: 6, paddingVertical: 4, paddingHorizontal: 10, borderRadius: 999, backgroundColor: theme.accentSoft },
+  managePhotosText:{ color: theme.accent, fontSize: 11, fontWeight: "700", letterSpacing: 0.3 },
   petName:       { fontSize: 26, fontWeight: "800", color: theme.fg, textAlign: "center", textTransform: "capitalize" },
   petMeta:       { fontSize: 13, color: theme.muted, marginTop: 4, textAlign: "center", textTransform: "capitalize" },
   mixMeta:       { fontSize: 12, color: theme.accent, marginTop: 4, textAlign: "center", fontStyle: "italic" },

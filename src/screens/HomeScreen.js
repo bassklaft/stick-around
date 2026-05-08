@@ -17,6 +17,7 @@ import { Pawgress, todayKey } from "../lib/pawgress";
 import { openMapsSearch } from "../lib/maps";
 import { tapMedium, tapHeavy } from "../lib/haptics";
 import PawgressPaw from "../components/PawgressPaw";
+import PhotoManagerSheet from "../components/PhotoManagerSheet";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -164,6 +165,8 @@ export default function HomeScreen({ navigation }) {
   const [refreshing, setRefreshing] = useState(false);
   const [healthRecords, setHealthRecords] = useState([]);
   const [pawgressDay, setPawgressDay] = useState(null);
+  // Photo manager sheet — opened by tapping the single-pet hero banner.
+  const [showPhotoManager, setShowPhotoManager] = useState(false);
 
   const load = useCallback(async () => {
     const p = await Pet.get();
@@ -241,10 +244,14 @@ export default function HomeScreen({ navigation }) {
           Tap → switcher (My Floofs tab) for active-pet swap. */}
       {(() => {
         const isMultiPet = petsCount > 1;
-        const HeroWrap = isMultiPet ? TouchableOpacity : View;
+        // Single-pet hero is now ALSO tappable — opens the photo
+        // manager sheet so the owner can add or rotate the floof's
+        // photos. Multi-pet hero still routes to YourPets where the
+        // user can pick a specific pet to manage.
+        const HeroWrap = TouchableOpacity;
         const wrapProps = isMultiPet
           ? { onPress: () => navigation.navigate("Main", { screen: "YourPets" }), activeOpacity: 0.85 }
-          : {};
+          : { onPress: () => { tapMedium(); setShowPhotoManager(true); }, activeOpacity: 0.85 };
 
         if (isMultiPet) {
           // Multi-pet collage hero. Layout adapts to family size.
@@ -385,6 +392,18 @@ export default function HomeScreen({ navigation }) {
           </Text>
         </View>
       </View>
+      <PhotoManagerSheet
+        visible={showPhotoManager}
+        pet={pet}
+        onClose={() => setShowPhotoManager(false)}
+        onChange={async (next) => {
+          // Persist + reload so the hero photo picker refreshes. We
+          // also write photoUri = photos[0] so the legacy mirror is
+          // up to date for any read sites that haven't migrated yet.
+          await Pets.update(pet.id, { photos: next, photoUri: next[0] || null });
+          await load();
+        }}
+      />
     </ScrollView>
   );
 }
