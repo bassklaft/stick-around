@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets, ChecklistState } from "../lib/storage";
+import { pickPhotoForSlot } from "../lib/petPhotos";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { breedFacts } from "../data/breeds";
 import { getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
@@ -29,13 +30,17 @@ const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).j
 // "this is who's active right now" without forcing a single-photo
 // hero again. Photos come from each pet's stored documentDirectory
 // URI; pets without a photo get a breed-emoji placeholder tile.
-function CollageTile({ pet, active, overflow = 0 }) {
+function CollageTile({ pet, active, overflow = 0, tileIndex = 0 }) {
   const primary = getPrimaryBreed(pet);
   const placeholderEmoji = pet?.species === "cat" ? "🐈" : "🐕";
+  // Each collage tile gets a different photo from the pet's set so two
+  // tiles for the same pet wouldn't show the same image (single-pet
+  // households still see the daily-rotated hero — different slot).
+  const tileUri = pickPhotoForSlot(pet, "collage", { tileIndex });
   return (
     <View style={[collageStyles.tile, active && collageStyles.tileActive]}>
-      {pet.photoUri ? (
-        <ImageBackground source={{ uri: pet.photoUri }} style={collageStyles.tileImage} imageStyle={collageStyles.tileImageInner}>
+      {tileUri ? (
+        <ImageBackground source={{ uri: tileUri }} style={collageStyles.tileImage} imageStyle={collageStyles.tileImageInner}>
           {overflow > 0 && (
             <View style={collageStyles.overflowOverlay}>
               <Text style={collageStyles.overflowText}>+{overflow} more</Text>
@@ -61,8 +66,8 @@ function FloofCollage({ pets, activeId }) {
   if (n === 2) {
     return (
       <View style={[collageStyles.fill, { flexDirection: "row" }]}>
-        {pets.slice(0, 2).map((p) => (
-          <CollageTile key={p.id} pet={p} active={p.id === activeId} />
+        {pets.slice(0, 2).map((p, i) => (
+          <CollageTile key={p.id} pet={p} active={p.id === activeId} tileIndex={i} />
         ))}
       </View>
     );
@@ -71,11 +76,11 @@ function FloofCollage({ pets, activeId }) {
     return (
       <View style={[collageStyles.fill, { flexDirection: "column" }]}>
         <View style={{ flex: 1, flexDirection: "row" }}>
-          <CollageTile pet={pets[0]} active={pets[0].id === activeId} />
+          <CollageTile pet={pets[0]} active={pets[0].id === activeId} tileIndex={0} />
         </View>
         <View style={{ flex: 1, flexDirection: "row" }}>
-          <CollageTile pet={pets[1]} active={pets[1].id === activeId} />
-          <CollageTile pet={pets[2]} active={pets[2].id === activeId} />
+          <CollageTile pet={pets[1]} active={pets[1].id === activeId} tileIndex={1} />
+          <CollageTile pet={pets[2]} active={pets[2].id === activeId} tileIndex={2} />
         </View>
       </View>
     );
@@ -86,15 +91,16 @@ function FloofCollage({ pets, activeId }) {
   return (
     <View style={[collageStyles.fill, { flexDirection: "column" }]}>
       <View style={{ flex: 1, flexDirection: "row" }}>
-        <CollageTile pet={visible[0]} active={visible[0].id === activeId} />
-        <CollageTile pet={visible[1]} active={visible[1].id === activeId} />
+        <CollageTile pet={visible[0]} active={visible[0].id === activeId} tileIndex={0} />
+        <CollageTile pet={visible[1]} active={visible[1].id === activeId} tileIndex={1} />
       </View>
       <View style={{ flex: 1, flexDirection: "row" }}>
-        <CollageTile pet={visible[2]} active={visible[2].id === activeId} />
+        <CollageTile pet={visible[2]} active={visible[2].id === activeId} tileIndex={2} />
         <CollageTile
           pet={visible[3]}
           active={visible[3].id === activeId}
           overflow={overflow}
+          tileIndex={3}
         />
       </View>
     </View>
@@ -185,7 +191,10 @@ export default function HomeScreen({ navigation }) {
   const breed = breedFacts[primaryBreed];
   const breedDisplay = mixedBreedLabel(pet) || titleCase(primaryBreed);
   const completed = items.filter(i => effectiveStatus(i, state[i.id]) === "done").length;
-  const hasPhoto = !!pet.photoUri;
+  // Hero photo rotates daily across the pet's photos[] set. Falls back
+  // to legacy photoUri-only pets gracefully via pickPhotoForSlot.
+  const heroPhotoUri = pickPhotoForSlot(pet, "hero");
+  const hasPhoto = !!heroPhotoUri;
 
   // Health tracker preview: nearest upcoming + overdue count
   const overdueCount = healthRecords.filter((r) => statusFor(r) === "overdue").length;
@@ -270,7 +279,7 @@ export default function HomeScreen({ navigation }) {
         if (hasPhoto) {
           return (
             <HeroWrap {...wrapProps}>
-              <ImageBackground source={{ uri: pet.photoUri }} style={s.hero} imageStyle={s.heroImage}>
+              <ImageBackground source={{ uri: heroPhotoUri }} style={s.hero} imageStyle={s.heroImage}>
                 <View style={s.heroOverlay} />
                 <View style={s.heroContent}>
                   <Text style={s.heroEyebrow}>FOR</Text>

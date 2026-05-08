@@ -14,12 +14,17 @@ import React from "react";
 import { View, Text, TouchableOpacity, Image, StyleSheet } from "react-native";
 import { breedEmoji } from "../data/breeds";
 import { getPrimaryBreed } from "../lib/petBreeds";
+import { pickPhotoForSlot } from "../lib/petPhotos";
 import { theme } from "../theme";
 
 export default function ActivePetChip({ pet, onPress }) {
   if (!pet) return null;
   const primary = getPrimaryBreed(pet);
   const firstName = (pet.name || "").split(" ")[0] || pet.name;
+  // Chip avatar rotates daily across the pet's photos[]. Same daily
+  // bucket as the hero, but the slot-specific seed means the chip
+  // rotates independently from the home banner.
+  const chipPhoto = pickPhotoForSlot(pet, "chip");
   return (
     <TouchableOpacity
       onPress={onPress}
@@ -29,8 +34,8 @@ export default function ActivePetChip({ pet, onPress }) {
       accessibilityLabel={`Active floof: ${pet.name}. Tap to switch.`}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
-      {pet.photoUri ? (
-        <Image source={{ uri: pet.photoUri }} style={s.avatar} />
+      {chipPhoto ? (
+        <Image source={{ uri: chipPhoto }} style={s.avatar} />
       ) : (
         <View style={s.avatarFallback}>
           <Text style={{ fontSize: 18 }}>{breedEmoji(primary)}</Text>

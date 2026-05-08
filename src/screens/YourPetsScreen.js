@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pets } from "../lib/storage";
+import { pickPhotoForSlot, MAX_PHOTOS_PER_PET } from "../lib/petPhotos";
 import { usePurchases } from "../lib/purchasesContext";
 import { getPetBreeds, getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
 import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
@@ -122,11 +123,22 @@ export default function YourPetsScreen() {
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
+  // Adds the picked photo to the pet's photos[] (primary slot at the
+  // top), keeping any existing photos so the multi-photo schema stays
+  // intact. A future "Manage photos" sheet (item 9) will give finer
+  // control; this one-tap path stays for the avatar quick-replace.
   async function changePhoto(petId) {
     const uri = await pickPetPhoto({ petId });
     if (!uri) return;
-    await Pets.update(petId, { photoUri: uri });
-    track("pet_photo_picked", { context: "my_floofs" });
+    const all = await Pets.list();
+    const existing = all.find((p) => p.id === petId);
+    const existingPhotos = Array.isArray(existing?.photos)
+      ? existing.photos.filter((u) => typeof u === "string" && u.length > 0)
+      : [];
+    // New photo becomes primary (photos[0]). Dedupe + cap at MAX.
+    const next = [uri, ...existingPhotos.filter((u) => u !== uri)].slice(0, MAX_PHOTOS_PER_PET);
+    await Pets.update(petId, { photos: next, photoUri: uri });
+    track("pet_photo_picked", { context: "my_floofs", total_photos: next.length });
     tapMedium();
     load();
   }
@@ -256,19 +268,34 @@ export default function YourPetsScreen() {
             )}
 
             <View style={{ alignItems: "center", marginTop: 4 }}>
-              <TouchableOpacity onPress={() => changePhoto(pet.id)} activeOpacity={0.7} style={s.avatarWrap}>
-                {pet.photoUri ? (
-                  <Image source={{ uri: pet.photoUri }} style={s.avatar} />
-                ) : (
-                  <View style={s.avatarFallback}>
-                    <Text style={{ fontSize: 44 }}>{breedEmoji(primary)}</Text>
-                  </View>
-                )}
-                <View style={s.avatarBadge}>
-                  <MaterialCommunityIcons name="camera" size={16} color="#fff" />
-                </View>
-              </TouchableOpacity>
-              <Text style={s.avatarHint}>{pet.photoUri ? "Tap to change photo" : "Tap to add a photo"}</Text>
+              {(() => {
+                // Card avatar rotates per session across the pet's
+                // photos[] so opening the screen later in the day or
+                // tomorrow shows a different shot of the same floof.
+                const cardUri = pickPhotoForSlot(pet, "card");
+                const photoCount = Array.isArray(pet.photos) ? pet.photos.length : (pet.photoUri ? 1 : 0);
+                return (
+                  <>
+                    <TouchableOpacity onPress={() => changePhoto(pet.id)} activeOpacity={0.7} style={s.avatarWrap}>
+                      {cardUri ? (
+                        <Image source={{ uri: cardUri }} style={s.avatar} />
+                      ) : (
+                        <View style={s.avatarFallback}>
+                          <Text style={{ fontSize: 44 }}>{breedEmoji(primary)}</Text>
+                        </View>
+                      )}
+                      <View style={s.avatarBadge}>
+                        <MaterialCommunityIcons name="camera" size={16} color="#fff" />
+                      </View>
+                    </TouchableOpacity>
+                    <Text style={s.avatarHint}>
+                      {cardUri
+                        ? (photoCount > 1 ? `Tap to add another · ${photoCount}/${MAX_PHOTOS_PER_PET}` : "Tap to add another photo")
+                        : "Tap to add a photo"}
+                    </Text>
+                  </>
+                );
+              })()}
             </View>
 
             {/* Pet name is the dedicated tap target → opens Edit. The rest

@@ -28,6 +28,7 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { breedEmoji } from "../data/breeds";
 import { getPrimaryBreed } from "../lib/petBreeds";
+import { pickPhotoForSlot } from "../lib/petPhotos";
 import { theme } from "../theme";
 
 const CIRCLE_DIAMETER = 76;
@@ -131,6 +132,7 @@ export default function FloofFanOverlay({
           const isActive = p.id === activeId;
           const primary = getPrimaryBreed(p);
           const firstName = (p.name || "").split(" ")[0] || p.name;
+          const fanUri = pickPhotoForSlot(p, "primary");
 
           return (
             <Animated.View
@@ -153,8 +155,11 @@ export default function FloofFanOverlay({
                 accessibilityState={{ selected: isActive }}
               >
                 <View style={[styles.circle, isActive && styles.circleActive]}>
-                  {p.photoUri ? (
-                    <Image source={{ uri: p.photoUri }} style={styles.circleImage} />
+                  {/* Fan-out always uses photos[0] — recognizable
+                      canonical face, no surprise when the user goes to
+                      pick. Slot "primary" enforces this in petPhotos.js. */}
+                  {fanUri ? (
+                    <Image source={{ uri: fanUri }} style={styles.circleImage} />
                   ) : (
                     <View style={styles.circlePlaceholder}>
                       <Text style={{ fontSize: 32 }}>{breedEmoji(primary)}</Text>
