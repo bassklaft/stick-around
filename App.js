@@ -176,6 +176,16 @@ export default function App() {
               <RootStack.Screen name="AddPet"   options={{ ...pushScreenOptions, presentation: "modal", title: "Add a floof" }}>
                 {(props) => <OnboardingScreen {...props} addMode onDone={() => props.navigation.goBack()} />}
               </RootStack.Screen>
+              <RootStack.Screen name="EditPet"  options={{ ...pushScreenOptions, presentation: "modal", title: "Edit floof" }}>
+                {(props) => (
+                  <OnboardingScreen
+                    {...props}
+                    editMode
+                    editPetId={props.route?.params?.petId}
+                    onDone={() => props.navigation.goBack()}
+                  />
+                )}
+              </RootStack.Screen>
               <RootStack.Screen name="Premium"  component={PremiumScreen}  options={{ ...pushScreenOptions, presentation: "modal", title: "Premium" }} />
               <RootStack.Screen
                 name="Settings"

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -15,7 +15,12 @@ const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).j
 // `addMode` reuses the same form as first-run onboarding to add an
 // additional pet to the household — finish() routes through Pets.add()
 // so existing pets are preserved.
-export default function OnboardingScreen({ onDone, addMode = false }) {
+//
+// `editMode` reuses the same form to edit an existing pet's record.
+// finish() routes through Pets.update(editPetId, ...) preserving the
+// original createdAt. Caller passes `editPetId` so we know which record
+// to load and update.
+export default function OnboardingScreen({ onDone, addMode = false, editMode = false, editPetId = null }) {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -26,6 +31,32 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
   const [photoUri, setPhotoUri] = useState(null);
   const [mixOf, setMixOf] = useState("");
   const [dnaNotes, setDnaNotes] = useState("");
+
+  // In editMode, pre-fill from the existing pet record on first mount.
+  useEffect(() => {
+    if (!editMode || !editPetId) return;
+    let mounted = true;
+    (async () => {
+      const all = await Pets.list();
+      const target = all.find((p) => p.id === editPetId);
+      if (!mounted || !target) return;
+      setName(target.name || "");
+      setSpecies(target.species || "dog");
+      const existingBreeds = Array.isArray(target.breeds) && target.breeds.length > 0
+        ? target.breeds
+        : (target.breed ? [target.breed] : []);
+      setSelectedBreeds(existingBreeds);
+      setAgeYears(target.ageYears != null ? String(target.ageYears) : "");
+      setWeightLbs(target.weightLbs != null ? String(target.weightLbs) : "");
+      setPhotoUri(target.photoUri || null);
+      setMixOf(target.mixOf || "");
+      setDnaNotes(target.dnaNotes || "");
+      // Edit jumps straight to step 1 (name) since the form is pre-filled
+      // and the species toggle is rarely meaningful for an existing pet.
+      setStep(1);
+    })();
+    return () => { mounted = false; };
+  }, [editMode, editPetId]);
 
   const breeds = species === "cat" ? catBreeds : dogBreeds;
   const includesMixed = selectedBreeds.includes("mixed") || selectedBreeds.includes("mixed cat");
@@ -62,7 +93,7 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
     const breedsList = selectedBreeds.length > 0
       ? selectedBreeds
       : [species === "cat" ? "domestic shorthair" : "mixed"];
-    const payload = {
+    const basePayload = {
       name: name.trim(),
       species,
       breeds: breedsList,
@@ -72,26 +103,34 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
       ageYears: isFinite(ageNum) ? ageNum : null,
       weightLbs: isFinite(weightNum) ? weightNum : null,
       photoUri: photoUri || null,
-      createdAt: Date.now(),
     };
-    if (addMode) {
-      await Pets.add(payload);
+    if (editMode && editPetId) {
+      // Don't overwrite createdAt on edits.
+      await Pets.update(editPetId, basePayload);
+      track("pet_edited", {
+        species,
+        has_photo: !!photoUri,
+        is_mix: !!basePayload.mixOf,
+      });
+      notifySuccess();
+    } else if (addMode) {
+      await Pets.add({ ...basePayload, createdAt: Date.now() });
       track("pet_added", {
         species,
         has_photo: !!photoUri,
-        has_age: payload.ageYears != null,
-        has_weight: payload.weightLbs != null,
-        is_mix: !!payload.mixOf,
+        has_age: basePayload.ageYears != null,
+        has_weight: basePayload.weightLbs != null,
+        is_mix: !!basePayload.mixOf,
       });
       notifySuccess();
     } else {
-      await Pet.set(payload);
+      await Pet.set({ ...basePayload, createdAt: Date.now() });
       track("onboarding_completed", {
         species,
         has_photo: !!photoUri,
-        has_age: payload.ageYears != null,
-        has_weight: payload.weightLbs != null,
-        is_mix: !!payload.mixOf,
+        has_age: basePayload.ageYears != null,
+        has_weight: basePayload.weightLbs != null,
+        is_mix: !!basePayload.mixOf,
       });
       notifySuccess();
     }
@@ -101,8 +140,8 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
   return (
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: theme.bg }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 32, paddingBottom: 60, paddingHorizontal: 22 }} keyboardShouldPersistTaps="handled">
-        <Text style={s.brand}>{addMode ? "Add a floof" : "FloofLife"}</Text>
-        <Text style={s.tagline}>{addMode ? "A few quick details about your new floof." : "Better pet parenting, on autopilot"}</Text>
+        <Text style={s.brand}>{editMode ? `Edit ${name.trim() || "this pet"}` : addMode ? "Add a floof" : "FloofLife"}</Text>
+        <Text style={s.tagline}>{editMode ? "Update the details for your floof." : addMode ? "A few quick details about your new floof." : "Better pet parenting, on autopilot"}</Text>
 
         {step === 0 && (
           <View style={s.section}>
@@ -115,9 +154,9 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
               ))}
             </View>
             <PrimaryButton label="Next" onPress={() => setStep(1)} />
-            {addMode && <SecondaryButton label="Cancel" onPress={onDone} />}
+            {(addMode || editMode) && <SecondaryButton label="Cancel" onPress={onDone} />}
 
-            {!addMode && (
+            {!addMode && !editMode && (
               <View style={s.founder}>
                 <Text style={s.founderText}>
                   Built by a dog dad who wanted the best for his floof — and yours.
@@ -260,7 +299,7 @@ export default function OnboardingScreen({ onDone, addMode = false }) {
               </Text>
             </View>
 
-            <PrimaryButton label={addMode ? `Add ${name.trim() || "this pet"}` : `Start with ${name.trim() || "your pet"}`} onPress={finish} />
+            <PrimaryButton label={editMode ? `Save changes` : addMode ? `Add ${name.trim() || "this pet"}` : `Start with ${name.trim() || "your pet"}`} onPress={finish} />
             <SecondaryButton label="Back" onPress={() => setStep(3)} />
           </View>
         )}
