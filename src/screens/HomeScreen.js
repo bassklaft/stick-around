@@ -12,7 +12,9 @@ import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { breedFacts } from "../data/breeds";
 import { getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
 import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
+import { Pawgress, todayKey } from "../lib/pawgress";
 import { openMapsSearch } from "../lib/maps";
+import PawgressPaw from "../components/PawgressPaw";
 import { theme } from "../theme";
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -25,6 +27,7 @@ export default function HomeScreen({ navigation }) {
   const [state, setState] = useState({});
   const [refreshing, setRefreshing] = useState(false);
   const [healthRecords, setHealthRecords] = useState([]);
+  const [pawgressDay, setPawgressDay] = useState(null);
 
   const load = useCallback(async () => {
     const p = await Pet.get();
@@ -35,6 +38,7 @@ export default function HomeScreen({ navigation }) {
     setState(await ChecklistState.get(p?.id));
     if (p?.id) {
       setHealthRecords(await Pets.listHealthRecords(p.id));
+      setPawgressDay(await Pawgress.getDay(p.id, todayKey()));
     }
   }, []);
   useEffect(() => { load(); }, [load]);
@@ -139,6 +143,28 @@ export default function HomeScreen({ navigation }) {
           <MaterialCommunityIcons name="chevron-right" size={22} color="#fff" />
         </TouchableOpacity>
 
+        {/* Pawgress card — today's daily-care paw at a glance. */}
+        {pawgressDay && (
+          <TouchableOpacity
+            onPress={() => navigation.navigate("Pawgress")}
+            style={s.pawgressCard}
+            activeOpacity={0.85}
+            accessibilityRole="button"
+            accessibilityLabel={`Pawgress: ${Pawgress.countCompleted(pawgressDay)} of 5 pads filled today`}
+          >
+            <PawgressPaw completion={pawgressDay} size={56} colorMode="today" />
+            <View style={{ flex: 1, marginLeft: 14 }}>
+              <Text style={s.pawgressTitle}>Today's Pawgress</Text>
+              <Text style={s.pawgressSubtitle}>
+                {Pawgress.isAllFive(pawgressDay)
+                  ? `${pet.name} is set for today`
+                  : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — tap a pad as you go`}
+              </Text>
+            </View>
+            <MaterialCommunityIcons name="chevron-right" size={22} color={theme.muted} />
+          </TouchableOpacity>
+        )}
+
         <Text style={s.sectionHd}>QUICK ACCESS</Text>
         {cards.map(c => (
           <TouchableOpacity key={c.key} onPress={c.onPress} style={s.card} activeOpacity={0.7}>
@@ -203,6 +229,9 @@ const s = StyleSheet.create({
   progressCount:{ color: theme.accent, fontWeight: "800", fontSize: 16 },
   sectionHd:    { marginTop: 22, marginBottom: 10, fontSize: 11, fontWeight: "700", color: theme.muted, letterSpacing: 1.2 },
   emergencyCard:    { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: "#C04A2C", borderRadius: 14, marginTop: 18, gap: 14 },
+  pawgressCard:     { flexDirection: "row", alignItems: "center", padding: 14, backgroundColor: theme.card, borderRadius: 14, marginTop: 12, borderWidth: 1, borderColor: theme.line },
+  pawgressTitle:    { fontSize: 14, fontWeight: "700", color: theme.fg },
+  pawgressSubtitle: { fontSize: 12, color: theme.muted, marginTop: 3, lineHeight: 16 },
   emergencyIcon:    { width: 50, height: 50, borderRadius: 25, backgroundColor: "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" },
   emergencyTitle:   { fontSize: 14, fontWeight: "800", color: "#fff", letterSpacing: 0.5 },
   emergencySubtitle:{ fontSize: 11, color: "rgba(255,255,255,0.9)", marginTop: 3, lineHeight: 15 },

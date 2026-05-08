@@ -27,6 +27,7 @@ import DogAgeScreen from "./src/screens/DogAgeScreen";
 import PremiumScreen from "./src/screens/PremiumScreen";
 import HealthTrackerScreen from "./src/screens/HealthTrackerScreen";
 import AddHealthRecordScreen from "./src/screens/AddHealthRecordScreen";
+import PawgressScreen from "./src/screens/PawgressScreen";
 import AboutScreen from "./src/screens/AboutScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import { PurchasesProvider } from "./src/lib/purchasesContext";
@@ -175,6 +176,7 @@ export default function App() {
               <RootStack.Screen name="DogAge"   component={DogAgeScreen}   options={{ ...pushScreenOptions, title: "Age Calculator" }} />
               <RootStack.Screen name="HealthTracker"   component={HealthTrackerScreen}   options={{ ...pushScreenOptions, title: "Health Tracker" }} />
               <RootStack.Screen name="AddHealthRecord" component={AddHealthRecordScreen} options={{ ...pushScreenOptions, presentation: "modal", title: "Health Record" }} />
+              <RootStack.Screen name="Pawgress"        component={PawgressScreen}        options={{ ...pushScreenOptions, presentation: "modal", title: "Pawgress" }} />
               <RootStack.Screen name="About"    component={AboutScreen}    options={{ ...pushScreenOptions, title: "About FloofLife" }} />
               <RootStack.Screen name="AddPet"   options={{ ...pushScreenOptions, presentation: "modal", title: "Add a floof" }}>
                 {(props) => <OnboardingScreen {...props} addMode onDone={() => props.navigation.goBack()} />}
