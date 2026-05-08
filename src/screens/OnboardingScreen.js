@@ -31,6 +31,8 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
   const [photoUri, setPhotoUri] = useState(null);
   const [mixOf, setMixOf] = useState("");
   const [dnaNotes, setDnaNotes] = useState("");
+  const [microchipStatus, setMicrochipStatus] = useState(null); // 'confirmed' | 'pending' | 'none' | 'unsure' | null
+  const [microchipNumber, setMicrochipNumber] = useState("");
 
   // In editMode, pre-fill from the existing pet record on first mount.
   useEffect(() => {
@@ -51,6 +53,8 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       setPhotoUri(target.photoUri || null);
       setMixOf(target.mixOf || "");
       setDnaNotes(target.dnaNotes || "");
+      setMicrochipStatus(target.microchipStatus || "unsure");
+      setMicrochipNumber(target.microchipNumber || "");
       // Edit jumps straight to step 1 (name) since the form is pre-filled
       // and the species toggle is rarely meaningful for an existing pet.
       setStep(1);
@@ -93,6 +97,10 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
     const breedsList = selectedBreeds.length > 0
       ? selectedBreeds
       : [species === "cat" ? "domestic shorthair" : "mixed"];
+    const finalMicrochipStatus = microchipStatus || "unsure";
+    const finalMicrochipNumber = (finalMicrochipStatus === "confirmed" && microchipNumber.trim())
+      ? microchipNumber.trim()
+      : null;
     const basePayload = {
       name: name.trim(),
       species,
@@ -103,6 +111,8 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       ageYears: isFinite(ageNum) ? ageNum : null,
       weightLbs: isFinite(weightNum) ? weightNum : null,
       photoUri: photoUri || null,
+      microchipStatus: finalMicrochipStatus,
+      microchipNumber: finalMicrochipNumber,
     };
     if (editMode && editPetId) {
       // Don't overwrite createdAt on edits.
@@ -285,6 +295,102 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
 
         {step === 4 && (
           <View style={s.section}>
+            <Text style={s.h1}>Does {name.trim() || "your pet"} have a microchip?</Text>
+            <Text style={s.sub}>
+              Microchip numbers matter at vet visits, boarding, and lost-pet situations. We just store the number locally — no registry sync (yet).
+            </Text>
+
+            <TouchableOpacity
+              onPress={() => { setMicrochipStatus("confirmed"); }}
+              style={[s.microchipOption, microchipStatus === "confirmed" && s.microchipOptionActive]}
+              activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: microchipStatus === "confirmed" }}
+            >
+              <MaterialCommunityIcons
+                name={microchipStatus === "confirmed" ? "radiobox-marked" : "radiobox-blank"}
+                size={20}
+                color={microchipStatus === "confirmed" ? theme.accent : theme.muted}
+              />
+              <Text style={[s.microchipOptionText, microchipStatus === "confirmed" && s.microchipOptionTextActive]}>
+                Yes — chip number is…
+              </Text>
+            </TouchableOpacity>
+            {microchipStatus === "confirmed" && (
+              <TextInput
+                value={microchipNumber}
+                onChangeText={setMicrochipNumber}
+                placeholder="e.g. 985112345678901 (15 digits, ISO 11784/11785)"
+                placeholderTextColor={theme.muted}
+                style={[s.input, { marginTop: 6, marginBottom: 6 }]}
+                keyboardType="number-pad"
+                autoCapitalize="none"
+                autoCorrect={false}
+              />
+            )}
+
+            <TouchableOpacity
+              onPress={() => { setMicrochipStatus("pending"); }}
+              style={[s.microchipOption, microchipStatus === "pending" && s.microchipOptionActive]}
+              activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: microchipStatus === "pending" }}
+            >
+              <MaterialCommunityIcons
+                name={microchipStatus === "pending" ? "radiobox-marked" : "radiobox-blank"}
+                size={20}
+                color={microchipStatus === "pending" ? theme.accent : theme.muted}
+              />
+              <Text style={[s.microchipOptionText, microchipStatus === "pending" && s.microchipOptionTextActive]}>
+                Yes, but ask me later (we'll remind you)
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => { setMicrochipStatus("none"); }}
+              style={[s.microchipOption, microchipStatus === "none" && s.microchipOptionActive]}
+              activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: microchipStatus === "none" }}
+            >
+              <MaterialCommunityIcons
+                name={microchipStatus === "none" ? "radiobox-marked" : "radiobox-blank"}
+                size={20}
+                color={microchipStatus === "none" ? theme.accent : theme.muted}
+              />
+              <Text style={[s.microchipOptionText, microchipStatus === "none" && s.microchipOptionTextActive]}>
+                No
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              onPress={() => { setMicrochipStatus("unsure"); }}
+              style={[s.microchipOption, microchipStatus === "unsure" && s.microchipOptionActive]}
+              activeOpacity={0.7}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: microchipStatus === "unsure" }}
+            >
+              <MaterialCommunityIcons
+                name={microchipStatus === "unsure" ? "radiobox-marked" : "radiobox-blank"}
+                size={20}
+                color={microchipStatus === "unsure" ? theme.accent : theme.muted}
+              />
+              <Text style={[s.microchipOptionText, microchipStatus === "unsure" && s.microchipOptionTextActive]}>
+                I'm not sure
+              </Text>
+            </TouchableOpacity>
+
+            <Text style={s.microchipFooter}>
+              💡 Most US shelters and many breeders chip pets before adoption. Your vet can scan the chip in a few seconds at any visit.
+            </Text>
+
+            <PrimaryButton label="Next" onPress={() => setStep(5)} />
+            <SecondaryButton label="Back" onPress={() => setStep(3)} />
+          </View>
+        )}
+
+        {step === 5 && (
+          <View style={s.section}>
             <Text style={s.h1}>A few quick details</Text>
             <Text style={s.label}>Age (years)</Text>
             <TextInput value={ageYears} onChangeText={setAgeYears} placeholder="e.g. 4" placeholderTextColor={theme.muted}
@@ -300,7 +406,7 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
             </View>
 
             <PrimaryButton label={editMode ? `Save changes` : addMode ? `Add ${name.trim() || "this pet"}` : `Start with ${name.trim() || "your pet"}`} onPress={finish} />
-            <SecondaryButton label="Back" onPress={() => setStep(3)} />
+            <SecondaryButton label="Back" onPress={() => setStep(4)} />
           </View>
         )}
       </ScrollView>
@@ -357,6 +463,11 @@ const s = StyleSheet.create({
   photoPlaceholder: { flex: 1, alignItems: "center", justifyContent: "center" },
   photoPlaceholderText: { marginTop: 10, color: theme.accent, fontWeight: "700", fontSize: 13, letterSpacing: 0.4 },
   photoPreview:     { width: "100%", height: "100%" },
+  microchipOption:    { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 14, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: theme.line, backgroundColor: theme.card, marginTop: 8 },
+  microchipOptionActive:{ borderColor: theme.accent, borderWidth: 2, backgroundColor: theme.accentSoft },
+  microchipOptionText:{ flex: 1, fontSize: 14, color: theme.fg },
+  microchipOptionTextActive:{ color: theme.accent, fontWeight: "600" },
+  microchipFooter:    { fontSize: 12, color: theme.muted, marginTop: 14, lineHeight: 18, fontStyle: "italic" },
   primaryBtn:       { backgroundColor: theme.accent, paddingVertical: 16, borderRadius: 12, alignItems: "center", marginTop: 24 },
   primaryBtnText:   { color: "#fff", fontWeight: "700", fontSize: 16, letterSpacing: 0.4 },
   secondaryBtn:     { paddingVertical: 14, alignItems: "center", marginTop: 4 },
