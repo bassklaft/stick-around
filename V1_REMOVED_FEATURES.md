@@ -945,3 +945,48 @@ CTA links directly to `PremiumScreen` modal, same surface the Settings → Upgra
 - Vet integration "Schedule appointment" deep-link (already in v1.2 plan; consider gating advanced multi-vet contact storage).
 
 Each of these gets the same treatment when its underlying feature lands: specific value framing, in-context CTA, grandfathering rules for v1.0 / v1.1 users, no nag-spam.
+
+
+---
+
+## Microchip integration (v1.3 → v1.4 → v2.0+ → v2.5+)
+
+A 3-phase feature for microchip data capture and lost-pet recovery.
+
+### Phase 1 — Data capture (v1.3 or v1.4)
+
+Add a microchip question to onboarding and to pet edit. Answer options:
+- "Yes — chip number is [text input]"
+- "Yes, but ask me later" (sets a remind-me flag — show a soft prompt occasionally)
+- "No"
+- "I'm not sure"
+
+Store on the pet record. Surface in pet profile. Schema: `pet.microchipNumber: string | null`, `pet.microchipStatus: 'confirmed' | 'pending' | 'none' | 'unsure'`.
+
+Useful immediately even without alert integration — having the number in one place matters at vet visits, boarding, lost pet situations.
+
+### Phase 2 — Lost pet workflow (v2.0+)
+
+Generate lost-pet posters with chip number + recent photos + key info. Show registry-aware reporting steps based on which database the chip is enrolled in (HomeAgain, AKC Reunite, AAHA, Found Animals Registry, 24PetWatch, etc.).
+
+Note for implementation: there is NO universal microchip database or API in the US. The AAHA Universal Pet Microchip Lookup (petmicrochiplookup.org) queries multiple registries but it's a lookup tool, not an alert API.
+
+### Phase 3 — Real-time scan alerts (v2.5+ or v3.0)
+
+When someone scans the pet's chip (e.g., a vet clinic finds a stray), the owner gets an alert with location info (typically the clinic name + address, not GPS).
+
+This is gated on a BUSINESS PARTNERSHIP with one or more major chip registries. Requires vendor agreements with HomeAgain, AKC Reunite, etc. Not a technical-only feature.
+
+### Bundled concept — "Pet Records / Pet ID Vault"
+
+The microchip feature naturally pairs with other "documents about your pet" — would make sense to bundle as a feature called Pet Records or Pet ID Vault:
+
+- Microchip number + registry
+- Rabies tag number + expiration
+- City/county license tag + expiration
+- Vet clinic registration ID
+- Insurance policy info (provider, policy number, contact)
+- Photos from multiple angles (for lost-pet posters and identification)
+- Any breeder/adoption paperwork references
+
+Schedule: Phase 1 of microchip can be a small standalone add. The full Pet Records vault is more like a v1.4 or v2.0 feature.
