@@ -137,15 +137,25 @@ Estimated 2-3 hours focused work. Worth doing properly as one cohesive feature c
 
 ---
 
-## Build 20 — STAGED 2026-05-08 — awaiting EAS confirmation prompt
+## Build 21 — TRIGGERED 2026-05-08 — ✅ EAS BUILD FINISHED
 
-**Status**: 🟡 Code landed on `v1.2-work`. Awaiting explicit user confirmation before `eas build` per `feedback_eas_build_confirmation.md`.
+**Status**: ✅ Build finished successfully on EAS Production tier. Awaiting Transporter upload + ASC processing.
 
-**HEAD pre-confirmation**: `7195411` (feat(fan-out): continuous slide-to-select on My Floofs long-press)
+**Build number landed as 21, not 20** — first eas-build attempt was rejected at the billing stage (free-plan iOS quota exhausted, pay-as-you-go didn't auto-engage), but EAS had already auto-incremented buildNumber 19 → 20 on the remote when the project files were uploaded. After the user upgraded to the Production tier ($19/mo) and the retry succeeded, EAS auto-incremented again 20 → 21. ASC doesn't care about gaps in build numbers — #20 will simply not exist in TestFlight, and the next build will be #22.
+
+**HEAD at trigger**: `8aaf2f5` (docs: log v1.2.0 build 20 manifest + guardrail verification — note the doc was written pre-trigger when we still expected #20)
 
 **Marketing version**: `1.2.0` (same train as build 19).
-**Build number**: `20` (auto-increment from 19).
-**Tag**: `1.2.0 (20)`.
+**Build number**: `21` (auto-increment from 20 → 21 on retry).
+**Tag**: `1.2.0 (21)`.
+
+**EAS build details page**: https://expo.dev/accounts/bassklaft/projects/pawrent/builds/414100a5-0b75-46c9-8510-0e75dd627ce6
+
+**iOS .ipa artifact**: https://expo.dev/artifacts/eas/94mxEM5wvQBEnfuRrNboDu.ipa
+
+**Trigger message**: "v1.2.0 build 20 — multi-photo schema (photoUri→photos[]) + 5-photo onboarding reel + photobooth animation + banner photo manager (max 10/pet) + multi-photo rotation across hero/collage/chip/cards + slide-to-select on fan-out (PanResponder, no new native deps). 20/20 migration tests pass. Guardrails A-E verified."
+
+**EAS-build confirmation rule applied**: User explicitly confirmed the retry ("Confirmed yes per the EAS build confirmation rule") after upgrading their plan. ~$2 pay-as-you-go would have applied; with the $19/mo Production tier subscription, additional builds in this cycle are included up to the plan limit.
 
 ### What landed in build 20 (commits 45d62c5 → 7195411)
 
