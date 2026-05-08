@@ -46,8 +46,8 @@ export default function EmergencyScreen() {
         </Text>
         {POISON_HOTLINES.map((h, i) => (
           <TouchableOpacity key={i} onPress={() => Linking.openURL(`tel:${h.phone}`)} style={s.callBtn}>
-            <MaterialCommunityIcons name="phone" size={18} color="#fff" style={{ marginRight: 8 }} />
-            <Text style={s.callBtnText}>{h.name}: {h.display}</Text>
+            <MaterialCommunityIcons name="phone" size={18} color="#fff" />
+            <Text style={s.callBtnText} numberOfLines={2}>{h.name}: {h.display}</Text>
           </TouchableOpacity>
         ))}
         <Text style={s.alarmFee}>Both poison-control lines charge a consultation fee (~$85–95) and operate 24/7.</Text>
@@ -60,12 +60,12 @@ export default function EmergencyScreen() {
       </Text>
 
       <TouchableOpacity onPress={() => openMaps("emergency veterinary hospital")} style={s.linkBtnPrimary}>
-        <MaterialCommunityIcons name="hospital-box" size={20} color="#fff" style={{ marginRight: 10 }} />
-        <Text style={s.linkBtnPrimaryText}>24-Hour Emergency Vet Near Me</Text>
+        <MaterialCommunityIcons name="hospital-box" size={20} color="#fff" />
+        <Text style={s.linkBtnPrimaryText} numberOfLines={2}>24-Hour Emergency Vet Near Me</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => openMaps("AAHA accredited veterinary hospital")} style={s.linkBtn}>
-        <MaterialCommunityIcons name="shield-check" size={18} color={theme.accent} style={{ marginRight: 10 }} />
+        <MaterialCommunityIcons name="shield-check" size={18} color={theme.accent} />
         <Text style={s.linkBtnText}>AAHA-Accredited Hospital Lookup</Text>
       </TouchableOpacity>
       <Text style={s.linkHint}>AAHA accreditation is a voluntary standard met by ~12-15% of US vet hospitals.</Text>
@@ -76,7 +76,7 @@ export default function EmergencyScreen() {
         FloofLife does not provide step-by-step emergency medical instructions. For pet CPR, choking response, and bleed control, take a certified course from the American Red Cross.
       </Text>
       <TouchableOpacity onPress={() => Linking.openURL("https://www.redcross.org/take-a-class/classes/cat-and-dog-first-aid/online-LP-00012380.html")} style={s.linkBtn}>
-        <MaterialCommunityIcons name="open-in-new" size={16} color={theme.accent} style={{ marginRight: 10 }} />
+        <MaterialCommunityIcons name="open-in-new" size={16} color={theme.accent} />
         <Text style={s.linkBtnText}>American Red Cross — Cat & Dog First Aid Course</Text>
       </TouchableOpacity>
       <Text style={s.linkHint}>Online, ~$25 one-time, lifetime access. Recognized standard for non-vet pet first aid.</Text>
@@ -129,14 +129,14 @@ const s = StyleSheet.create({
   alarmHd:        { fontSize: 12, fontWeight: "800", color: "#9C2A0F", letterSpacing: 1.2, marginBottom: 6 },
   alarmBody:      { fontSize: 13, color: "#5A1A0A", lineHeight: 19, marginBottom: 12 },
   alarmFee:       { fontSize: 11, color: "#7A2A0F", marginTop: 6, fontStyle: "italic" },
-  callBtn:        { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#C04A2C", paddingVertical: 12, borderRadius: 10, marginBottom: 8 },
-  callBtnText:    { color: "#fff", fontWeight: "700", fontSize: 14 },
+  callBtn:        { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#C04A2C", paddingVertical: 12, paddingHorizontal: 14, borderRadius: 10, marginBottom: 8, gap: 10 },
+  callBtnText:    { flexShrink: 1, color: "#fff", fontWeight: "700", fontSize: 14, textAlign: "center" },
   sectionHd:      { marginTop: 22, marginBottom: 6, fontSize: 11, fontWeight: "800", color: theme.muted, letterSpacing: 1.2 },
   sectionSub:     { fontSize: 12, color: theme.muted, marginBottom: 10, lineHeight: 18, fontStyle: "italic" },
   subSectionHd:   { marginTop: 14, marginBottom: 6, fontSize: 13, fontWeight: "700", color: theme.fg },
-  linkBtnPrimary: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: theme.accent, paddingVertical: 14, borderRadius: 10, marginBottom: 8 },
-  linkBtnPrimaryText: { color: "#fff", fontWeight: "700", fontSize: 14 },
-  linkBtn:        { flexDirection: "row", alignItems: "center", justifyContent: "flex-start", backgroundColor: theme.card, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: theme.line, marginBottom: 4 },
+  linkBtnPrimary: { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: theme.accent, paddingVertical: 14, paddingHorizontal: 14, borderRadius: 10, marginBottom: 8, gap: 10 },
+  linkBtnPrimaryText: { flexShrink: 1, color: "#fff", fontWeight: "700", fontSize: 14, textAlign: "center" },
+  linkBtn:        { flexDirection: "row", alignItems: "center", justifyContent: "flex-start", backgroundColor: theme.card, padding: 14, borderRadius: 10, borderWidth: 1, borderColor: theme.line, marginBottom: 4, gap: 10 },
   linkBtnText:    { color: theme.fg, fontWeight: "600", fontSize: 14, flex: 1 },
   linkHint:       { fontSize: 11, color: theme.muted, marginTop: 4, marginBottom: 6, paddingHorizontal: 4 },
   bigCard:        { padding: 14, backgroundColor: theme.card, borderRadius: 12, borderWidth: 1, borderColor: theme.line, marginBottom: 8 },

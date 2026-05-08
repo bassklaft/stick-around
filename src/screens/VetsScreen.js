@@ -23,12 +23,12 @@ export default function VetsScreen() {
       </Text>
 
       <TouchableOpacity onPress={() => Linking.openURL(APPLE_MAPS("veterinarian")).catch(() => {})} style={s.btn}>
-        <MaterialCommunityIcons name="apple" size={20} color="#fff" style={{ marginRight: 10 }} />
+        <MaterialCommunityIcons name="apple" size={20} color="#fff" />
         <Text style={s.btnText}>Open in Apple Maps</Text>
       </TouchableOpacity>
 
       <TouchableOpacity onPress={() => Linking.openURL(GOOGLE_MAPS("veterinarian")).catch(() => {})} style={[s.btn, s.btnAlt]}>
-        <MaterialCommunityIcons name="google" size={20} color="#fff" style={{ marginRight: 10 }} />
+        <MaterialCommunityIcons name="google" size={20} color="#fff" />
         <Text style={s.btnText}>Open in Google Maps</Text>
       </TouchableOpacity>
 
@@ -39,11 +39,11 @@ export default function VetsScreen() {
         For after-hours emergencies, search "emergency veterinary hospital" — many regular clinics close evenings and weekends.
       </Text>
       <TouchableOpacity onPress={() => Linking.openURL(APPLE_MAPS("emergency veterinary hospital")).catch(() => {})} style={[s.btnSmall, s.btnUrgent]}>
-        <MaterialCommunityIcons name="hospital-box-outline" size={16} color="#fff" style={{ marginRight: 8 }} />
+        <MaterialCommunityIcons name="hospital-box-outline" size={16} color="#fff" />
         <Text style={s.btnSmallText}>Find emergency vet (Apple)</Text>
       </TouchableOpacity>
       <TouchableOpacity onPress={() => Linking.openURL(GOOGLE_MAPS("emergency veterinary hospital")).catch(() => {})} style={[s.btnSmall, s.btnUrgent, { marginTop: 8 }]}>
-        <MaterialCommunityIcons name="hospital-box-outline" size={16} color="#fff" style={{ marginRight: 8 }} />
+        <MaterialCommunityIcons name="hospital-box-outline" size={16} color="#fff" />
         <Text style={s.btnSmallText}>Find emergency vet (Google)</Text>
       </TouchableOpacity>
 
@@ -66,11 +66,11 @@ const s = StyleSheet.create({
   title:      { fontSize: 22, fontWeight: "800", color: theme.fg, marginBottom: 6, textAlign: "center" },
   subTitle:   { fontSize: 16, fontWeight: "700", color: theme.fg, marginBottom: 6, alignSelf: "stretch" },
   body:       { fontSize: 13, color: theme.muted, textAlign: "center", lineHeight: 19, marginBottom: 18 },
-  btn:        { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: theme.accent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, alignSelf: "stretch", marginBottom: 10 },
+  btn:        { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: theme.accent, paddingVertical: 14, paddingHorizontal: 24, borderRadius: 12, alignSelf: "stretch", marginBottom: 10 },
   btnAlt:     { backgroundColor: "#3F8E5C" },
-  btnText:    { color: "#fff", fontWeight: "700", fontSize: 15, letterSpacing: 0.3 },
-  btnSmall:   { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: theme.muted, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, alignSelf: "stretch" },
-  btnSmallText:{ color: "#fff", fontWeight: "700", fontSize: 13 },
+  btnText:    { flexShrink: 1, color: "#fff", fontWeight: "700", fontSize: 15, letterSpacing: 0.3, textAlign: "center" },
+  btnSmall:   { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, backgroundColor: theme.muted, paddingVertical: 10, paddingHorizontal: 14, borderRadius: 8, alignSelf: "stretch" },
+  btnSmallText:{ flexShrink: 1, color: "#fff", fontWeight: "700", fontSize: 13, textAlign: "center" },
   btnUrgent:  { backgroundColor: "#C04A2C" },
   divider:    { width: "100%", height: 1, backgroundColor: theme.line, marginVertical: 24 },
   hint:       { fontSize: 11, color: theme.muted, textAlign: "center", marginTop: 24, lineHeight: 17, fontStyle: "italic" },
