@@ -5,7 +5,7 @@
 // the "+ Add entry" button shows the upsell instead. Edits + calendar
 // export are never gated — once a record exists we don't retroactively
 // take it away.
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useLayoutEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Modal, Alert, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -14,6 +14,11 @@ import { Pets, Pet } from "../lib/storage";
 import { findType, statusFor, daysUntilDue, durationLabel, CATEGORIES } from "../lib/healthRecordTypes";
 import { shareCalendarExport } from "../lib/icalExport";
 import { usePurchases } from "../lib/purchasesContext";
+import { track } from "../lib/analytics";
+import { tapLight } from "../lib/haptics";
+import ActivePetTitle from "../components/ActivePetTitle";
+import ActivePetChip from "../components/ActivePetChip";
+import PetSwitcherModal from "../components/PetSwitcherModal";
 import { theme } from "../theme";
 
 const FREE_TIER_RECORD_LIMIT = 1;
@@ -43,18 +48,22 @@ function statusStyle(status) {
 export default function HealthTrackerScreen({ navigation, route }) {
   const insets = useSafeAreaInsets();
   const [pet, setPet] = useState(null);
+  const [pets, setPets] = useState([]);
   const [records, setRecords] = useState([]);
   const [refreshing, setRefreshing] = useState(false);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [switcherVisible, setSwitcherVisible] = useState(false);
   const { isPremium } = usePurchases();
 
   const petId = route?.params?.petId || null;
+  const multiPet = pets.length > 1;
 
   const load = useCallback(async () => {
+    const all = await Pets.list();
+    setPets(all);
     let target = null;
     if (petId) {
-      const all = await Pets.list();
       target = all.find((p) => p.id === petId) || null;
     }
     if (!target) target = await Pet.get();
@@ -66,6 +75,38 @@ export default function HealthTrackerScreen({ navigation, route }) {
   }, [petId]);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // Pet-name context header in the nav bar + active-pet chip on right
+  // (multi-pet only). Switching pets here also updates the route param
+  // and the global active pet so other screens stay in sync.
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <ActivePetTitle
+          pet={pet}
+          screenName="Health Tracker"
+          multiPet={multiPet}
+          onPress={() => setSwitcherVisible(true)}
+        />
+      ),
+      headerRight: multiPet
+        ? () => <ActivePetChip pet={pet} onPress={() => setSwitcherVisible(true)} />
+        : undefined,
+    });
+  }, [navigation, pet, multiPet]);
+
+  async function handlePickPet(newPetId) {
+    if (!newPetId || newPetId === pet?.id) {
+      setSwitcherVisible(false);
+      return;
+    }
+    await Pets.setActive(newPetId);
+    track("active_pet_switched", { source: "health_tracker_switcher", pet_count: pets.length });
+    tapLight();
+    setSwitcherVisible(false);
+    // Update the route param so the screen reloads with the new pet's records.
+    navigation.setParams({ petId: newPetId });
+  }
 
   async function ackDisclaimer() {
     if (pet?.id) await Pets.ackHealthDisclaimer(pet.id);
@@ -131,7 +172,6 @@ export default function HealthTrackerScreen({ navigation, route }) {
 
         <View style={s.headerRow}>
           <View style={{ flex: 1 }}>
-            <Text style={s.h1}>{pet.name}'s health tracker</Text>
             <Text style={s.subtitle}>{records.length} record{records.length === 1 ? "" : "s"} · {overdue.length} overdue</Text>
           </View>
           <TouchableOpacity onPress={exportCalendar} style={s.exportBtn} activeOpacity={0.8}>
@@ -181,6 +221,14 @@ export default function HealthTrackerScreen({ navigation, route }) {
         <MaterialCommunityIcons name={atLimit ? "lock-outline" : "plus"} size={22} color="#fff" />
         <Text style={s.fabText}>{atLimit ? "Add entry · Premium" : "Add entry"}</Text>
       </TouchableOpacity>
+
+      <PetSwitcherModal
+        visible={switcherVisible}
+        onClose={() => setSwitcherVisible(false)}
+        pets={pets}
+        activeId={pet?.id}
+        onPick={handlePickPet}
+      />
 
       {/* First-run disclaimer modal — required dismissal */}
       <Modal visible={showDisclaimer} animationType="fade" transparent>

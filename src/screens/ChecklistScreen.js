@@ -1,6 +1,6 @@
 // Weekly checklist — extracted from the prior YourPets screen so it
 // stands as its own bottom-tab destination.
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useLayoutEffect } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -8,27 +8,64 @@ import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { track } from "../lib/analytics";
 import { tapMedium, tapLight } from "../lib/haptics";
+import ActivePetTitle from "../components/ActivePetTitle";
+import ActivePetChip from "../components/ActivePetChip";
+import PetSwitcherModal from "../components/PetSwitcherModal";
 import { theme } from "../theme";
 
 export default function ChecklistScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
   const [pet, setPet] = useState(null);
-  const [petsCount, setPetsCount] = useState(0);
+  const [pets, setPets] = useState([]);
   const [items, setItems] = useState([]);
   const [state, setState] = useState({});
   const [refreshing, setRefreshing] = useState(false);
+  const [switcherVisible, setSwitcherVisible] = useState(false);
+
+  const multiPet = pets.length > 1;
 
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
     const all = await Pets.list();
-    setPetsCount(all.length);
+    setPets(all);
     setItems(generateChecklist(p));
     setState(await ChecklistState.get(p?.id));
   }, []);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // Pet-name context header in the nav bar + active-pet chip on right
+  // (multi-pet only). Title is tappable to open the switcher; chip is
+  // a parallel affordance for the same action.
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerTitle: () => (
+        <ActivePetTitle
+          pet={pet}
+          screenName="Checklist"
+          multiPet={multiPet}
+          onPress={() => setSwitcherVisible(true)}
+        />
+      ),
+      headerRight: multiPet
+        ? () => <ActivePetChip pet={pet} onPress={() => setSwitcherVisible(true)} />
+        : undefined,
+    });
+  }, [navigation, pet, multiPet]);
+
+  async function handlePickPet(petId) {
+    if (!petId || petId === pet?.id) {
+      setSwitcherVisible(false);
+      return;
+    }
+    await Pets.setActive(petId);
+    track("active_pet_switched", { source: "checklist_switcher", pet_count: pets.length });
+    tapLight();
+    setSwitcherVisible(false);
+    load();
+  }
 
   async function setStatus(id, status) {
     if (!pet?.id) return;
@@ -43,23 +80,12 @@ export default function ChecklistScreen() {
   const completed = items.filter(i => effectiveStatus(i, state[i.id]) === "done").length;
 
   return (
+    <>
     <ScrollView
       style={{ backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingTop: 16, paddingBottom: insets.bottom + 40, paddingHorizontal: 20 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
-      <TouchableOpacity
-        onPress={() => petsCount > 1 && navigation.navigate("Main", { screen: "YourPets" })}
-        disabled={petsCount <= 1}
-        activeOpacity={0.7}
-        style={s.petHeader}
-      >
-        <Text style={s.petHeaderName} numberOfLines={1}>
-          {pet.name}'s checklist
-        </Text>
-        {petsCount > 1 && <Text style={s.petHeaderSwitch}>Switch ›</Text>}
-      </TouchableOpacity>
-
       <View style={s.progress}>
         <Text style={s.progressLabel}>This week</Text>
         <Text style={s.progressCount}>{completed} of {items.length} done</Text>
@@ -95,13 +121,18 @@ export default function ChecklistScreen() {
         <Text style={s.disclaimerText}>FloofLife guidance is not a substitute for veterinary advice. When something feels wrong, call your vet.</Text>
       </View>
     </ScrollView>
+    <PetSwitcherModal
+      visible={switcherVisible}
+      onClose={() => setSwitcherVisible(false)}
+      pets={pets}
+      activeId={pet?.id}
+      onPick={handlePickPet}
+    />
+    </>
   );
 }
 
 const s = StyleSheet.create({
-  petHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 10, paddingHorizontal: 4, gap: 12 },
-  petHeaderName:{ flex: 1, fontSize: 18, fontWeight: "800", color: theme.fg, textTransform: "capitalize" },
-  petHeaderSwitch:{ flexShrink: 0, fontSize: 12, fontWeight: "700", color: theme.accent, letterSpacing: 0.4 },
   progress:     { flexDirection: "row", justifyContent: "space-between", alignItems: "baseline", paddingVertical: 14, paddingHorizontal: 16, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 16, gap: 12 },
   progressLabel:{ color: theme.fg, fontWeight: "700", fontSize: 14, letterSpacing: 0.5 },
   progressCount:{ color: theme.accent, fontWeight: "800", fontSize: 18 },
