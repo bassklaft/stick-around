@@ -9,6 +9,20 @@ import { pickPetPhoto } from "../lib/photoPicker";
 import { track } from "../lib/analytics";
 import { tapMedium, notifySuccess } from "../lib/haptics";
 import { theme } from "../theme";
+import PhotoboothAnimation from "../components/PhotoboothAnimation";
+
+// 5-photo onboarding reel — cute prompts that nudge the user to capture
+// a small set of photos that the home screen rotates between. Each
+// prompt is individually skippable and "Skip all photos" jumps the
+// user past the entire reel in one tap (Apple Guideline 4.0 + build
+// 20 guardrail B: complete-skip path < 90s).
+const PHOTO_PROMPTS = [
+  { eyebrow: "📸  PHOTO 1 OF 5", title: "The day you met",        sub: "First-day energy. A puppy class, the airport pickup, a shelter parking-lot moment." },
+  { eyebrow: "📸  PHOTO 2 OF 5", title: "Them in their happy place", sub: "The favorite spot. Sun puddle, that one couch corner, the back of the car." },
+  { eyebrow: "📸  PHOTO 3 OF 5", title: "A silly one",             sub: "A goofy face, a zoomies blur, the sleepy upside-down. Embarrassing is encouraged." },
+  { eyebrow: "📸  PHOTO 4 OF 5", title: "Looking their finest",    sub: "Fresh from the groomer, in a holiday sweater, or just a really good nap-mane." },
+  { eyebrow: "📸  PHOTO 5 OF 5", title: "Latest pic of {pet}",     sub: "Most recent — the version of them you'd text to a friend right now." },
+];
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
@@ -28,11 +42,21 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
   const [selectedBreeds, setSelectedBreeds] = useState([]);
   const [ageYears, setAgeYears] = useState("");
   const [weightLbs, setWeightLbs] = useState("");
-  const [photoUri, setPhotoUri] = useState(null);
+  // photos[] is the new v1.2 multi-photo array. photoUri (the v1.1.x
+  // single-photo field) is preserved as a backward-compat mirror via
+  // the storage migration — we don't track it separately here.
+  const [photos, setPhotos] = useState([]);
+  // Index into PHOTO_PROMPTS that the user is currently being asked.
+  // Independent of the form's outer step counter so we can sub-step
+  // through the reel without bloating the main step machine.
+  const [photoPromptIdx, setPhotoPromptIdx] = useState(0);
   const [mixOf, setMixOf] = useState("");
   const [dnaNotes, setDnaNotes] = useState("");
   const [microchipStatus, setMicrochipStatus] = useState(null); // 'confirmed' | 'pending' | 'none' | 'unsure' | null
   const [microchipNumber, setMicrochipNumber] = useState("");
+  // Photobooth-animation overlay shown right before onDone(). Only
+  // mounted while we're transitioning out of the form.
+  const [showPhotobooth, setShowPhotobooth] = useState(false);
 
   // In editMode, pre-fill from the existing pet record on first mount.
   useEffect(() => {
@@ -50,7 +74,10 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       setSelectedBreeds(existingBreeds);
       setAgeYears(target.ageYears != null ? String(target.ageYears) : "");
       setWeightLbs(target.weightLbs != null ? String(target.weightLbs) : "");
-      setPhotoUri(target.photoUri || null);
+      const existingPhotos = Array.isArray(target.photos) && target.photos.length > 0
+        ? target.photos
+        : (target.photoUri ? [target.photoUri] : []);
+      setPhotos(existingPhotos);
       setMixOf(target.mixOf || "");
       setDnaNotes(target.dnaNotes || "");
       setMicrochipStatus(target.microchipStatus || "unsure");
@@ -81,15 +108,67 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
     setSelectedBreeds((prev) => prev.filter((x) => x !== b));
   }
 
-  async function pickPhoto() {
+  // Pick a photo for the given prompt index. Photos are stored to
+  // documentDirectory by the picker (sandbox only — guardrail E:
+  // never written to camera roll). On success we replace the
+  // photo at that prompt index; we DON'T auto-advance so the user
+  // can re-pick if they don't love the choice.
+  async function pickPhotoForPrompt(idx) {
     const uri = await pickPetPhoto();
     if (uri) {
-      setPhotoUri(uri);
-      track("pet_photo_picked", { context: "onboarding" });
+      setPhotos((prev) => {
+        const next = prev.slice();
+        next[idx] = uri;
+        return next;
+      });
+      track("pet_photo_picked", { context: "onboarding", prompt_index: idx });
       tapMedium();
     }
   }
 
+  function clearPhotoAtPrompt(idx) {
+    setPhotos((prev) => {
+      const next = prev.slice();
+      next[idx] = undefined;
+      return next;
+    });
+  }
+
+  // Advance through the 5-prompt reel. If we're on the last prompt,
+  // move to step 4 (microchip).
+  function nextPhotoPrompt() {
+    if (photoPromptIdx < PHOTO_PROMPTS.length - 1) {
+      setPhotoPromptIdx(photoPromptIdx + 1);
+      tapMedium();
+    } else {
+      setStep(4);
+    }
+  }
+
+  function prevPhotoPrompt() {
+    if (photoPromptIdx > 0) {
+      setPhotoPromptIdx(photoPromptIdx - 1);
+    } else {
+      setStep(2);
+    }
+  }
+
+  // Skip the entire 5-photo reel. Per build 20 guardrail B, this is
+  // always one tap away on every prompt — total skip path is well
+  // under 90s.
+  function skipAllPhotos() {
+    track("photo_reel_skipped_all", { from_prompt: photoPromptIdx });
+    setStep(4);
+  }
+
+  // List of present (non-undefined, non-empty) photos in prompt-order.
+  function compactPhotos() {
+    return photos.filter((u) => typeof u === "string" && u.length > 0);
+  }
+
+  // Build the payload, persist it, then trigger the photobooth animation
+  // (if any photos were captured). When the photobooth ends — by either
+  // its own timer or the Skip button — we call the original onDone().
   async function finish() {
     if (!name.trim()) { Alert.alert("Pick a name", "Your pet needs a name."); return; }
     const ageNum = parseFloat(ageYears);
@@ -101,6 +180,8 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
     const finalMicrochipNumber = (finalMicrochipStatus === "confirmed" && microchipNumber.trim())
       ? microchipNumber.trim()
       : null;
+    const photosList = compactPhotos();
+    const hasPhoto = photosList.length > 0;
     const basePayload = {
       name: name.trim(),
       species,
@@ -110,7 +191,10 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       dnaNotes: dnaNotes.trim() || null,
       ageYears: isFinite(ageNum) ? ageNum : null,
       weightLbs: isFinite(weightNum) ? weightNum : null,
-      photoUri: photoUri || null,
+      // v1.2 multi-photo. Storage migration mirrors photos[0] back into
+      // pet.photoUri so legacy read sites keep working.
+      photos: photosList,
+      photoUri: photosList[0] || null,
       microchipStatus: finalMicrochipStatus,
       microchipNumber: finalMicrochipNumber,
     };
@@ -119,7 +203,8 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       await Pets.update(editPetId, basePayload);
       track("pet_edited", {
         species,
-        has_photo: !!photoUri,
+        has_photo: hasPhoto,
+        photo_count: photosList.length,
         is_mix: !!basePayload.mixOf,
       });
       notifySuccess();
@@ -127,7 +212,8 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       await Pets.add({ ...basePayload, createdAt: Date.now() });
       track("pet_added", {
         species,
-        has_photo: !!photoUri,
+        has_photo: hasPhoto,
+        photo_count: photosList.length,
         has_age: basePayload.ageYears != null,
         has_weight: basePayload.weightLbs != null,
         is_mix: !!basePayload.mixOf,
@@ -137,13 +223,27 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       await Pet.set({ ...basePayload, createdAt: Date.now() });
       track("onboarding_completed", {
         species,
-        has_photo: !!photoUri,
+        has_photo: hasPhoto,
+        photo_count: photosList.length,
         has_age: basePayload.ageYears != null,
         has_weight: basePayload.weightLbs != null,
         is_mix: !!basePayload.mixOf,
       });
       notifySuccess();
     }
+    // Show the photobooth strip animation if the user captured ≥1
+    // photo. It's skippable per guardrail C and auto-dismisses ≤3.5s.
+    // For edit-mode we skip the animation since the user's already
+    // seen these photos.
+    if (hasPhoto && !editMode) {
+      setShowPhotobooth(true);
+    } else {
+      onDone();
+    }
+  }
+
+  function handlePhotoboothDone() {
+    setShowPhotobooth(false);
     onDone();
   }
 
@@ -269,29 +369,65 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
           </View>
         )}
 
-        {step === 3 && (
-          <View style={s.section}>
-            <Text style={s.h1}>Add a photo of {name.trim() || "your pet"}</Text>
-            <Text style={s.sub}>The home screen turns into a daily reminder of who you're showing up for. Optional — you can skip.</Text>
-            <TouchableOpacity onPress={pickPhoto} style={s.photoPicker} activeOpacity={0.8}>
-              {photoUri ? (
-                <Image source={{ uri: photoUri }} style={s.photoPreview} />
-              ) : (
-                <View style={s.photoPlaceholder}>
-                  <MaterialCommunityIcons name="camera-plus" size={42} color={theme.accent} />
-                  <Text style={s.photoPlaceholderText}>Tap to choose photo</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            {photoUri && (
-              <TouchableOpacity onPress={() => setPhotoUri(null)} style={{ alignSelf: "center", padding: 8 }}>
-                <Text style={{ color: theme.muted, fontSize: 13 }}>Remove photo</Text>
+        {step === 3 && (() => {
+          const prompt = PHOTO_PROMPTS[photoPromptIdx];
+          const promptTitle = prompt.title.replace(/\{pet\}/g, name.trim() || "them");
+          const currentUri = photos[photoPromptIdx];
+          const filledCount = compactPhotos().length;
+          const isLast = photoPromptIdx === PHOTO_PROMPTS.length - 1;
+          return (
+            <View style={s.section}>
+              {/* Reel progress dots — communicates "5 prompts" without being a clock */}
+              <View style={s.reelDots}>
+                {PHOTO_PROMPTS.map((_, i) => {
+                  const has = !!photos[i];
+                  const active = i === photoPromptIdx;
+                  return (
+                    <View
+                      key={i}
+                      style={[
+                        s.reelDot,
+                        has && s.reelDotFilled,
+                        active && s.reelDotActive,
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+              <Text style={s.eyebrow}>{prompt.eyebrow}</Text>
+              <Text style={s.h1}>{promptTitle}</Text>
+              <Text style={s.sub}>{prompt.sub}</Text>
+
+              <TouchableOpacity onPress={() => pickPhotoForPrompt(photoPromptIdx)} style={s.photoPicker} activeOpacity={0.8}>
+                {currentUri ? (
+                  <Image source={{ uri: currentUri }} style={s.photoPreview} />
+                ) : (
+                  <View style={s.photoPlaceholder}>
+                    <MaterialCommunityIcons name="camera-plus" size={42} color={theme.accent} />
+                    <Text style={s.photoPlaceholderText}>Tap to choose photo</Text>
+                  </View>
+                )}
               </TouchableOpacity>
-            )}
-            <PrimaryButton label="Next" onPress={() => setStep(4)} />
-            <SecondaryButton label="Skip for now" onPress={() => setStep(4)} />
-          </View>
-        )}
+              {currentUri && (
+                <TouchableOpacity onPress={() => clearPhotoAtPrompt(photoPromptIdx)} style={{ alignSelf: "center", padding: 8 }}>
+                  <Text style={{ color: theme.muted, fontSize: 13 }}>Remove this photo</Text>
+                </TouchableOpacity>
+              )}
+
+              <PrimaryButton
+                label={isLast ? (filledCount > 0 ? "Done with photos" : "Next") : (currentUri ? "Next prompt" : "Skip prompt")}
+                onPress={nextPhotoPrompt}
+              />
+              <SecondaryButton
+                label={photoPromptIdx > 0 ? "Back" : "Back"}
+                onPress={prevPhotoPrompt}
+              />
+              <TouchableOpacity onPress={skipAllPhotos} style={{ alignSelf: "center", padding: 6 }}>
+                <Text style={s.skipAllText}>Skip all photos · add later</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
 
         {step === 4 && (
           <View style={s.section}>
@@ -410,6 +546,11 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
           </View>
         )}
       </ScrollView>
+      <PhotoboothAnimation
+        visible={showPhotobooth}
+        photos={compactPhotos()}
+        onDone={handlePhotoboothDone}
+      />
     </KeyboardAvoidingView>
   );
 }
@@ -434,6 +575,12 @@ const s = StyleSheet.create({
   tagline:  { fontSize: 14, color: theme.muted, marginTop: 4, marginBottom: 28 },
   h1:       { fontSize: 24, fontWeight: "700", color: theme.fg, marginBottom: 6 },
   sub:      { fontSize: 14, color: theme.muted, marginBottom: 14 },
+  eyebrow:  { fontSize: 11, fontWeight: "800", color: theme.accent, letterSpacing: 1.4, marginBottom: 10, textTransform: "uppercase" },
+  reelDots: { flexDirection: "row", gap: 6, marginBottom: 14 },
+  reelDot:  { width: 10, height: 10, borderRadius: 5, backgroundColor: theme.line, borderWidth: 1, borderColor: theme.line },
+  reelDotFilled: { backgroundColor: theme.accent + "55", borderColor: theme.accent + "AA" },
+  reelDotActive: { backgroundColor: theme.accent, borderColor: theme.accent, transform: [{ scale: 1.15 }] },
+  skipAllText:   { color: theme.muted, fontSize: 12, fontStyle: "italic", marginTop: 6 },
   label:    { fontSize: 12, fontWeight: "600", color: theme.muted, marginTop: 16, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.6 },
   input:    { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.line, borderRadius: 10, paddingVertical: 14, paddingHorizontal: 14, fontSize: 17, color: theme.fg, marginBottom: 4 },
   section:  { marginTop: 8 },
