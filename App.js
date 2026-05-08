@@ -28,6 +28,9 @@ import PremiumScreen from "./src/screens/PremiumScreen";
 import HealthTrackerScreen from "./src/screens/HealthTrackerScreen";
 import AddHealthRecordScreen from "./src/screens/AddHealthRecordScreen";
 import PawgressScreen from "./src/screens/PawgressScreen";
+import TummyTrackerScreen from "./src/screens/TummyTrackerScreen";
+import LogStoolScreen from "./src/screens/LogStoolScreen";
+import LogDietScreen from "./src/screens/LogDietScreen";
 import AboutScreen from "./src/screens/AboutScreen";
 import SettingsScreen from "./src/screens/SettingsScreen";
 import { PurchasesProvider } from "./src/lib/purchasesContext";
@@ -177,6 +180,9 @@ export default function App() {
               <RootStack.Screen name="HealthTracker"   component={HealthTrackerScreen}   options={{ ...pushScreenOptions, title: "Health Tracker" }} />
               <RootStack.Screen name="AddHealthRecord" component={AddHealthRecordScreen} options={{ ...pushScreenOptions, presentation: "modal", title: "Health Record" }} />
               <RootStack.Screen name="Pawgress"        component={PawgressScreen}        options={{ ...pushScreenOptions, presentation: "modal", title: "Pawgress" }} />
+              <RootStack.Screen name="TummyTracker"    component={TummyTrackerScreen}    options={{ ...pushScreenOptions, title: "Tummy Tracker" }} />
+              <RootStack.Screen name="LogStool"        component={LogStoolScreen}        options={{ ...pushScreenOptions, presentation: "modal", title: "Log a poop" }} />
+              <RootStack.Screen name="LogDiet"         component={LogDietScreen}         options={{ ...pushScreenOptions, presentation: "modal", title: "Log a meal" }} />
               <RootStack.Screen name="About"    component={AboutScreen}    options={{ ...pushScreenOptions, title: "About FloofLife" }} />
               <RootStack.Screen name="AddPet"   options={{ ...pushScreenOptions, presentation: "modal", title: "Add a floof" }}>
                 {(props) => <OnboardingScreen {...props} addMode onDone={() => props.navigation.goBack()} />}

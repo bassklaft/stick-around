@@ -61,3 +61,57 @@ export async function pickPetPhoto({ petId } = {}) {
     return null;
   }
 }
+
+// Tummy log photo helper — supports camera + library, copies into a
+// per-pet `tummy/` subdirectory under documentDirectory. Photos are
+// NEVER written to the camera roll (ImagePicker camera with
+// saveToPhotos defaulting to false). Returns the persistent URI.
+//
+// `source` argument: "camera" | "library". Caller is responsible for
+// presenting the choice (e.g., via ActionSheetIOS or a custom modal).
+export async function pickTummyPhoto({ petId, source = "library" } = {}) {
+  try {
+    let result;
+    if (source === "camera") {
+      const camPerm = await ImagePicker.requestCameraPermissionsAsync();
+      if (!camPerm.granted) {
+        Alert.alert("Camera access needed", "Allow camera access in Settings to take a photo for your pet's log.");
+        return null;
+      }
+      result = await ImagePicker.launchCameraAsync({
+        mediaTypes: imageMediaTypes(),
+        allowsEditing: false,
+        quality: 0.7,
+        // Explicitly NOT saving to camera roll — sandbox storage only
+        // per the privacy contract.
+      });
+    } else {
+      const libPerm = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!libPerm.granted) {
+        Alert.alert("Photo access needed", "Allow photo access in Settings to choose a photo for your pet's log.");
+        return null;
+      }
+      result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: imageMediaTypes(),
+        allowsEditing: false,
+        quality: 0.7,
+      });
+    }
+    if (result.canceled || !result.assets?.[0]?.uri) return null;
+    const tempUri = result.assets[0].uri;
+    // Persist to a tummy/ subdirectory so log photos are organized
+    // separately from the pet portrait.
+    const safeId = (petId || "unsorted").replace(/[^a-zA-Z0-9_-]/g, "_");
+    const dir = `${FileSystem.documentDirectory}pets/${safeId}/tummy/`;
+    await FileSystem.makeDirectoryAsync(dir, { intermediates: true });
+    const cleanSrc = tempUri.split("?")[0].split("#")[0];
+    const m = cleanSrc.match(/\.([a-zA-Z0-9]{1,5})$/);
+    const ext = (m?.[1] || "jpg").toLowerCase();
+    const dst = `${dir}${Date.now()}.${ext}`;
+    await FileSystem.copyAsync({ from: tempUri, to: dst });
+    return dst;
+  } catch (e) {
+    Alert.alert("Couldn't capture photo", e?.message || "Try again, or check permissions in Settings.");
+    return null;
+  }
+}
