@@ -123,12 +123,10 @@ export default function YourPetsScreen() {
     load();
   }
 
-  async function activatePet(petId) {
-    await Pets.setActive(petId);
-    setActiveId(petId);
-    track("active_pet_switched", { pet_count: pets.length });
-    tapMedium();
-    navigation.navigate("Main", { screen: "Home" });
+  function editPet(petId) {
+    track("pet_edit_opened");
+    tapLight();
+    navigation.navigate("EditPet", { petId });
   }
 
   function addAnotherPet() {
@@ -173,14 +171,9 @@ export default function YourPetsScreen() {
         const mixLabel = mixedBreedLabel(pet);
         const isMultiPet = pets.length > 1;
         const isActive = isMultiPet && activeId === pet.id;
-        const CardWrapper = isMultiPet ? TouchableOpacity : View;
-        const cardProps = isMultiPet
-          ? { onPress: () => activatePet(pet.id), activeOpacity: 0.9 }
-          : {};
         return (
-          <CardWrapper
+          <View
             key={pet.id || idx}
-            {...cardProps}
             style={[s.petCard, isActive && s.petCardActive]}
           >
             {isActive && (
@@ -188,9 +181,6 @@ export default function YourPetsScreen() {
             )}
             {idx === 0 && isMultiPet && (
               <View style={s.eldestBadge}><Text style={s.eldestBadgeText}>👑 ELDEST</Text></View>
-            )}
-            {isMultiPet && (
-              <Text style={s.tapHint}>{isActive ? "Currently active — tap any other floof to switch" : "Tap card to make active"}</Text>
             )}
 
             <View style={{ alignItems: "center", marginTop: 4 }}>
@@ -209,7 +199,20 @@ export default function YourPetsScreen() {
               <Text style={s.avatarHint}>{pet.photoUri ? "Tap to change photo" : "Tap to add a photo"}</Text>
             </View>
 
-            <Text style={s.petName}>{pet.name}</Text>
+            {/* Pet name is the dedicated tap target → opens Edit. The rest
+                of the card is informational. Active-pet switching has
+                moved to the nav-bar pet chip and the title-tap on
+                pet-scoped screens. */}
+            <TouchableOpacity
+              onPress={() => editPet(pet.id)}
+              activeOpacity={0.6}
+              style={s.petNameRow}
+              accessibilityRole="button"
+              accessibilityLabel={`Edit ${pet.name}`}
+            >
+              <Text style={s.petName}>{pet.name}</Text>
+              <MaterialCommunityIcons name="pencil-outline" size={20} color={theme.accent} style={{ marginLeft: 8 }} />
+            </TouchableOpacity>
             <Text style={s.petMeta}>
               {mixLabel || titleCase(primary)} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}
             </Text>
@@ -374,7 +377,7 @@ export default function YourPetsScreen() {
                 </View>
               );
             })}
-          </CardWrapper>
+          </View>
         );
       })}
 
@@ -406,7 +409,7 @@ const s = StyleSheet.create({
   petCardActive:{ borderColor: theme.accent, borderWidth: 2 },
   activeBadge:  { position: "absolute", top: 12, left: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   activeBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 0.6 },
-  tapHint:      { fontSize: 10, color: theme.muted, fontStyle: "italic", textAlign: "center", marginTop: 28, marginBottom: -4, letterSpacing: 0.3 },
+  petNameRow:   { flexDirection: "row", alignItems: "center", justifyContent: "center", marginTop: 12 },
   eldestBadge:  { position: "absolute", top: 12, right: 12, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6 },
   eldestBadgeText: { color: "#fff", fontSize: 10, fontWeight: "800", letterSpacing: 0.6 },
   avatarWrap:    { position: "relative" },
@@ -414,7 +417,7 @@ const s = StyleSheet.create({
   avatarFallback:{ width: 130, height: 130, borderRadius: 65, backgroundColor: theme.accentSoft, alignItems: "center", justifyContent: "center" },
   avatarBadge:   { position: "absolute", bottom: 4, right: 4, width: 32, height: 32, borderRadius: 16, backgroundColor: theme.accent, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: theme.card },
   avatarHint:    { fontSize: 11, color: theme.muted, marginTop: 8, fontStyle: "italic" },
-  petName:       { fontSize: 26, fontWeight: "800", color: theme.fg, marginTop: 12, textAlign: "center", textTransform: "capitalize" },
+  petName:       { fontSize: 26, fontWeight: "800", color: theme.fg, textAlign: "center", textTransform: "capitalize" },
   petMeta:       { fontSize: 13, color: theme.muted, marginTop: 4, textAlign: "center", textTransform: "capitalize" },
   mixMeta:       { fontSize: 12, color: theme.accent, marginTop: 4, textAlign: "center", fontStyle: "italic" },
   breedCard:     { marginTop: 16, padding: 14, backgroundColor: theme.bg, borderRadius: 12, borderWidth: 1, borderColor: theme.line },
