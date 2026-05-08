@@ -41,14 +41,23 @@ Features that help pet owners genuinely **and** justify Premium subscription pri
 
 ## Development workflow notes
 
-### EAS build budget — 12 production iOS builds per month max (3 in reserve)
+### EAS build budget — current cycle constrained, normal target 12/month
 
-Established 2026-05-07. Bootstrap-mode founder; build credits are a constrained resource. Target ~3 builds per week, with 3 builds held back as an emergency reserve.
+Bootstrap-mode founder; build credits are a constrained resource. Two-tier rule:
 
-**How this changes day-to-day work:**
+**This billing cycle (constrained — through 2026-05-31 reset):**
+- 2 production builds remaining, 1 reserved for emergencies → realistically 1 more discretionary build before the reset.
+- Cadence target: **1 build/week MAX** for the rest of this cycle.
+- Each build needs **5-8+** meaningful changes stacked.
 
-- **Each build bundles multiple meaningful changes — never one tiny fix per build.** Aim for 3-5 features/fixes minimum per build.
-- **Default answer to "should we build now" is NO** unless multiple things are stacked on the branch.
+**Next billing cycle onward (normal target):**
+- 12 production builds per month, 3 in reserve for emergencies (~3 builds/week).
+- Each build still needs 3-5+ meaningful changes stacked.
+
+**Both cycles — non-negotiable:**
+
+- **Each build bundles multiple meaningful changes — never one tiny fix per build.**
+- **Default answer to "should we build now" is NO** unless the user explicitly approves AND the manifest is substantial.
 - **Code commits accumulate on the working branch between builds.** Don't reflexively reach for `eas build` after every commit; let work pile up.
 - **Test aggressively in TestFlight on the current build before triggering a new one.** Surface obvious issues during the testing window, not via fresh build cycles.
 - **Before triggering any build, list the stacked manifest and confirm explicitly.** Format: *"Build N includes X, Y, Z. Trigger build now or stack more?"* Wait for explicit go-ahead — never auto-trigger, even when the stack is obviously big enough.
@@ -61,7 +70,26 @@ Established 2026-05-07. Bootstrap-mode founder; build credits are a constrained 
 
 For emergencies, propose the fix + immediate rebuild without the stacking ritual. **Do NOT quietly ship "while I'm at it" extras during an emergency build** — keep emergency builds minimal so the rebuild cost stays clearly justified.
 
-This rule is also persisted to Claude's memory system as `feedback_build_budget.md` so it applies autonomously across sessions.
+### Autonomous-work rule
+
+When given a stacked manifest of work (e.g., a multi-part Part 1 / Part 2 / Part 3 batch), run autonomously:
+
+- Don't ask permission item-by-item.
+- Commit each piece separately on the appropriate branch with a clear message that names the piece (e.g., "Part 1.A — Emergency layout audit").
+- Surface diffs in the response for review, but don't block on them — Max reviews diffs over the next few days, not in real time.
+- Only stop and ask if there's a genuine blocker: missing information that prevents shipping (e.g., an API key), a conflicting requirement between two items, or a high-stakes ambiguous decision.
+
+### Content principles
+
+Codified rules for any user-facing content:
+
+- **About card** — default expanded, warm, charming, screenshot-worthy for friends. Personality, origin story, "did you know" facts, ONE soft health-flavor line MAX. No specific medical content.
+- **Health Considerations card** — default collapsed, serious, audit-quality, screenshot-worthy for vets. All specific medical content (named conditions, watch-list, vet cadence, sources).
+- **"We know YOUR breed"** — every collapsed header, every tone choice should reinforce specificity. *"Insider Tips · 7 things only Cocker Spaniel owners know"* not *"Tap to learn more"*. Personalize by breed name + concrete count + concrete promise.
+- **Contested topics** — surface BOTH sides with sourcing, never pick. Four-part format: state neutrally → summarize each side with sources → owner watch-list → end on the vet.
+- **Brand voice** — warm but never childish; informed but never lecturing; breed-specific (use the breed name often). Health information stays accurate — warmth doesn't soften medical seriousness. Brachycephalic warning, recall warnings, toxic foods, dosing cautions stay direct.
+
+These rules are persisted to Claude's memory system (`feedback_build_budget.md`, `feedback_autonomous_work.md`, `feedback_content_principles.md`) so they apply autonomously across sessions, not just within this repo.
 
 ---
 
