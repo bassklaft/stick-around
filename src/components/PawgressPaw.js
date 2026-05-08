@@ -121,6 +121,50 @@ export default function PawgressPaw({
   const checkOpacity = useRef(new Animated.Value(isComplete ? 1 : 0)).current;
   const checkScale   = useRef(new Animated.Value(isComplete ? 1 : 0)).current;
 
+  // Idle "wave/stretch" animation that runs every ~6-10 seconds when
+  // the paw is NOT already complete. Per build 19 smoke-test feedback
+  // — "make it animated like it moves every now and then in some fun
+  // way like it waves hello or does a paw stretch." A quick happy
+  // tilt + scale-pulse, then pause. Once isComplete=true the paw
+  // settles into a "resting proud" pose with the green check badge
+  // and stops idling — completion is its own signal.
+  const idleRotation = useRef(new Animated.Value(0)).current;
+  const idleScale    = useRef(new Animated.Value(1)).current;
+
+  useEffect(() => {
+    if (isComplete) return; // resting proud — no idle wiggle when done
+    let mounted = true;
+    let timer = null;
+    function tick() {
+      if (!mounted) return;
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(idleRotation, { toValue: -1,   duration: 180, useNativeDriver: true }),
+          Animated.timing(idleRotation, { toValue: 1,    duration: 220, useNativeDriver: true }),
+          Animated.timing(idleRotation, { toValue: -0.4, duration: 140, useNativeDriver: true }),
+          Animated.timing(idleRotation, { toValue: 0,    duration: 120, useNativeDriver: true }),
+        ]),
+        Animated.sequence([
+          Animated.timing(idleScale, { toValue: 1.06, duration: 250, useNativeDriver: true }),
+          Animated.timing(idleScale, { toValue: 1,    duration: 350, useNativeDriver: true }),
+        ]),
+      ]).start(() => {
+        if (!mounted) return;
+        // Random 6-10s pause until the next wave
+        const next = 6000 + Math.random() * 4000;
+        timer = setTimeout(tick, next);
+      });
+    }
+    // Initial wait 3-5s after mount before the first wave
+    timer = setTimeout(tick, 3000 + Math.random() * 2000);
+    return () => { mounted = false; if (timer) clearTimeout(timer); };
+  }, [isComplete, idleRotation, idleScale]);
+
+  const idleRotationDeg = idleRotation.interpolate({
+    inputRange: [-1, 0, 1],
+    outputRange: ["-8deg", "0deg", "8deg"],
+  });
+
   useEffect(() => {
     if (isComplete && !wasCompleteRef.current) {
       // Just transitioned to complete — fire the spin + badge animation.
@@ -170,6 +214,7 @@ export default function PawgressPaw({
   return (
     <View style={[styles.wrap, { width: size, height: size }]}>
       <Animated.View style={{ transform: [{ rotate: spinTransform }] }}>
+        <Animated.View style={{ transform: [{ rotate: idleRotationDeg }, { scale: idleScale }] }}>
         <Svg width={size} height={size} viewBox="0 0 200 200">
           {TOE_PADS.map((toe) => (
             <Segment
@@ -222,6 +267,7 @@ export default function PawgressPaw({
             />
           </View>
         )}
+        </Animated.View>
       </Animated.View>
       {/* Green check badge — same colors + border style as Logo.js's
           checkBadge, sized proportional to the paw. Sits OUTSIDE the
