@@ -102,14 +102,46 @@ New-breeds total: **31** (20 dogs + 11 cats) — cleared the 30-50 lower-bound t
 
 All v1.2-work content additions in batches H4 / I1 / I2 follow Path C language guardrails: no brand-name medications, "may be predisposed" hedging, per-bullet "discuss with your vet" framing.
 
-## Open items for morning
+## Morning merge — DONE (2026-05-08)
 
-1. **Merge v1.1.2-work → v1.2-work**: 8-file structural conflict described above. YourPetsScreen.js needs careful 3-way reconciliation. Estimate 1-2 hours focused work.
+Hand-resolved merge of v1.1.2-work into v1.2-work. Commit `0a7b215`, pushed to origin. v1.2-work HEAD is now `0a7b215`.
 
-2. **Audit existing Part 2.H batches H1-H3 for guardrail compliance**: The 15 dogs added in H1-H3 (Pug through Bullmastiff) were written before the Path C guardrails arrived mid-run. Some entries may reference brand-name medications (Apoquel, Cytopoint, Vetmedin, etc.) that should be replaced with generic class names per Path C. Quick grep + edit pass needed.
+Final conflict count: **16** (14 content + 2 add/add) — actual count was higher than the 8 estimated overnight, because (a) App.js, V1_REMOVED_FEATURES.md, V2_CHANGELOG.md, package.json, package-lock.json all conflicted too, and (b) ChecklistScreen / HomeScreen / OnboardingScreen / PremiumScreen each had their own real conflicts not just YourPetsScreen.
 
-3. **Pit-bull-type breeds**: American Pit Bull Terrier and American Staffordshire Terrier still pending — explicitly flagged for neutral framing per Path C rejection-risk guardrails. Best done with a clear head and a careful review of the framing language before committing.
+Resolution map (all 16):
 
-4. **Optional further breed expansion**: User mentioned potential candidates including American Curl, Munchkin, Savannah, Selkirk Rex (cats); and Basset Hound (done), Cardigan Welsh Corgi, Pekingese, Mastiff (English), Tibetan Mastiff, Great Pyrenees, Westie, Scottish Terrier, Jack Russell Terrier, Rhodesian Ridgeback, Standard Schnauzer, Bull Terrier (dogs). Not blocking; v1.2.0 already has substantial expansion.
+**Take v1.2-work (ours)** — 2 files:
+- `src/data/breeds.js` (rich audit + 31 new breeds + About/Health schema lives here)
+- `V2_CHANGELOG.md` (add/add — slightly more polished phrasing)
 
-5. **Munchkin**: Welfare-contested breed (achondroplasia-like dwarfism). Per Path C tone, deserve careful neutral framing similar to pit-bull-type breeds — let user keep it or skip. Did NOT add tonight to avoid a poorly-framed entry going in unreviewed.
+**Take v1.1.2-work (theirs)** — 7 files:
+- `src/screens/SettingsScreen.js`, `EmergencyScreen.js`, `ChecklistScreen.js`, `PremiumScreen.js`
+- `src/lib/founderOverride.js` (add/add), `purchasesContext.js`, `checklist.js`
+
+**Real 3-way merges** — 7 files:
+- `App.js` — kept HealthTracker/AddHealthRecord routes + DogAge title rename (ours); harmless to drop v1.1.2's "Age in Human Years" since route + title both modernized on v1.2-work.
+- `V1_REMOVED_FEATURES.md` — merged 3 documentation blocks; both branches added different roadmap sections to the same file. Kept all of them (v1.2 polish, v1.3 health-logging-expansion, v1.1.1/v1.1.2 patch backlog, paywall placement).
+- `package.json` — kept all three new deps (expo-document-picker, expo-file-system, expo-haptics) alphabetically.
+- `package-lock.json` — regenerated via `npm install --package-lock-only --ignore-scripts`.
+- `HomeScreen.js` — load() combines per-pet ChecklistState (theirs) + healthRecords load (ours); breed lookup uses ours' multi-breed-aware getPrimaryBreed/breedDisplay; hero wraps in theirs' multi-pet TouchableOpacity switcher but uses ours' breedDisplay for breed label.
+- `OnboardingScreen.js` — kept theirs' cat-coat-pattern hint Alert but converted `setBreed("...")` → `setSelectedBreeds(["..."])` to fit ours' multi-breed model. Kept ours' showMixDetails. Both style sets preserved.
+- `YourPetsScreen.js` — most complex. Kept ours' HealthTrackerRow + breedKeys.map per-breed iteration + About/Health Considerations split + sectionId keying (`${pet.id}:${breedKey}`). Layered in theirs' active pet switcher (CardWrapper/activeBadge/eldestBadge/tapHint/activatePet) + inner collapsibles (Origin Story / Sources / Tips) — all re-keyed from pet.id to sectionId so mixed-breed pets get independent state per breed. Kept theirs' "X things only Y owners know" tease title format. Kept theirs' analytics tracking + haptics. **Caught + fixed bug**: auto-merge produced two `toggleAbout` function declarations with the same name (`toggleAbout(sectionId)` from ours and `toggleAbout(petId)` from theirs); the second hoists and silently overrides the first. Consolidated into one sectionId-keyed `toggleAbout` that has both the default-expanded behavior (ours) AND analytics + haptics (theirs). Same treatment for `toggleHealth`. Added a generic `toggleSubSection(setter, sectionId, eventName)` helper for the inner collapsibles.
+
+esbuild parse-clean across all 12 affected JS/JSX files. No leftover conflict markers anywhere in the tree.
+
+## Pre-existing open items (still open)
+
+1. **Audit existing Part 2.H batches H1-H3 for guardrail compliance**: The 15 dogs added in H1-H3 (Pug through Bullmastiff) were written before the Path C guardrails arrived mid-run. Some entries may reference brand-name medications (Apoquel, Cytopoint, Vetmedin, etc.) that should be replaced with generic class names per Path C. Quick grep + edit pass needed.
+
+2. **Pit-bull-type breeds**: American Pit Bull Terrier and American Staffordshire Terrier still pending — explicitly flagged for neutral framing per Path C rejection-risk guardrails. Best done with a clear head and a careful review of the framing language before committing.
+
+3. **Optional further breed expansion**: User mentioned potential candidates including American Curl, Munchkin, Savannah, Selkirk Rex (cats); and Basset Hound (done), Cardigan Welsh Corgi, Pekingese, Mastiff (English), Tibetan Mastiff, Great Pyrenees, Westie, Scottish Terrier, Jack Russell Terrier, Rhodesian Ridgeback, Standard Schnauzer, Bull Terrier (dogs). Not blocking; v1.2.0 already has substantial expansion.
+
+4. **Munchkin**: Welfare-contested breed (achondroplasia-like dwarfism). Per Path C tone, deserve careful neutral framing similar to pit-bull-type breeds — let user keep it or skip. Did NOT add overnight to avoid a poorly-framed entry going in unreviewed.
+
+5. **Visual verification of the merged UI**: the merge is parse-clean but no simulator pass has happened. Recommend running the app once before triggering a build to confirm:
+   - Multi-pet card switcher behaves correctly on My Floofs
+   - Mixed-breed pets show independent About/Health state per contributing breed
+   - Origin Story + Sources collapsibles work inside each About card
+   - Tips card collapsible header reads correctly
+   - Active pet ✓ ACTIVE / 👑 ELDEST badges render
