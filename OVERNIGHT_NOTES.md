@@ -2,6 +2,139 @@
 
 Auto mode. Path B confirmed: all remaining manifest work goes on `v1.2-work`. Build 18 stays on `v1.1.2-work` with what was already committed (Parts 1.A–1.D + 1.F + memory updates).
 
+---
+
+# 🚀 v1.2.0 FINAL MANIFEST — locked 2026-05-08
+
+Everything below this section is historical detail from the earlier overnight runs. This block is the authoritative wrap-up before build 18 trigger.
+
+## What landed in v1.2.0
+
+| Area | Summary |
+|---|---|
+| **Breed catalog** | 78 dog entries + 33 cat entries = **111 total breeds**, all with audit-quality content (about + healthSummary + 6-7 health bullets + references + grooming + exercise + checklist + tips). 31 breeds added net-new in v1.2 across overnight runs + manifest batches. |
+| **Brand-name compliance** | Zero brand-name medications across entire breeds.js. All allergy-related bullets use "modern allergy medications — discuss with your vet whether oral medications, injectable options, or allergen-specific immunotherapy fit." Pimobendan kept as generic class name (Vetmedin parenthetical dropped). |
+| **Pit-type breeds (3 entries)** | American Pit Bull Terrier, American Staffordshire Terrier, Staffordshire Bull Terrier — all with neutral framing per Apple-rejection-risk guardrails (no aggression/fighting/tough/guard-dog language; BSL implications mentioned only as practical owner considerations re housing + insurance + travel). |
+| **Welfare-aware framing** | Munchkin cat added with the Scottish Fold pattern: honest about the chondrodysplasia welfare debate, citing ICatCare + RSPCA + BVA + GCCF + FIFe positions, balanced care guidance for current owners, "if you have one... if you're considering buying one..." closing. |
+| **Multi-pet UX refinement** | Pet card name-as-button + EditPet flow (OnboardingScreen with editMode); pet-name nav title on ChecklistScreen + HealthTrackerScreen ("Falafel's Checklist"); active-pet chip in nav-bar top-right; PetSwitcherModal as the single switching mechanism (replaces whole-card tap). Single-pet households get plain title, no chip. |
+| **My Floofs empty state** | Welcoming first-time-user UI with 140×140 paw icon, "Welcome to FloofLife" headline, value prop body, "Add your first floof" CTA → AddPet modal, privacy reassurance line. Replaces the prior dev-speak empty state. |
+| **Microchip Phase 1** | New onboarding step + edit screen capturing microchipStatus (`confirmed` / `pending` / `none` / `unsure`) + microchipNumber (15-digit ISO 11784/11785). Existing pets soft-migrate to `microchipStatus: 'unsure'` via fallback default in editMode pre-fill. No alert integration in v1.x. |
+| **Light gamification polish** | Smooth LayoutAnimation expand/collapse on About / Health / Tips / Sources / Origin Story cards; celebratory animation + notifySuccess haptic when ALL daily checklist items complete (de-duped per pet/date/itemcount); tapLight haptic on every tab switch. Zero new screens, zero new deps. |
+| **v1.1.2-work merge** | 16 conflicts hand-resolved (RLS-style 3-way merges on YourPetsScreen, HomeScreen, OnboardingScreen, App.js, V1_REMOVED_FEATURES.md, package files). Caught and fixed a duplicate-toggleAbout-function bug from the auto-merge that would have silently broken mixed-breed sectionId state. |
+
+## Commit log (v1.2-work since v1.1.2-work merge)
+
+```
+6120fa8 feat: light gamification polish — animations + celebration + tab haptics
+8f56861 feat: microchip data capture in onboarding (Phase 1 — no alert integration)
+41c7cc2 feat: My Floofs welcoming empty state with CTA
+9a586c3 feat: Munchkin cat with welfare-aware framing (modeled on Scottish Fold)
+14491bc feat: 3 pit-type breeds — APBT, AmStaff, Staffie (neutral framing)
+fc1ff1f feat: 5 new breeds — Westie, Xoloitzcuintli, American Curl, Savannah, Selkirk Rex
+d3e6c04 feat: 5 new dog breeds — Pekingese, Rhodesian Ridgeback, Scottish Terrier, Standard Schnauzer, Tibetan Mastiff
+0d271fe feat: 5 new dog breeds — Bull Terrier, Cardigan Welsh Corgi, English Mastiff, Great Pyrenees, Jack Russell Terrier
+ef09744 docs: update PRE-BUILD-18 checklist for multi-pet UX changes
+6120fa8 ↑ + chip work above
+39e483e feat: pet-name nav title + active-pet chip + switcher modal (multi-pet)
+8ed4791 feat: pet card name-as-button affordance on My Floofs
+27de1ee feat: add editMode to OnboardingScreen + EditPet route
+9665f7d docs: pre-implementation note for multi-pet UX refinement
+95f4a05 docs: add Microchip integration roadmap (v1.3 → v2.5+)
+acc58c4 audit: brand-name guardrail compliance for 6 out-of-scope breeds
+666f60a docs: add PRE-BUILD-18 manual checklist to OVERNIGHT_NOTES
+145a2e0 audit: H1-H3 brand-name guardrail compliance + visual-verification static pass
+d6a256f docs: update OVERNIGHT_NOTES with merge resolution log
+0a7b215 Merge v1.1.2-work into v1.2-work
+```
+
+(Also on `main`: `b1b5668 docs: add security non-negotiables for backend work` — reference doc for the post-v1.2.0 backend buildout.)
+
+## Pre-Build-18 manual verification
+
+The full smoke-test list is below in the existing "PRE-BUILD-18 MANUAL CHECKLIST" section (already updated for the multi-pet UX changes). For v1.2.0 specifically also test:
+
+**v1.2.0 NEW additions to verify (run AFTER the existing 10-section checklist)**:
+
+11. **Microchip step in onboarding (NEW step 4)**
+    - [ ] Onboarding step 4: "Does [name] have a microchip?" appears between photo and details
+    - [ ] Tapping "Yes — chip number is…" reveals an inline numeric text input
+    - [ ] All four options select cleanly; only one can be selected at a time
+    - [ ] Footer hint about shelters/breeders chipping pets shows
+    - [ ] "Next" advances to step 5 (age + weight)
+    - [ ] "Back" returns to step 3 (photo)
+    - [ ] Microchip data persists on the pet record after finish
+
+12. **Edit pet via name-tap on My Floofs**
+    - [ ] Tap pet's NAME (with pencil icon) on My Floofs → EditPet modal opens
+    - [ ] All fields pre-filled with existing values, including microchip
+    - [ ] Microchip status options reflect the saved status
+    - [ ] "Save changes" updates the pet record (verify by reopening edit)
+    - [ ] "Cancel" closes without saving
+
+13. **My Floofs empty state**
+    - [ ] (Best tested on a fresh install) When no pets exist: empty state shows paw icon, "Welcome to FloofLife", value prop, "Add your first floof" CTA, and privacy reassurance
+    - [ ] Tap CTA → AddPet onboarding modal opens
+
+14. **Light gamification polish**
+    - [ ] About / Health Considerations / Tips / Sources / Origin Story cards expand and collapse SMOOTHLY (not snap)
+    - [ ] Tab switches (Checklist / Home / My Floofs) fire a light haptic on physical device
+    - [ ] Complete ALL items on the Checklist for one pet → celebration overlay appears with 🎉 emoji + "[Name] is set for today" + notifySuccess haptic
+    - [ ] Re-toggling the last item doesn't re-fire the celebration
+    - [ ] Switching to a different pet whose checklist isn't complete shows no celebration
+
+15. **New breed entries**
+    - [ ] In the breed picker, scroll to verify alphabetical order: Akita, Aussiedoodle, Australian Cattle Dog, Australian Shepherd, ... continues alphabetically through the new entries (Bull Terrier, Cardigan Welsh Corgi, English Mastiff, Great Pyrenees, Jack Russell Terrier, Pekingese, Rhodesian Ridgeback, Scottish Terrier, Standard Schnauzer, Tibetan Mastiff, West Highland White Terrier, Xoloitzcuintli) ... up to "Mixed" / "Other dog" pinned at the bottom
+    - [ ] Pit-type breeds (American Pit Bull Terrier, American Staffordshire Terrier, Staffordshire Bull Terrier) appear in alphabetical order at the start
+    - [ ] Munchkin cat appears in alphabetical position in the cat picker
+    - [ ] Sample 3-4 new breed entries on the My Floofs card to confirm About + Health Considerations render correctly
+
+## App Store Connect privacy disclosure check (BEFORE build 18 submission)
+
+The microchip number is **User Content** under Apple's privacy taxonomy. Verify before submission:
+
+- [ ] **App Store Connect → My Apps → FloofLife → App Privacy** → "User Content" category includes "App Functionality" use case. Microchip number falls under this — same as pet name, breed, photo, notes — already declared for v1.0.
+- [ ] **No new privacy categories required** — microchip data does NOT cross any new category boundary (it's not health/fitness, location, contacts, search history, etc.).
+- [ ] **Privacy Policy** at `bassklaft.github.io/floof-life/legal/privacy-policy.html` already covers User Content broadly. **Recommended addition** for clarity (low priority for v1.2.0, can wait for v1.3+ when microchip Phase 2 lost-pet workflow lands): a single line in the User Content section explicitly listing "microchip number" alongside "pet name", "photos", "notes". Doesn't change disclosure scope, just improves transparency.
+- [ ] **PrivacyInfo.xcprivacy** manifest: doesn't need updating for v1.2.0 since no new APIs accessed.
+- [ ] **Apple's stricter ATT-tracking rules** don't apply — microchip number is user-entered local data, never used for tracking.
+
+## Apple review risk assessment (v1.2.0)
+
+| Guideline | Assessment | Mitigation |
+|---|---|---|
+| **1.4.1 (Safety – Medical)** | LOW for v1.2.0. All health content is editorial summary with vet-discussion framing; no diagnosis claims, no drug doses, no brand-name medications. | Existing standard: "may be predisposed", per-bullet "discuss with your vet", ZERO brand-name meds in catalog. |
+| **3.1.1 (In-app Purchase)** | LOW. Premium gating via RevenueCat unchanged from v1.1. | Existing flow. |
+| **4.0 (Design)** | LOW. New UI is consistent with existing patterns; tab haptic + smooth animations are standard polish. | No new third-party SDK; no design-pattern departures. |
+| **5.1.1 (Privacy)** | LOW. Microchip number is User Content (already declared). All data stays on device for v1.x. Permission strings (camera, photo library, location) unchanged. | Verify App Privacy categories cover microchip number per checklist above. |
+| **5.1.2 (Privacy – Tracking)** | LOW. No new tracking. PostHog still anonymous-by-default with the privacy contract enforced. | No change. |
+| **Pit-type breed framing rejection risk** | LOW. APBT / AmStaff / Staffie entries use AKC/UKC sourcing, neutral language, no aggression or fighting references, BSL framed as practical owner consideration only. | Reviewed against the user's framing rules at writing time. |
+| **Munchkin welfare framing rejection risk** | LOW. Same Scottish Fold pattern that already shipped in v1.1; cites veterinary welfare orgs neutrally. | Reviewed against the existing Scottish Fold framing model. |
+
+**Overall v1.2.0 review risk: LOW.** Largest content additions (31 new breeds, microchip step, multi-pet UX refinement) all build on existing patterns that have already passed review.
+
+## Marketing content brief for v1.2.0 launch
+
+3-5 highlights for App Store "What's New", press, social. Lead with what users feel; specifics in second tier.
+
+1. **30+ new breeds, fully audit-format.** Including pit-type breeds with neutral framing, the welfare-aware Munchkin entry, ancient breeds (Xoloitzcuintli, Tibetan Mastiff), and a wave of mid-popularity dogs (Bull Terrier, Westie, Scottie, Jack Russell, etc.). Now 111 breed entries with peer-reviewed sourcing.
+
+2. **Better multi-pet flow.** Pet name is now the obvious tap target — tap to edit. Active-pet switching lives in a small avatar chip in the nav bar of pet-scoped screens. Pet-name nav titles ("Falafel's Checklist") give scope context per iOS HIG.
+
+3. **Microchip data capture.** New onboarding step asks for chip status with four options (Yes-with-number / Yes-ask-later / No / Unsure). Useful immediately for vet visits, boarding, lost-pet situations. (Lost-pet workflow + alert integration coming in future versions.)
+
+4. **Polish that adds up.** Smooth expand/collapse animations on every breed card. Celebratory haptic when you complete the day's checklist. Light tap on every tab switch. Welcoming empty state for first-time users.
+
+5. **Honest content edits.** Brand-name medications (Apoquel, Cytopoint, etc.) replaced across 9 breed entries with the medication CLASS — owners get the same medical understanding without inadvertently endorsing specific products.
+
+**App Store "What's New" copy (~150 chars)**:
+> v1.2: 30+ new breeds (including pit-type with neutral framing + Munchkin with welfare-aware copy), smoother multi-pet UX, microchip onboarding, polish.
+
+**Tone**: confident but not boastful. Specific (numbers, named features). No emoji in the title bar. Saves emoji for the in-app celebration moments.
+
+---
+
+
+
 ## Branch hygiene done
 
 - `v1.1.2-work` had `b4f680c` (Part 1.G schema + UI) which Path B says shouldn't ship in build 18. Reverted via `d0eae9b` and pushed to origin.
