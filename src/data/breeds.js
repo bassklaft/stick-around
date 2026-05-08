@@ -6,7 +6,9 @@
 const dogBreedData = {
   "labrador retriever": {
     species: "dog", lifespan: "10-12 years", energy: "high",
+    about: "Friendly, water-loving, eternally optimistic — Labs are the most popular dog in America for a reason. They're patient with children, easy to train, and famously interested in whatever you're eating. Originally bred as fishermen's dogs in Newfoundland to retrieve nets and fish, they thrive in active families with room to run, water nearby, and humans who don't mind a tail-thwapping greeting at the door. A Lab without a job and a swim is a Lab redecorating your couch. Like all larger sporting breeds, Labs have a few breed-specific health patterns worth knowing — Health Considerations covers what to watch for, including a documented satiety-gene quirk that makes many Labs physiologically hungrier than other breeds.",
     summary: "Friendly, even-tempered, water-loving. Famously food-motivated — and a 2016 Cambridge study identified a POMC gene deletion in many Labs that makes them genuinely hungrier than other breeds. Weight management is real work.",
+    healthSummary: "Labs are long-lived overall but carry a distinct cluster of breed-specific risks — joints, satiety genetics, ear care for swimmers, and a few late-onset patterns. Most are catchable with the right attention.",
     references: [
       { label: "AKC Labrador Retriever breed page", url: "https://www.akc.org/dog-breeds/labrador-retriever/" },
       { label: "Labrador Retriever Club, Inc.", url: "https://www.thelabradorclub.com/" },
@@ -45,7 +47,9 @@ const dogBreedData = {
     origin: "England → France · 1800s",
     originStory: "Descended from English Bulldogs miniaturized by Nottingham lacemakers, then carried to France during the Industrial Revolution where they became companions of Parisian café society. Refined into the modern Frenchie in late-1800s France.",
     brachycephalic: true,
+    about: "Affectionate, comic, and unmistakably opinionated — Frenchies are bat-eared loaf-shaped companions descended from English Bulldogs miniaturized by Nottingham lacemakers and carried to France during the Industrial Revolution. They're indoor dogs by anatomy: short walks suffice, big runs don't, and heat above 80°F is genuinely dangerous. Frenchies pick a person and follow them everywhere — they make every couch their command station and consider supervising your dinner part of their job description. Air-conditioning, cooling mats, and short-snout-aware scheduling come with the territory. Like all brachycephalic breeds, they need extra care around airway, eyes, and back — Health Considerations covers what to watch for.",
     summary: "Affectionate, low-exercise, brachycephalic. Heat is genuinely dangerous for this breed.",
+    healthSummary: "The Frenchie's signature flat face creates a well-documented cluster of brachycephalic respiratory concerns plus IVDD risk from chondrodystrophic spine. Most are catchable with the right attention and a vet who knows the breed.",
     references: [
       { label: "AKC French Bulldog breed page", url: "https://www.akc.org/dog-breeds/french-bulldog/" },
       { label: "French Bull Dog Club of America", url: "https://www.frenchbulldogclub.org/" },
@@ -78,7 +82,9 @@ const dogBreedData = {
   },
   "golden retriever": {
     species: "dog", lifespan: "10-12 years", energy: "high",
+    about: "Family-oriented, eager to please, and gentle to a fault — Goldens are the textbook 'good with kids' dog and one of the most popular family breeds in America. Originally bred in 19th-century Scotland by Lord Tweedmouth to retrieve waterfowl on rough estate terrain, they kept the soft mouth and the love of water but added a sunny temperament that made them a household standard worldwide. They thrive in active families with room to run, water nearby, and humans who can handle the daily 'wait, did I bring you something?' nudge. Goldens never really stop being puppies; the under-3 years are pure exuberance. Like all retrievers, Goldens have well-documented breed-specific health patterns worth knowing — Health Considerations covers what to watch for, especially around cancer screening as they age.",
     summary: "Family-oriented, eager, strong retriever instinct. The Morris Animal Foundation's Golden Retriever Lifetime Study has documented unusually high cancer rates in the breed — owners benefit from knowing the patterns and screening for early signs.",
+    healthSummary: "Goldens have one of the highest documented cancer prevalences of any breed (Morris Animal Foundation Lifetime Study), plus joint and eye conditions worth proactive monitoring. Most catchable with monthly lump-checks and the right vet cadence.",
     references: [
       { label: "AKC Golden Retriever breed page", url: "https://www.akc.org/dog-breeds/golden-retriever/" },
       { label: "Golden Retriever Club of America — health", url: "https://www.grca.org/about-the-breed/health-research/" },
@@ -112,7 +118,9 @@ const dogBreedData = {
   },
   "german shepherd": {
     species: "dog", lifespan: "9-13 years", energy: "high",
+    about: "Intelligent, loyal, and deeply bonded — German Shepherds are the iconic working dog: police, military, search-and-rescue, service. Bred in late-19th-century Germany by Captain Max von Stephanitz to be the ideal all-purpose herding and protection dog, they've become one of the most-recognized breeds in the world. They thrive with a real job, structured training, and humans who can match their intensity. A bored Shepherd is a destructive Shepherd; mental work matters as much as physical exercise. Working / IPO / DDR-line dogs differ meaningfully from American show-line dogs in temperament and structure — research the breeder. Like all large working breeds, GSDs have well-documented health patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Intelligent, working drive, deeply bonded. Needs structured training and a real job. Health concerns split sharply between well-bred working lines and poorly-bred backyard or 'super-angulated' show lines — research the breeder rigorously.",
+    healthSummary: "GSDs split sharply between well-bred working lines and poorly-bred backyard or super-angulated show lines on health outcomes. Joint, neuro, and digestive concerns are the headlines; most catchable with proactive screening.",
     references: [
       { label: "AKC German Shepherd Dog breed page", url: "https://www.akc.org/dog-breeds/german-shepherd-dog/" },
       { label: "German Shepherd Dog Club of America — health", url: "https://gsdca.org/" },
@@ -146,7 +154,9 @@ const dogBreedData = {
   },
   "poodle": {
     species: "dog", lifespan: "12-15 years (standard); 14-18 (mini/toy)", energy: "moderate-high",
+    about: "Highly intelligent, low-shedding, and surprisingly versatile — Poodles come in three sizes (Standard, Mini, Toy) and originated as German water-retrieval dogs (the name comes from the German Pudel, 'to splash'), not the French elegance their show clip suggests. They're easy to train, eager for work, and famously good at communicating directly with their humans. Standards thrive with a job and active company; Minis and Toys do well in smaller spaces but want every bit of attention. The signature curly coat needs regular professional grooming — every 4-6 weeks — but rewards owners with minimal shedding and dander. Health concerns vary by size, and Standards face a different set of risks than Minis and Toys — Health Considerations covers what to watch for in your size.",
     summary: "Highly intelligent, low-shedding curly coat, three sizes. Health concerns vary considerably by size — Standards skew large-breed (bloat, hip dysplasia), Minis and Toys skew small-breed (patellar luxation, dental, tracheal collapse).",
+    healthSummary: "Standards face large-breed concerns (bloat, hip dysplasia, Addison's disease). Minis and Toys carry small-breed risks (patellar luxation, dental disease, tracheal collapse). Both share Poodle-specific eye and skin patterns worth knowing.",
     references: [
       { label: "AKC Poodle breed page", url: "https://www.akc.org/dog-breeds/poodle-standard/" },
       { label: "Poodle Club of America — health", url: "https://poodleclubofamerica.org/health-information/" },
@@ -184,7 +194,9 @@ const dogBreedData = {
     displayName: "Bulldogs", brachycephalic: true,
     origin: "England · 1500s",
     originStory: "Originally bred for bull-baiting (banned 1835). Refined post-ban into a companion breed but the squat, broad-skulled phenotype was retained. Modern Bulldogs are dramatically reshaped from their working ancestors.",
+    about: "Mellow, stubborn, and unmistakably built — Bulldogs are the chunky, broad-skulled descendants of dogs bred for bull-baiting in 16th-century England (banned 1835), refined post-ban into companion dogs but with the squat phenotype intentionally retained. Modern Bulldogs are dramatically reshaped from their working ancestors and approach life at their own pace: short walks, lots of couch time, and a snoring soundtrack that becomes part of the household ambient. They're devoted to their people and famously good with children. Air-conditioning is non-negotiable — heat above 80°F is genuinely dangerous because of how their flat-faced respiratory system works. Like all brachycephalic breeds, they need extra care around airway, skin folds, eyes, and joints — Health Considerations covers what to watch for, including a notably high rate of hip dysplasia for the breed.",
     summary: "Mellow, stubborn, brachycephalic. Most are born by C-section because the modern conformation has a head too broad for the maternal pelvis. Thermoregulation is poor and respiratory anatomy is the dominant care concern.",
+    healthSummary: "The Bulldog's broad-skull phenotype creates the highest documented BOAS-airway, hip dysplasia, and skin-fold concerns of any common breed. Daily fold cleaning + heat-stroke awareness + a vet who knows brachycephalic breeds are the foundation of good Bulldog care.",
     references: [
       { label: "AKC Bulldog breed page", url: "https://www.akc.org/dog-breeds/bulldog/" },
       { label: "Bulldog Club of America — health", url: "https://bulldogclubofamerica.org/" },
@@ -220,7 +232,9 @@ const dogBreedData = {
   },
   "rottweiler": {
     species: "dog", lifespan: "9-10 years", energy: "moderate",
+    about: "Confident, loyal, and substantial — Rottweilers descend from Roman drover dogs left in southern Germany after the empire withdrew, where they herded cattle and pulled butchers' carts (the breed name comes from the Württemberg town of Rottweil). They're famously devoted to their family, reserved with strangers, and require a confident handler who can match their working intensity. Rotties bond hard, often picking one person as 'theirs', and benefit from structured training plus a real job — agility, obedience, tracking, weight pull, herding trials. They're not a first-time-owner breed. Like all large working breeds, Rottweilers carry breed-specific cancer and joint patterns worth knowing — Health Considerations covers what to watch for, including peer-reviewed evidence on spay/neuter timing and osteosarcoma risk.",
     summary: "Confident, loyal, working background. Substantial training commitment, with breed-prevalent cancer risks that owners should know about — including a well-documented relationship between early spay/neuter and osteosarcoma.",
+    healthSummary: "Rottweilers carry one of the highest documented osteosarcoma rates of any breed, plus joint and cardiac concerns worth proactive screening. The Cooley 2002 study documents a clear link between early gonadectomy and elevated cancer risk — discuss timing with your vet.",
     references: [
       { label: "AKC Rottweiler breed page", url: "https://www.akc.org/dog-breeds/rottweiler/" },
       { label: "American Rottweiler Club — health", url: "https://www.amrottclub.org/" },
@@ -255,7 +269,9 @@ const dogBreedData = {
   },
   "beagle": {
     species: "dog", lifespan: "12-15 years", energy: "high",
+    about: "Pack-bonded, food-driven, and famously vocal — Beagles are scenthounds first and everything else second. They were bred in England to hunt rabbits in packs, and the genetic memory is intact: a Beagle on a scent is a Beagle who has stopped listening to you. They thrive in active families with a fenced yard, structured training, and humans who can resist the I-am-starving-please-just-this-once eyes. They're cheerful, social, do well with other dogs, and produce a vocal repertoire ranging from bay to howl to 'arroo' that some neighbors love and some don't. Like all hounds, Beagles have a few breed-specific patterns worth knowing — Health Considerations covers what to watch for.",
     summary: "Pack-bonded scenthounds, vocal, food-driven, and notoriously hard to recall once a scent triggers them. Long-lived overall but with a handful of breed-specific patterns owners benefit from knowing about.",
+    healthSummary: "Beagles are long-lived overall (12-15 years) but carry a handful of breed-specific patterns — obesity, epilepsy, otitis externa, and a notable autoimmune meningitis condition called 'Beagle pain syndrome' (steroid-responsive meningitis-arteritis) that owners should know about.",
     references: [
       { label: "AKC Beagle breed page", url: "https://www.akc.org/dog-breeds/beagle/" },
       { label: "National Beagle Club of America", url: "https://nationalbeagleclub.org/" },
@@ -291,7 +307,9 @@ const dogBreedData = {
   },
   "dachshund": {
     species: "dog", lifespan: "12-16 years", energy: "moderate",
+    about: "Bold, scent-driven, long-backed and unmistakably opinionated — Dachshunds were bred in 17th-century Germany to hunt badgers (Dachs = badger, hund = dog), with the elongated body engineered to follow prey into burrows. The same conformation that made them effective hunters defines their care today: ramps replace stairs, lean body weight is non-negotiable, and jumping off the couch is the textbook IVDD trigger. They're devoted to their family, suspicious of strangers, and possess a vocal repertoire that makes them feel substantially larger than they are. Long-lived (often 12-16 years) and full of personality the whole time. Like all chondrodystrophic breeds, spine care is the dominant theme — Health Considerations covers what to watch for.",
     summary: "Bold, scent-driven, long-backed. Spinal anatomy is the dominant care concern — Dachshunds are the textbook chondrodystrophic breed and roughly 1 in 4 will have an IVDD episode in life. Care decisions revolve around protecting the spine.",
+    healthSummary: "The Dachshund's signature long-back-short-leg conformation drives the dominant breed risk: roughly 1 in 4 develop IVDD (intervertebral disc disease). Most other concerns are small-breed standards — patellar luxation, dental, eye conditions. Spine protection is the foundation of good Dachshund care.",
     references: [
       { label: "AKC Dachshund breed page", url: "https://www.akc.org/dog-breeds/dachshund/" },
       { label: "Dachshund Club of America — health", url: "https://www.dachshundclubofamerica.org/health/" },
@@ -329,7 +347,9 @@ const dogBreedData = {
   },
   "yorkshire terrier": {
     species: "dog", lifespan: "13-16 years", energy: "moderate",
+    about: "Tiny, bold, and bigger-than-they-are — Yorkshire Terriers were bred in 19th-century industrial England by Yorkshire millworkers to catch rats in textile mills, where their small size and tenacity made them effective. The hunters are gone but the personality remains: confident, opinionated, attached to their humans, and willing to bark at any perceived intruder regardless of size. Their long silky coat needs regular grooming, and the small mouth makes daily tooth brushing one of the most important breed-specific care routines. Long-lived (13-16 years) and remarkably young in spirit. Like all toy breeds, Yorkies have a cluster of small-breed health concerns worth knowing — Health Considerations covers what to watch for.",
     summary: "Tiny, bold, hypoallergenic-ish coat. Long-lived overall but with a cluster of small-breed conditions worth knowing about — periodontal disease, tracheal collapse, hypoglycemia in puppies, and portosystemic shunt are the headlines.",
+    healthSummary: "Yorkies are long-lived overall but carry the standard toy-breed cluster: severe periodontal disease, tracheal collapse, patellar luxation, plus a notable rate of portosystemic shunt and puppy hypoglycemia worth knowing.",
     references: [
       { label: "AKC Yorkshire Terrier breed page", url: "https://www.akc.org/dog-breeds/yorkshire-terrier/" },
       { label: "Yorkshire Terrier Club of America", url: "https://ytca.org/" },
