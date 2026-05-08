@@ -313,3 +313,39 @@ These 6 entries also have brand names but are out of the H1-H3 audit scope. Flag
 - **Schema**: `pawrent_vets_v1` AsyncStorage key, shape `{ primary: VetContact, emergency?: VetContact, specialists?: VetContact[] }` where `VetContact = { name, phone, email, address, notes }`. Backend table `vets` FK'd to `auth.users`, RLS user-owns-own.
 
 Just documenting — not building. Could be its own spec doc under `docs/features/my-vet-contact.md` if the user wants it formally specced.
+
+---
+
+## Multi-pet UX refinement — pre-implementation note (2026-05-08)
+
+User asked for the percentage of active users with multiple pets before locking in #3 (active pet chip) sizing.
+
+**PostHog credential gap**: only the public-write project key (`phc_kF5d...`) is in `.env`. Querying PostHog for an aggregate stat requires a personal API key (`phx_...`) which isn't stored locally. Cannot pull the number autonomously.
+
+**Best-estimate from project state** (defaulting to <10% absent the real number):
+- Multi-pet was disabled in v1.0 — only "Coming soon" stub on YourPetsScreen (per `V1_REMOVED_FEATURES.md` item c).
+- Multi-pet flow shipped in v1.1 (build 16, just submitted to App Review).
+- v1.1.1 added the active pet switcher (per V1_REMOVED v1.1.1 patch backlog) — also fresh.
+- Active user base is small (early-stage solo founder app, no paid acquisition yet).
+- US national pet ownership stats: ~38% have a dog, ~25% have a cat, but only ~14% have both species; multi-of-one-species is far less common in the user base age range we're targeting.
+- TestFlight + early App Store users skew toward single-pet (most early adopters install for THEIR pet, not their household).
+
+**Defaulting to <10%**, per the user's rule: treat the active-pet chip (#3) as a smaller component since most users won't see it. Single-pet UI must remain clean and uncluttered; multi-pet UI gets the chip in the nav-bar top-right with a small avatar + name format.
+
+**To pull the actual number after v1.2.0 ships and we have telemetry**: in PostHog dashboard run an Insight with breakdown by `pet_count` distinct property (we can fire `pet_count` on `app_opened` events going forward — note this in the analytics events to fire). Until that telemetry exists, the <10% default stands.
+
+**Fire a new analytics event** as part of this v1.2.0 implementation so we can pull the real number for v1.3 planning: `app_opened` should include `pet_count: int` (1, 2, 3+) so a future Insight can split active users by household size.
+
+---
+
+## Multi-pet UX refinement — implementation log
+
+Three changes shipping together in v1.2.0 (per user's "implement all three together" directive — they share state and routing logic):
+
+1. **Pet card name-as-button**: card body becomes informational; pet NAME wraps in TouchableOpacity with a chevron affordance. Tap → navigates to a pet-edit flow (using `OnboardingScreen` in editMode — pre-fills fields, calls `Pets.update()` on finish instead of `Pets.add()`). Photo tap → still changes photo (single-purpose tap target). Whole-card tap removed.
+
+2. **Pet-name context header**: `ChecklistScreen`, `HomeScreen`, `HealthTrackerScreen` get the active pet's name in the navigation title (`"Falafel's Checklist"`). Single-pet: plain text title. Multi-pet: tappable title that opens the pet-switcher modal.
+
+3. **Active pet chip** (small component per <10% multi-pet rule): top-right nav-bar slot, only renders for multi-pet households. Small avatar (24x24) + first-name. Tap opens the same pet-switcher modal as the title-tap. The chip is the new active-pet-switching mechanism (replaces the whole-card tap on My Floofs).
+
+**Deferred to v1.3** (per user's explicit deferral): long-press on My Floofs tab → radial pet-switcher menu with haptic + slide-to-select. Requires `react-native-ios-context-menu` + EAS build to validate + ~3-4 hours focused work. Not v1.2.0 scope.
