@@ -8,8 +8,9 @@ import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated } from "
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Pet } from "../lib/storage";
+import { Pet, ChecklistState } from "../lib/storage";
 import { Pawgress, PAW_SEGMENTS, SEGMENT_LABELS, SEGMENT_DESCRIPTIONS, todayKey, dailySpecialFor } from "../lib/pawgress";
+import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { usePurchases } from "../lib/purchasesContext";
 import { track } from "../lib/analytics";
 import { tapLight, tapMedium, notifySuccess } from "../lib/haptics";
@@ -26,6 +27,10 @@ export default function PawgressScreen() {
   const [day, setDay] = useState(null);
   const [streak, setStreak] = useState(0);
   const [celebrating, setCelebrating] = useState(false);
+  // Daily-checklist remaining count, surfaced in the hero copy so
+  // "all 5 pads filled" doesn't read as "everything done" when the
+  // user still has daily checklist items to do.
+  const [dailyRemaining, setDailyRemaining] = useState(0);
   const lastCelebratedKeyRef = useRef(null);
 
   const dateKey = todayKey();
@@ -38,6 +43,17 @@ export default function PawgressScreen() {
     const d = await Pawgress.getDay(p.id, dateKey);
     setDay(d);
     setStreak(await Pawgress.getStreak(p.id));
+    // Compute daily-checklist items still pending so the hero copy
+    // can mention them when the 5 pads are all filled but breed-
+    // specific daily care is still outstanding.
+    const items = generateChecklist(p);
+    const state = await ChecklistState.get(p.id);
+    const dailyPending = items.filter((it) => {
+      if (it.frequency !== "daily") return false;
+      const status = effectiveStatus(it, state[it.id]);
+      return status !== "done" && status !== "skipped";
+    }).length;
+    setDailyRemaining(dailyPending);
   }, [dateKey]);
 
   useEffect(() => { load(); }, [load]);
@@ -97,7 +113,9 @@ export default function PawgressScreen() {
         <View style={s.heroCard}>
           <PawgressPaw completion={day} size={220} colorMode="today" />
           <Text style={s.heroSummary}>
-            {allFive ? `${pet.name} is set for today` : `${completed} of 5 pads filled`}
+            {allFive
+              ? `Today's 5 pads filled · ${pet.name}`
+              : `${completed} of 5 pads filled`}
           </Text>
           {streak > 0 && (
             <View style={s.streakRow}>
@@ -107,7 +125,9 @@ export default function PawgressScreen() {
           )}
           <Text style={s.heroHint}>
             {allFive
-              ? "Sweet dreams. Come back tomorrow for another paw."
+              ? (dailyRemaining > 0
+                  ? `Pads done — but ${dailyRemaining} daily checklist item${dailyRemaining === 1 ? "" : "s"} still need attention. Tap "This Week" on Home to finish those.`
+                  : "Sweet dreams. Come back tomorrow for another paw.")
               : "Tap a pad as you go through the day."}
           </Text>
         </View>

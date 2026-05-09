@@ -42,26 +42,27 @@ const COLORS = {
 // Layout — 5 segments inside a 200×200 bounding box. Designed to match
 // the silhouette of MaterialCommunityIcons "paw" (the icon used in the
 // nav-bar tab) so the Pawgress paw and the tab paw read as the same
-// brand mark. Toe pads are tilted ellipses (teardrops fanned outward)
-// instead of plain circles; the heel is a heart-style pad with three
-// subtle bumps along the top edge instead of a flat squircle.
+// brand mark. Toe pads are softly tilted ovals (rounder than the
+// previous teardrops) and the heel is a smooth heart-shaped pad
+// without the pronounced "3 knuckle" bumps the earlier version had.
 //
 //   key           cx   cy   rx  ry  rot°    label
-//   movement     46   74   14  22   -28    outer-left toe (pinky)
-//   food         78   42   15  24    -8    inner-left toe (index)
-//   mind        122   42   15  24    +8    inner-right toe (middle)
-//   body        154   74   14  22   +28    outer-right toe (ring)
+//   movement     48   74   16  20   -20    outer-left toe (pinky)
+//   food         78   44   17  22    -6    inner-left toe (index)
+//   mind        122   44   17  22    +6    inner-right toe (middle)
+//   body        152   74   16  20   +20    outer-right toe (ring)
 //   special     heart-pad path                  main pad (heel)
 const TOE_PADS = [
-  { key: "movement", cx: 46,  cy: 74, rx: 14, ry: 22, rot: -28 },
-  { key: "food",     cx: 78,  cy: 42, rx: 15, ry: 24, rot: -8 },
-  { key: "mind",     cx: 122, cy: 42, rx: 15, ry: 24, rot: 8 },
-  { key: "body",     cx: 154, cy: 74, rx: 14, ry: 22, rot: 28 },
+  { key: "movement", cx: 48,  cy: 74, rx: 16, ry: 20, rot: -20 },
+  { key: "food",     cx: 78,  cy: 44, rx: 17, ry: 22, rot: -6 },
+  { key: "mind",     cx: 122, cy: 44, rx: 17, ry: 22, rot: 6 },
+  { key: "body",     cx: 152, cy: 74, rx: 16, ry: 20, rot: 20 },
 ];
-// Heel pad — heart/trefoil silhouette mirroring the MCI paw heel.
-// Three soft bumps along the top (left, middle, right) where toes
-// would attach, sides taper inward to a rounded bottom point.
-const MAIN_PAD_PATH = "M 55 132 C 46 106, 60 92, 76 98 C 82 88, 96 86, 100 100 C 104 86, 118 88, 124 98 C 140 92, 154 106, 145 132 C 152 158, 130 180, 100 184 C 70 180, 48 158, 55 132 Z";
+// Heel pad — smooth fat heart silhouette. Wide rounded top tapers
+// to a rounded bottom point. Quadratic curves only (no cubic
+// over-shoots) keep the outline clean and free of the prominent
+// 3-bump knuckle pattern the earlier cubic-bezier version had.
+const MAIN_PAD_PATH = "M 56 122 Q 56 96 100 92 Q 144 96 144 122 Q 156 156 130 178 Q 100 192 70 178 Q 44 156 56 122 Z";
 
 function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
   const scale = useRef(new Animated.Value(filled ? 1 : 0.92)).current;

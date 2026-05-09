@@ -354,7 +354,7 @@ export default function HomeScreen({ navigation }) {
               <Text style={s.pawgressTitle}>Today's Pawgress</Text>
               <Text style={s.pawgressSubtitle}>
                 {Pawgress.isAllFive(pawgressDay)
-                  ? `${pet.name} is set for today`
+                  ? `Today's 5 pads filled · ${pet.name}`
                   : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — tap a pad as you go`}
               </Text>
             </View>
