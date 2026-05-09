@@ -343,28 +343,54 @@ Every paid provider FloofLife uses **must have a hard spend cap configured at th
 
 This rule sits in the same family as Rule 4 (rate limits): defense in depth against runaway cost. The rate limiter rejects the burst at the edge; the budget cap is what catches the *one* request that escapes (configuration mistake, new feature without a limiter, novel attack pattern) before it compounds.
 
+### Pecking order — automatic shutoff > scripted shutoff > alerted manual shutoff
+
+For each provider, configure cost protection at the **highest tier the provider supports** before falling back to lower tiers:
+
+1. **🟢 Best — provider-built-in automatic shutoff at the cap.** The provider sees their own usage hit your cap and disables service themselves. No script to maintain, no race window where billing keeps accruing. Examples: Supabase's "Pause project on cap," Cloudflare Workers spending limit, OpenAI hard limit.
+
+2. **🟡 Acceptable — scripted shutoff via the provider's billing API.** When the provider has a budget-fired event but no native shutoff, hook it to a serverless function that calls their billing API to disable billing or detach the service. Examples: Firebase / GCP — Cloud Billing budget → Pub/Sub → Cloud Function that calls `cloudbilling.projects.updateBillingInfo` to set `billingAccountName` to empty string (this disables billing on the project, which immediately cuts off all paid services). AWS Budgets → Budget Action that detaches the IAM role via SCP. The script runs in seconds; the human doesn't have to wake up.
+
+3. **🟠 Worst-acceptable — strong alerts so the human can manually disable.** When neither (1) nor (2) is possible (some legacy providers, some edge cases): tiered alerts at 50/75/90% PLUS a separate "rate-of-burn" alert (see below) PLUS the alert routes through SMS or push, not just email. Document the manual shutoff procedure in the cap-fired runbook so it's a 30-second action when the alert fires, not a research project.
+
+**❌ Unacceptable — no automation, no alerts.** A budget cap that you set and forget without alerts is theatre.
+
+### Rate-of-burn alerts (catches abuse before the percentage thresholds do)
+
+The 50/75/90% alerts catch *gradual* growth. They don't catch *sudden* abuse — an attack that burns a month's worth of budget in 4 hours hits "50%" and "75%" within minutes of each other, and you'd ignore the 50% as normal-looking morning traffic.
+
+Add a separate alert: **if today's burn-so-far × (days remaining in month / day-of-month-elapsed) > monthly cap**, alert immediately. In English: "at this rate, we'll exceed the cap before the month ends." That fires within an hour of an attack starting, not at the 50% threshold three hours in.
+
+Most providers (GCP, AWS, Datadog, Cloudwatch) support this as a custom metric or via a small Cloud Function on their billing-event stream.
+
 ### Per-provider configuration (all of these need caps before any production traffic touches them)
 
 | Provider                              | Hard cap mechanism                                                              | Notes |
 |---|---|---|
-| **OpenAI**                            | Dashboard → Limits → "Monthly budget" with **hard limit** (not soft)            | Hard limit halts API calls; soft limit only emails. Configure both. |
-| **Anthropic**                         | Workspace → Cost limits → monthly cap                                            | Same shape — set the hard cutoff, not just an alert. |
-| **AWS** (any service)                 | AWS Budgets + Budget Action that revokes IAM via SCP / role detach              | AWS Budgets alone are alerts only — pair with a Lambda or SCP action that disables the offending service. |
-| **GCP** (any service)                 | Cloud Billing budgets + programmatic action via Pub/Sub → Cloud Function       | Same — vanilla budget is alert-only; the programmatic action is what cuts off. |
-| **Cloudflare** (Workers, R2, AI)      | Per-Worker / per-account spending limits in dashboard                            | Workers Paid: $5 included + per-request thereafter. Cap the overage. |
-| **Supabase**                          | Project settings → Spend cap (toggle "On"); pauses project at the cap            | Pause-on-limit is the safe default. |
-| **Vercel / Netlify**                  | Team Spending Cap in dashboard                                                   | Pauses deploys / serverless functions at cap. |
+| **OpenAI**                            | Dashboard → Limits → "Monthly budget" with **hard limit** (not soft)            | Hard limit halts API calls; soft limit only emails. Configure both. **Tier 🟢** (built-in). |
+| **Anthropic**                         | Workspace → Cost limits → monthly cap                                            | Same shape — set the hard cutoff, not just an alert. **Tier 🟢** (built-in). |
+| **AWS** (any service)                 | AWS Budgets + Budget Action that revokes IAM via SCP / role detach              | AWS Budgets alone are alerts only — pair with a Lambda or SCP action that disables the offending service. **Tier 🟡** (scripted). |
+| **GCP / Firebase** (any service)      | Cloud Billing budgets + Pub/Sub → Cloud Function calling `cloudbilling.projects.updateBillingInfo` to clear `billingAccountName` | Vanilla budget is alert-only. The programmatic action that disables billing on the project is the actual shutoff — implement it the same day you create the budget. Firebase = GCP under the hood, same mechanism. **Tier 🟡** (scripted). |
+| **Cloudflare** (Workers, R2, AI)      | Per-Worker / per-account spending limits in dashboard                            | Workers Paid: $5 included + per-request thereafter. Cap the overage. **Tier 🟢** (built-in). |
+| **Supabase**                          | Project settings → Spend cap (toggle "On"); pauses project at the cap            | Pause-on-limit is the safe default. **Tier 🟢** (built-in). |
+| **Vercel / Netlify**                  | Team Spending Cap in dashboard                                                   | Pauses deploys / serverless functions at cap. **Tier 🟢** (built-in). |
 | **Stripe**                            | No built-in spend cap (it's revenue, not cost) — use **Radar** for fraud rules   | Different shape: cap *hostile inflows* via Radar rules, not outflows. Set up Radar's velocity rules + 3DS triggering early. |
-| **Twilio**                            | Account-level spending cap via support ticket + programmatic Spend Webhook       | Twilio's UI cap is soft; the support-ticket cap is the hard one. |
-| **Resend / SendGrid / Postmark**      | Tier-based send limits (built-in) + dashboard alert thresholds                  | Most email providers have intrinsic per-day caps tied to plan; pick the smallest plan that meets needs. |
+| **Twilio**                            | Account-level spending cap via support ticket + programmatic Spend Webhook       | Twilio's UI cap is soft; the support-ticket cap is the hard one. **Tier 🟠** (alerted manual) unless support cap arranged. |
+| **Resend / SendGrid / Postmark**      | Tier-based send limits (built-in) + dashboard alert thresholds                  | Most email providers have intrinsic per-day caps tied to plan; pick the smallest plan that meets needs. **Tier 🟢** (built-in via plan ceiling). |
 | **RevenueCat**                        | Per-MTR billing — costs scale with active payers, no runaway risk                | Lower priority for a budget-cap layer; revenue-aligned. |
-| **Sentry / PostHog / Datadog (logs)** | Event quotas + drop-after-quota                                                  | Configure to **drop** events past quota, not buffer/bill them. |
+| **Sentry / PostHog / Datadog (logs)** | Event quotas + drop-after-quota                                                  | Configure to **drop** events past quota, not buffer/bill them. **Tier 🟢** (built-in drop). |
 
 ### Tiered alerts before the cliff
 
 For every provider above, set warning alerts at **50% / 75% / 90%** of the monthly cap. Hitting 50% mid-month is normal growth signal; hitting 75% by week 2 is "investigate now"; hitting 90% is "shut something off before the hard cap kicks in." The hard cap is the floor, not the operating point.
 
-Email + push notification on each alert. No "we'll watch the dashboard" — that's how the $100k bills happen.
+**Alert routing must reach you when you're asleep.** Email alone is not enough — alert fatigue and overnight batching means you'll see the 50% notice along with the 90% notice in the morning. Tier the alert channels:
+- 50% → email
+- 75% → email + iOS push (Pushover, ntfy.sh, or your preferred app)
+- 90% → email + push + SMS (Twilio webhook or PagerDuty)
+- Rate-of-burn alert (the "at this rate" trigger from above) → push + SMS regardless of percentage
+
+For Tier 🟠 providers (alerted-manual shutoff), the 90% alert IS the shutoff trigger — the alert and the action are the same event. Document the manual shutoff procedure ahead of time so when the SMS hits at 3 AM, the action is one bookmarked admin link, not a mid-panic search.
 
 ### Per-environment caps
 
