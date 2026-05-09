@@ -17,8 +17,8 @@
 // 32px (chip) and at 200px (collage tile / card-stack hero).
 import React, { useState, useMemo, useCallback } from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { pickPhotoForSlot } from "../lib/petPhotos";
+import PawIcon from "./PawIcon";
 import { theme } from "../theme";
 
 export default function PetAvatar({
@@ -76,10 +76,11 @@ export default function PetAvatar({
 
   const placeholderName = (pet?.name && pet.name.trim()) || emptyName;
   const radius = size / 2;
-  // Inner sizing: paw is ~52% of avatar, check badge is ~28%.
-  const pawSize = Math.round(size * 0.52);
-  const badgeSize = Math.max(12, Math.round(size * 0.28));
-  const checkSize = Math.max(8, Math.round(badgeSize * 0.62));
+  // Inner sizing: PawIcon's 24×24 viewBox includes both paw glyph
+  // (~83% of size) and the integrated check badge (anchored bottom-
+  // right via translate(19, 20)). 0.6 here matches the prior
+  // pawSize=size*0.52 + check overlay's combined visual footprint.
+  const iconSize = Math.round(size * 0.6);
   const nameSize = Math.max(11, Math.round(size * 0.13));
 
   if (hasUsablePhoto) {
@@ -108,22 +109,12 @@ export default function PetAvatar({
         },
       ]}
     >
-      <View style={[s.iconStack, { width: pawSize + 6, height: pawSize }]}>
-        <MaterialCommunityIcons name="paw" size={pawSize} color={theme.accent} />
-        <View
-          style={[
-            s.checkBadge,
-            {
-              width: badgeSize,
-              height: badgeSize,
-              borderRadius: badgeSize / 2,
-              borderWidth: Math.max(1.5, badgeSize * 0.12),
-            },
-          ]}
-        >
-          <MaterialCommunityIcons name="check-bold" size={checkSize} color="#fff" />
-        </View>
-      </View>
+      <PawIcon
+        size={iconSize}
+        withCheck
+        color={theme.accent}
+        checkBg={theme.bg}
+      />
       {showName && (
         <Text
           style={[s.name, { fontSize: nameSize, lineHeight: nameSize + 2 }]}
@@ -145,19 +136,6 @@ const s = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     overflow: "hidden",
-  },
-  iconStack: {
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  checkBadge: {
-    position: "absolute",
-    bottom: -2,
-    right: -4,
-    backgroundColor: "#3F8E5C",
-    alignItems: "center",
-    justifyContent: "center",
-    borderColor: theme.bg,
   },
   name: {
     marginTop: 4,

@@ -26,10 +26,10 @@ import {
   PanResponder,
   StyleSheet,
 } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { pickPhotoForSlot } from "../lib/petPhotos";
 import { getPrimaryBreed, mixedBreedLabel } from "../lib/petBreeds";
 import { tapLight, tapMedium } from "../lib/haptics";
+import PawIcon from "./PawIcon";
 import { theme } from "../theme";
 
 const SWIPE_THRESHOLD = 60;        // px — beyond this, commit a flip
@@ -91,12 +91,7 @@ function PetCardFace({ pet, width, height }) {
         </ImageBackground>
       ) : (
         <View style={styles.cardFallback}>
-          <View style={styles.placeholderIconStack}>
-            <MaterialCommunityIcons name="paw" size={64} color={theme.accent} />
-            <View style={styles.placeholderCheckBadge}>
-              <MaterialCommunityIcons name="check-bold" size={14} color="#fff" />
-            </View>
-          </View>
+          <PawIcon size={76} withCheck color={theme.accent} checkBg={theme.bg} />
           <Text style={styles.placeholderName} numberOfLines={1}>{placeholderName}</Text>
           {breed && pet?.name && (
             <Text style={styles.placeholderMeta} numberOfLines={1}>
@@ -295,8 +290,6 @@ const styles = StyleSheet.create({
   cardName:     { fontSize: 36, fontWeight: "800", color: "#fff", letterSpacing: -0.5, textShadowColor: "rgba(0,0,0,0.4)", textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 4 },
   cardMeta:     { fontSize: 14, color: "#fff", marginTop: 2, opacity: 0.95, textTransform: "capitalize" },
   cardFallback: { flex: 1, alignItems: "center", justifyContent: "center", padding: 14, gap: 8, backgroundColor: theme.accentSoft },
-  placeholderIconStack: { width: 72, height: 70, alignItems: "center", justifyContent: "center" },
-  placeholderCheckBadge:{ position: "absolute", bottom: 0, right: -4, width: 24, height: 24, borderRadius: 12, backgroundColor: "#3F8E5C", alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: theme.bg },
   placeholderName:{ fontSize: 22, fontWeight: "800", color: theme.fg, letterSpacing: -0.4, textTransform: "capitalize" },
   placeholderMeta:{ fontSize: 13, color: theme.muted, textTransform: "capitalize" },
   topOverlay:   { position: "absolute", top: 14, left: 0, right: 0, alignItems: "center" },

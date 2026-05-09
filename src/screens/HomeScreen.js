@@ -17,6 +17,7 @@ import { Pawgress, todayKey } from "../lib/pawgress";
 import { openMapsSearch } from "../lib/maps";
 import { tapMedium, tapHeavy } from "../lib/haptics";
 import PawgressPaw from "../components/PawgressPaw";
+import PawIcon from "../components/PawIcon";
 import PhotoManagerSheet from "../components/PhotoManagerSheet";
 import FloofCardStack from "../components/FloofCardStack";
 import { theme } from "../theme";
@@ -57,15 +58,11 @@ function CollageTile({ pet, active, overflow = 0, tileIndex = 0 }) {
         </ImageBackground>
       ) : (
         <View style={collageStyles.tileFallback}>
-          {/* Branded placeholder — paw + green check (the FloofLife
-              mark) over the pet's name. Reads as "no photo yet" but
-              still feels like the app, not a missing-asset hole. */}
-          <View style={collageStyles.placeholderIconStack}>
-            <MaterialCommunityIcons name="paw" size={44} color={theme.accent} />
-            <View style={collageStyles.placeholderCheckBadge}>
-              <MaterialCommunityIcons name="check-bold" size={11} color="#fff" />
-            </View>
-          </View>
+          {/* Branded placeholder — canonical PawIcon with check (the
+              FloofLife mark) over the pet's name. Reads as "no photo
+              yet" but still feels like the app, not a missing-asset
+              hole. Same canonical paw vector as Logo / tabs / Pawgress. */}
+          <PawIcon size={52} withCheck color={theme.accent} checkBg={theme.bg} />
           <Text style={collageStyles.placeholderName} numberOfLines={1}>
             {placeholderName}
           </Text>
@@ -169,8 +166,6 @@ const collageStyles = StyleSheet.create({
   tileImage:      { flex: 1 },
   tileImageInner: { resizeMode: "cover" },
   tileFallback:   { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.accentSoft, padding: 8, gap: 6 },
-  placeholderIconStack: { width: 50, height: 48, alignItems: "center", justifyContent: "center" },
-  placeholderCheckBadge:{ position: "absolute", bottom: 0, right: -2, width: 18, height: 18, borderRadius: 9, backgroundColor: "#3F8E5C", alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: theme.bg },
   placeholderName:{ fontSize: 12, fontWeight: "800", color: theme.fg, letterSpacing: -0.2, textAlign: "center", maxWidth: "92%", textTransform: "capitalize" },
   overflowOverlay:{ ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.55)", alignItems: "center", justifyContent: "center" },
   overflowText:   { color: "#fff", fontSize: 18, fontWeight: "800", letterSpacing: 0.4 },
