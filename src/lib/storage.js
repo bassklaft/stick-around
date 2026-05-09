@@ -110,15 +110,19 @@ export const Pets = {
         return (a.createdAt || 0) - (b.createdAt || 0);
       });
       const next = sorted[0]?.id || null;
+      // Update in-process cache SYNCHRONOUSLY (same tick) so any
+      // useActivePet consumer reflects the rotation before the
+      // AsyncStorage write completes. setCachedActiveId fires the
+      // notify too — no double-notify needed.
+      try {
+        const mod = require("./activePet");
+        mod.setCachedActiveId?.(next);
+      } catch { /* swallow */ }
       if (next) {
         await AsyncStorage.setItem(KEY_ACTIVE, next);
       } else {
         await AsyncStorage.removeItem(KEY_ACTIVE);
       }
-      try {
-        const mod = require("./activePet");
-        mod.notifyActivePetChanged?.();
-      } catch { /* swallow */ }
     }
   },
 
@@ -189,26 +193,41 @@ export const Pets = {
     });
   },
   async getActiveId() {
-    return await AsyncStorage.getItem(KEY_ACTIVE);
+    // Prefer the in-process cache so a getActiveId firing inside
+    // the same event-loop tick as a setActive sees the new value
+    // before the AsyncStorage write resolves. Cold start: cache
+    // is `undefined`, fall through to AsyncStorage and seed.
+    try {
+      const mod = require("./activePet");
+      const cached = mod.getCachedActiveId?.();
+      if (cached !== undefined) return cached;
+    } catch { /* swallow */ }
+    const id = await AsyncStorage.getItem(KEY_ACTIVE);
+    try {
+      const mod = require("./activePet");
+      mod.setCachedActiveId?.(id);
+    } catch { /* swallow */ }
+    return id;
   },
   async setActive(id) {
     if (!id) return;
-    await AsyncStorage.setItem(KEY_ACTIVE, id);
-    // Notify in-process useActivePet() consumers so any open modal
-    // (e.g., the photo manager) re-syncs to the new active pet
-    // immediately, without waiting for a focus event. Lazy import
-    // avoids a circular-init issue (activePet.js imports Pets).
+    // Update the in-process cache SYNCHRONOUSLY before the async
+    // AsyncStorage write so any reader in the same tick (e.g., a
+    // tab tap immediately after a swipe) sees the new active id.
+    // setCachedActiveId also fires the useActivePet notify, so we
+    // don't double-notify after the AsyncStorage write resolves.
     try {
       const mod = require("./activePet");
-      mod.notifyActivePetChanged?.();
+      mod.setCachedActiveId?.(id);
     } catch { /* swallow */ }
+    await AsyncStorage.setItem(KEY_ACTIVE, id);
   },
   async clearActive() {
-    await AsyncStorage.removeItem(KEY_ACTIVE);
     try {
       const mod = require("./activePet");
-      mod.notifyActivePetChanged?.();
+      mod.setCachedActiveId?.(null);
     } catch { /* swallow */ }
+    await AsyncStorage.removeItem(KEY_ACTIVE);
   },
 };
 

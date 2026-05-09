@@ -25,6 +25,29 @@ import { Pets } from "./storage";
 
 const listeners = new Set();
 
+// In-memory cache of the current active id. Written synchronously
+// by Pets.setActive BEFORE the AsyncStorage round-trip resolves,
+// so any consumer reading via Pets.getActiveId / Pet.get inside
+// the same event-loop tick sees the new value. Solves the
+// build-33 race where tapping the Pawgress tab right after a
+// home-swipe could read a stale KEY_ACTIVE (AsyncStorage write
+// in flight) and render the previous pet's checklist.
+//
+// `undefined` = not yet primed (first cold read seeds it from
+// AsyncStorage). `null` = explicitly cleared (no active pet).
+let _cachedActiveId = undefined;
+
+export function getCachedActiveId() {
+  return _cachedActiveId;
+}
+
+export function setCachedActiveId(id) {
+  _cachedActiveId = id;
+  for (const fn of listeners) {
+    try { fn(); } catch { /* swallow — never break a notification */ }
+  }
+}
+
 // Internal — fires after Pets.setActive resolves. Storage.js calls
 // this so every consumer of useActivePet re-syncs immediately.
 export function notifyActivePetChanged() {
