@@ -7,34 +7,51 @@
 // (getHapticsPref / setHapticsPref) remain as no-ops so any old
 // import sites keep building, but the internals no longer read them.
 //
-// Build-35 fix for iOS 26.3.1 TurboModule queue crash: every
-// native expo-haptics call is now deferred by one runloop tick
-// via setTimeout(fn, 0) before invocation. Reasoning:
+// Build-36 fix for iOS 26.3.x TurboModule queue crash: hard-disable
+// every native expo-haptics call on iOS 26.3.x. Build 35's defer +
+// double-catch + circuit-breaker wrapper did NOT prevent the crash
+// — confirmed by a fresh crash report on build 35 with the SAME
+// signature: `objc_exception_rethrow` on
+// `com.meta.react.turbomodulemanager.queue` → SIGABRT.
 //
-//   • iOS 26.3.1 introduced a regression where a UIFeedbackGenerator
-//     call inside the React Native TurboModule serial-dispatch lane
-//     can throw an Obj-C exception that aborts the entire JS bridge.
-//   • Build-29's fire() wrapper caught JS Promise rejections, but
-//     an Obj-C throw happens BEFORE the promise resolves to JS —
-//     so the promise.catch never fires.
-//   • Deferring by one tick moves the native call out of the
-//     touch-event's serial drain. If expo-haptics throws, it
-//     throws on a fresh runloop tick where there's no pending
-//     drain to abort, so the crash is contained.
-//   • Defense in depth: try/catch around the synchronous call site
-//     AND a Promise.catch on the returned promise. Plus a
-//     consecutive-failure circuit breaker so a chronically-broken
-//     haptic system bails after a few attempts instead of churning
-//     every tap.
+// Why JS-level wrapping can't fix this:
+//   The Obj-C exception thrown inside UIFeedbackGenerator's
+//   TurboModule invocation block unwinds the stack past the JS
+//   bridge boundary. It hits `_objc_terminate` → `abort()`
+//   BEFORE any Promise.catch / try/catch / circuit-breaker
+//   counter can fire. The defer-by-1-tick changed when JS
+//   scheduled the call but not where the native call ended up
+//   (still TurboModule queue) or how the dispatch lane handled
+//   the throw (still serial-drain abort). The wrapper looked
+//   defensive but architecturally couldn't intercept the crash.
 //
-// Latency cost: ~16ms per haptic vs the previous synchronous call.
-// Imperceptible to humans for tap/medium/heavy/notification feedback.
+// Pragmatic fix until upstream lands a patch (Expo SDK 54 →
+// 56 upgrade, or react-native-haptic-feedback as drop-in):
+// detect iOS 26.3.x via Platform.Version and bail before any
+// native call. Users on iOS ≤ 26.2.x and ≥ 26.4.x keep full
+// haptics. iOS 26.3.x users get a silent app — slightly
+// degraded UX, no crash.
+//
+// The defer + double-catch + circuit-breaker remain for
+// defense in depth on other OS versions where a similar
+// (but catchable) failure mode might arise.
 //
 // All calls are silent no-ops on platforms / devices where haptics
 // aren't supported. iOS users can still disable haptics globally
 // from iOS Settings → Sounds & Haptics; Expo Haptics respects
 // that, so we don't need an in-app override.
+import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
+
+// Hard-disable haptics on iOS 26.3.x. Platform.Version on iOS
+// is a string like "26.3.1". `startsWith("26.3")` covers
+// 26.3.0, 26.3.1, 26.3.2, etc. — the entire affected family.
+// Re-evaluate this gate when iOS 26.4 ships (might fix the
+// regression upstream) or when we upgrade Expo SDK.
+const IS_IOS_26_3 =
+  Platform.OS === "ios" &&
+  typeof Platform.Version === "string" &&
+  Platform.Version.startsWith("26.3");
 
 let consecutiveFailures = 0;
 const MAX_FAILURES = 3;
@@ -52,6 +69,7 @@ export async function setHapticsPref(_pref) { /* no-op */ }
 // drain to abort. The double catch (sync try + Promise.catch)
 // is for the rare case where expo-haptics throws synchronously.
 function safeFire(nativeCall) {
+  if (IS_IOS_26_3) return;
   if (consecutiveFailures >= MAX_FAILURES) return;
   setTimeout(() => {
     try {
