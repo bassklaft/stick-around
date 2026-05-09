@@ -308,19 +308,90 @@ openFDA recall queries, public AKC breed pages, etc. — anything where (a) the 
 
 ---
 
-## Rule 6 — secrets in env, never in code
+## Rule 6 — secrets in env, never in code (and env-vars are SERVER-only)
 
-Edge Function secrets (RevenueCat secret key, OpenAI API key if/when one lands, Resend / SES tokens for email) live in the Edge Function secret store. They never appear in:
+Edge Function secrets (RevenueCat secret key, OpenAI API key if/when one lands, Resend / SES tokens for email, S3 / R2 access keys, etc.) live in the Edge Function secret store. They never appear in:
 - `.env` files committed to the repo
 - `app.json` / `eas.json`
 - Source code (encoded or otherwise)
-- Logs
+- Logs (including request/response logging middleware — strip auth headers before they hit the log pipeline)
 
-Rotate immediately on any suspected leak; rotation procedure is documented in `docs/runbooks/credential-rotation.md` (write this when the first secret lands).
+### "Env var" is not a synonym for "safe"
+
+A common dangerous mental shortcut: *"the secret is in an environment variable, so it's safe."* That sentence is only true on a **server** where the env var lives in the runtime's process memory and never touches a client.
+
+- ✅ `OPENAI_API_KEY` set on a Supabase Edge Function — safe (runs server-side, never shipped).
+- ❌ `EXPO_PUBLIC_OPENAI_API_KEY` in `.env` — **NOT SAFE**. The `EXPO_PUBLIC_` prefix means Expo bundles it into the JS bundle that ships to the client. Anyone who downloads the .ipa can extract it in seconds (`unzip`, then grep). Same goes for any framework's "public env var" convention: `NEXT_PUBLIC_*`, `VITE_*`, `REACT_APP_*`, etc. — public means **public**, not "convenient and obscured."
+- ❌ Server-side env var copied verbatim into a client-fetched config endpoint — equally not safe; the config endpoint becomes the leak.
+
+Rule of thumb: if the env var is consumed by code that runs on a user's phone or in a user's browser, it is a public string. Treat it that way.
+
+### What `EXPO_PUBLIC_*` is fine for
+
+Things that are designed to be public and have provider-side abuse protection on the key:
+- RevenueCat's iOS SDK key (`appl_...`) — meant to be public; tied to your app's bundle ID.
+- PostHog public project key — meant to be public; tied to your project, rate-limited per-event.
+- Public Maps / Places SDK keys with bundle-ID + referrer restrictions configured in the provider dashboard.
+
+Rotate immediately on any suspected leak. Rotation procedure documented in `docs/runbooks/credential-rotation.md` (write this when the first secret lands).
 
 ---
 
-## Rule 7 — privacy contract
+## Rule 7 — hard budget caps at every provider
+
+Every paid provider FloofLife uses **must have a hard spend cap configured at the provider level** that automatically halts service when hit. Soft alerts (email me at $X) are an addition, not a substitute. The principle: **better for the app to go down for a few hours than for me to wake up to a $100,000 bill.**
+
+This rule sits in the same family as Rule 4 (rate limits): defense in depth against runaway cost. The rate limiter rejects the burst at the edge; the budget cap is what catches the *one* request that escapes (configuration mistake, new feature without a limiter, novel attack pattern) before it compounds.
+
+### Per-provider configuration (all of these need caps before any production traffic touches them)
+
+| Provider                              | Hard cap mechanism                                                              | Notes |
+|---|---|---|
+| **OpenAI**                            | Dashboard → Limits → "Monthly budget" with **hard limit** (not soft)            | Hard limit halts API calls; soft limit only emails. Configure both. |
+| **Anthropic**                         | Workspace → Cost limits → monthly cap                                            | Same shape — set the hard cutoff, not just an alert. |
+| **AWS** (any service)                 | AWS Budgets + Budget Action that revokes IAM via SCP / role detach              | AWS Budgets alone are alerts only — pair with a Lambda or SCP action that disables the offending service. |
+| **GCP** (any service)                 | Cloud Billing budgets + programmatic action via Pub/Sub → Cloud Function       | Same — vanilla budget is alert-only; the programmatic action is what cuts off. |
+| **Cloudflare** (Workers, R2, AI)      | Per-Worker / per-account spending limits in dashboard                            | Workers Paid: $5 included + per-request thereafter. Cap the overage. |
+| **Supabase**                          | Project settings → Spend cap (toggle "On"); pauses project at the cap            | Pause-on-limit is the safe default. |
+| **Vercel / Netlify**                  | Team Spending Cap in dashboard                                                   | Pauses deploys / serverless functions at cap. |
+| **Stripe**                            | No built-in spend cap (it's revenue, not cost) — use **Radar** for fraud rules   | Different shape: cap *hostile inflows* via Radar rules, not outflows. Set up Radar's velocity rules + 3DS triggering early. |
+| **Twilio**                            | Account-level spending cap via support ticket + programmatic Spend Webhook       | Twilio's UI cap is soft; the support-ticket cap is the hard one. |
+| **Resend / SendGrid / Postmark**      | Tier-based send limits (built-in) + dashboard alert thresholds                  | Most email providers have intrinsic per-day caps tied to plan; pick the smallest plan that meets needs. |
+| **RevenueCat**                        | Per-MTR billing — costs scale with active payers, no runaway risk                | Lower priority for a budget-cap layer; revenue-aligned. |
+| **Sentry / PostHog / Datadog (logs)** | Event quotas + drop-after-quota                                                  | Configure to **drop** events past quota, not buffer/bill them. |
+
+### Tiered alerts before the cliff
+
+For every provider above, set warning alerts at **50% / 75% / 90%** of the monthly cap. Hitting 50% mid-month is normal growth signal; hitting 75% by week 2 is "investigate now"; hitting 90% is "shut something off before the hard cap kicks in." The hard cap is the floor, not the operating point.
+
+Email + push notification on each alert. No "we'll watch the dashboard" — that's how the $100k bills happen.
+
+### Per-environment caps
+
+Dev / staging / production have **separate billing accounts** (or separate API keys with separate caps) wherever the provider supports it. A dev-environment loop that hits a thousand LLM calls per minute should burn the dev cap, not the prod cap.
+
+When a provider doesn't support per-key caps, use **separate accounts** for dev vs prod even if it costs a small amount more — the isolation is worth it.
+
+### What's not OK
+
+- ❌ "I set up an alert" without a hard cap. Alerts get missed (sleep, vacation, alert fatigue).
+- ❌ Hard cap set at 10x the expected monthly spend "for safety." That's not a cap, that's a credit limit. Cap should be 1.5–2x the realistic worst-case month so a single bad day can't drain it.
+- ❌ Cap configured *somewhere* without a regular re-review. Costs drift; legitimate growth eats headroom; review caps quarterly minimum.
+- ❌ Single shared account for dev + prod. One dev mistake takes prod down (or, worse, drains prod's runway).
+
+### When the cap fires
+
+Document the runbook for "we hit the cap, services are off" before it can happen, not after. Includes:
+- How to verify it's a legitimate cap (vs an outage in the provider)
+- Who has permission to raise the cap (one person, off-hours-reachable, MFA-protected)
+- The communication template for users ("a feature is temporarily unavailable")
+- The post-mortem checklist for figuring out *why* spend was high
+
+Stub: `docs/runbooks/budget-cap-fired.md` — write this when the first paid provider goes live.
+
+---
+
+## Rule 8 — privacy contract
 
 Per the existing privacy posture: pet names, photos, free-text notes, and tummy / health log entries stay **device-local**. PostHog events get neutered fields (event-only, no payload of user content). RevenueCat sees only the anonymous user ID.
 
@@ -335,6 +406,9 @@ When a backend ships, the privacy contract gets a structured update — see `doc
 - [ ] Every privileged operation re-checks entitlement server-side
 - [ ] Every backend endpoint enforces IP-based rate limits at the edge before any other work
 - [ ] Per-user limits added on top of IP limits when account-based features ship
-- [ ] No sensitive third-party API call (LLM, mailer, billing-secret) is made directly from the client — all proxied through Edge Functions
-- [ ] Secrets live in the Edge Function secret store, not the repo
+- [ ] No sensitive third-party API call (LLM, mailer, billing-secret, cloud-storage credential, payment provider) is made directly from the client — all proxied through Edge Functions (or for storage, via short-lived presigned URLs minted server-side)
+- [ ] Secrets live in the Edge Function secret store, not the repo — and no `EXPO_PUBLIC_*` / `NEXT_PUBLIC_*` / equivalent contains a real secret
+- [ ] Every paid provider has a **hard** spend cap configured (not just alerts) before any production traffic touches it
+- [ ] Tiered alerts at 50% / 75% / 90% of monthly cap on every paid provider
+- [ ] Dev / staging / prod use separate provider accounts or per-key caps wherever supported
 - [ ] Privacy contract updated if user-content leaves the device
