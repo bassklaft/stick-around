@@ -3,7 +3,7 @@
 // gentle dark gradient, name + breed overlaid. FloofLife exists to
 // keep that face around for more years.
 import React, { useEffect, useState, useCallback, useRef } from "react";
-import { View, Text, ScrollView, TouchableOpacity, ImageBackground, RefreshControl, Linking, Platform, Animated, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, ImageBackground, RefreshControl, Linking, Platform, Animated, StyleSheet, Dimensions } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -18,7 +18,12 @@ import { openMapsSearch } from "../lib/maps";
 import { tapMedium, tapHeavy } from "../lib/haptics";
 import PawgressPaw from "../components/PawgressPaw";
 import PhotoManagerSheet from "../components/PhotoManagerSheet";
+import FloofCardStack from "../components/FloofCardStack";
 import { theme } from "../theme";
+
+// Multi-pet hero dimensions for the swipeable card stack — same
+// 92%/320 footprint the existing single-pet hero uses (see s.hero).
+const HERO_HEIGHT = 320;
 
 const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
@@ -171,7 +176,7 @@ const collageStyles = StyleSheet.create({
   overflowText:   { color: "#fff", fontSize: 18, fontWeight: "800", letterSpacing: 0.4 },
 });
 
-export default function HomeScreen({ navigation }) {
+export default function HomeScreen({ navigation, onShowFloofFan }) {
   const insets = useSafeAreaInsets();
   const [pet, setPet] = useState(null);
   const [pets, setPets] = useState([]);
@@ -252,48 +257,54 @@ export default function HomeScreen({ navigation }) {
       contentContainerStyle={{ paddingBottom: insets.bottom + 40 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
     >
-      {/* Hero — single-pet households see the active pet's photo full-
-          bleed (current behavior). Multi-pet households see a collage
-          of all floof photos with the active pet emphasized; text
-          overlay shows family names with active pet in accent color.
-          Tap → switcher (My Floofs tab) for active-pet swap. */}
+      {/* Hero — single-pet households see the active pet's photo
+          full-bleed. Multi-pet households see a SWIPEABLE STACK of
+          pet cards — flip through with a finger, pinch in or
+          long-press to fan out (FloofFanOverlay), tap a card to
+          activate that pet AND open the photo manager scoped to
+          them. Each card is bound to one pet, so taps + swipes
+          always know which floof they're acting on (fixes the
+          earlier "tap Falafel → land on Bella" bug). */}
       {(() => {
         const isMultiPet = petsCount > 1;
-        // Single-pet hero is now ALSO tappable — opens the photo
-        // manager sheet so the owner can add or rotate the floof's
-        // photos. Multi-pet hero still routes to YourPets where the
-        // user can pick a specific pet to manage.
         const HeroWrap = TouchableOpacity;
-        const wrapProps = isMultiPet
-          ? { onPress: () => navigation.navigate("Main", { screen: "YourPets" }), activeOpacity: 0.85 }
-          : { onPress: () => { tapMedium(); setShowPhotoManager(true); }, activeOpacity: 0.85 };
+        const wrapProps = { onPress: () => { tapMedium(); setShowPhotoManager(true); }, activeOpacity: 0.85 };
 
         if (isMultiPet) {
-          // Multi-pet collage hero. Layout adapts to family size.
+          // Compute the same 92%-of-window width the single-pet
+          // hero uses (`width: "92%"` + alignSelf: "center" on
+          // s.hero). This matches the visual footprint exactly.
+          const cardW = Math.round(Dimensions.get("window").width * 0.92);
           return (
-            <HeroWrap {...wrapProps}>
-              <View style={s.hero}>
-                <FloofCollage pets={pets} activeId={pet.id} />
-                <View style={s.heroOverlay} />
-                <View style={s.heroContent}>
-                  <Text style={s.heroEyebrow}>YOUR FLOOFS</Text>
-                  <Text style={s.heroFamilyNames} numberOfLines={2}>
-                    {pets.map((p, i) => (
-                      <Text
-                        key={p.id || i}
-                        style={p.id === pet.id ? s.heroFamilyNameActive : s.heroFamilyName}
-                      >
-                        {p.name}{i < pets.length - 1 ? "  ·  " : ""}
-                      </Text>
-                    ))}
-                  </Text>
-                  <Text style={s.heroMeta} numberOfLines={1}>
-                    Active: {pet.name} · {breedDisplay}
-                  </Text>
-                  <Text style={s.heroSwitch}>Tap to switch floof ↓</Text>
-                </View>
-              </View>
-            </HeroWrap>
+            <View style={s.heroStackWrap}>
+              <Text style={s.heroStackEyebrow}>YOUR FLOOFS</Text>
+              <FloofCardStack
+                pets={pets}
+                activeId={pet.id}
+                width={cardW}
+                height={HERO_HEIGHT}
+                onActivate={async (petId) => {
+                  if (!petId || petId === pet.id) return;
+                  await Pets.setActive(petId);
+                  await load();
+                }}
+                onTapFront={async (tappedPet) => {
+                  // Tap a card → activate that pet + open the
+                  // photo manager scoped to them. Resolves the
+                  // build-21 bug where tapping a tile routed to
+                  // the wrong pet's profile.
+                  if (!tappedPet?.id) return;
+                  if (tappedPet.id !== pet.id) {
+                    await Pets.setActive(tappedPet.id);
+                    await load();
+                  }
+                  setShowPhotoManager(true);
+                }}
+                onLongPress={() => {
+                  if (typeof onShowFloofFan === "function") onShowFloofFan();
+                }}
+              />
+            </View>
           );
         }
 
@@ -428,6 +439,8 @@ export default function HomeScreen({ navigation }) {
 
 const s = StyleSheet.create({
   hero:         { width: "92%", alignSelf: "center", height: 320, justifyContent: "flex-end", borderRadius: 22, overflow: "hidden", marginTop: 8 },
+  heroStackWrap:{ alignSelf: "center", marginTop: 8 },
+  heroStackEyebrow: { fontSize: 11, fontWeight: "800", color: theme.muted, letterSpacing: 1.6, marginBottom: 8, marginLeft: "4%" },
   heroImage:    { resizeMode: "cover", borderRadius: 22 },
   heroOverlay:  { ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.35)" },
   heroContent:  { padding: 22 },

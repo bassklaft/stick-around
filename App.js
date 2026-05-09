@@ -100,9 +100,11 @@ function MainTabs({ navigation, onMyFloofsLongPress }) {
       <Tabs.Screen name="Checklist" component={ChecklistScreen}
         options={{ title: "This Week", tabBarLabel: "Pawgress" }}
         listeners={{ tabPress: () => tapHeavy() }} />
-      <Tabs.Screen name="Home"      component={HomeScreen}
+      <Tabs.Screen name="Home"
         options={{ title: "FloofLife", tabBarLabel: "Home" }}
-        listeners={{ tabPress: () => tapHeavy() }} />
+        listeners={{ tabPress: () => tapHeavy() }}>
+        {(props) => <HomeScreen {...props} onShowFloofFan={onMyFloofsLongPress} />}
+      </Tabs.Screen>
       <Tabs.Screen name="YourPets"  component={YourPetsScreen}
         options={{ title: "My Floofs", tabBarLabel: "My Floofs" }}
         listeners={{
