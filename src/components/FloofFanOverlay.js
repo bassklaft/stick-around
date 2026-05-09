@@ -21,155 +21,57 @@
 // Per build 19 smoke-test feedback: "see if you can make it fan out
 // some circles with icons of your pets. like a hand of cards but
 // circles not rectangles and those icons are the profile pictures."
-import React, { useEffect, useRef, useState, useMemo } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import {
   Modal,
   View,
   Text,
-  Image,
   StyleSheet,
   Animated,
   Dimensions,
-  PanResponder,
 } from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { getPrimaryBreed } from "../lib/petBreeds";
-import { pickPhotoForSlot } from "../lib/petPhotos";
 import PetAvatar from "./PetAvatar";
-import { tapLight } from "../lib/haptics";
+import { computeFanCenters, CIRCLE_DIAMETER } from "../lib/fanGeometry";
 import { theme } from "../theme";
 
-const CIRCLE_DIAMETER = 76;
-const ARC_RADIUS = 170;
-// A touch within this radius of a circle's center is considered "over"
-// it. Slightly larger than the circle itself so the user doesn't have
-// to be pixel-perfect during a slide.
-const HOVER_RADIUS = CIRCLE_DIAMETER / 2 + 18;
-
+// FloofFanOverlay is now PURE PRESENTATION — the gesture is owned
+// by the custom My Floofs tab button (MyFloofsTabButton). The tab
+// button captures the touch from the long-press through the slide
+// to the release, computes the hovered pet via hitTestFan, and
+// passes hoveredId in here for visual feedback. Release commits
+// the pick at the App level, not inside this component.
 export default function FloofFanOverlay({
   visible,
   pets,
   activeId,
-  onPick,
+  hoveredId,
+  bottomInset = 0,
   onClose,
 }) {
-  const insets = useSafeAreaInsets();
-  const { width, height } = Dimensions.get("window");
-  const tabBarHeight = 86;
-  const originX = width - 60;
-  const originY = height - insets.bottom - tabBarHeight + 22;
-
+  const { height } = Dimensions.get("window");
   const [mounted, setMounted] = useState(visible);
   const animProgress = useRef(new Animated.Value(visible ? 0 : 0)).current;
-
-  // Currently-hovered pet id (during slide / press). null = no hover.
-  const [hoveredId, setHoveredId] = useState(null);
-  // Refs so the PanResponder closures see the latest values without
-  // re-creating the responder on every render.
-  const hoveredIdRef = useRef(null);
-  const petsRef = useRef(pets);
-  petsRef.current = pets;
-  const isAnimatingInRef = useRef(false);
 
   useEffect(() => {
     if (visible) {
       setMounted(true);
-      isAnimatingInRef.current = true;
       Animated.spring(animProgress, {
         toValue: 1,
         friction: 6,
         tension: 80,
         useNativeDriver: true,
-      }).start(() => { isAnimatingInRef.current = false; });
+      }).start();
     } else if (mounted) {
       Animated.timing(animProgress, {
         toValue: 0,
         duration: 180,
         useNativeDriver: true,
-      }).start(() => {
-        setMounted(false);
-        setHoveredId(null);
-        hoveredIdRef.current = null;
-      });
+      }).start(() => setMounted(false));
     }
   }, [visible, animProgress, mounted]);
 
   const n = pets.length;
-  const angleStart = Math.PI;
-  const angleEnd = Math.PI * 1.5;
-
-  // Compute on-screen centers for each pet circle. Memoized against
-  // pets/dimensions so PanResponder hit-testing is cheap.
-  const centers = useMemo(() => {
-    return pets.map((p, i) => {
-      const t = n === 1 ? 0.5 : i / (n - 1);
-      const angle = angleStart + t * (angleEnd - angleStart);
-      return {
-        id: p.id,
-        cx: originX + ARC_RADIUS * Math.cos(angle),
-        cy: originY + ARC_RADIUS * Math.sin(angle),
-      };
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pets, originX, originY, n]);
-  const centersRef = useRef(centers);
-  centersRef.current = centers;
-
-  // Find which circle (if any) the touch is currently over. Returns
-  // the pet id or null.
-  function hitTest(x, y) {
-    let bestId = null;
-    let bestDistSq = HOVER_RADIUS * HOVER_RADIUS;
-    for (const c of centersRef.current) {
-      const dx = x - c.cx;
-      const dy = y - c.cy;
-      const distSq = dx * dx + dy * dy;
-      if (distSq < bestDistSq) {
-        bestDistSq = distSq;
-        bestId = c.id;
-      }
-    }
-    return bestId;
-  }
-
-  function updateHover(x, y) {
-    const next = hitTest(x, y);
-    if (next !== hoveredIdRef.current) {
-      hoveredIdRef.current = next;
-      setHoveredId(next);
-      if (next) tapLight();
-    }
-  }
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onStartShouldSetPanResponder: () => true,
-      onMoveShouldSetPanResponder: () => true,
-      onPanResponderGrant: (e) => {
-        // Don't accept input until the entrance animation is finished
-        // — prevents accidental pick on a still-flying-out circle.
-        if (isAnimatingInRef.current) return;
-        updateHover(e.nativeEvent.pageX, e.nativeEvent.pageY);
-      },
-      onPanResponderMove: (e) => {
-        updateHover(e.nativeEvent.pageX, e.nativeEvent.pageY);
-      },
-      onPanResponderRelease: () => {
-        const picked = hoveredIdRef.current;
-        hoveredIdRef.current = null;
-        setHoveredId(null);
-        if (picked) {
-          onPick?.(picked);
-        } else {
-          onClose?.();
-        }
-      },
-      onPanResponderTerminate: () => {
-        hoveredIdRef.current = null;
-        setHoveredId(null);
-      },
-    }),
-  ).current;
+  const centers = computeFanCenters(pets, bottomInset);
 
   if (!mounted) return null;
 
@@ -181,22 +83,25 @@ export default function FloofFanOverlay({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      <View style={StyleSheet.absoluteFill} {...panResponder.panHandlers}>
+      {/* No PanResponder here anymore — the gesture lives on the
+          custom My Floofs tab button so the long-press → slide can
+          be a single continuous touch session. The modal is purely
+          a visual layer rendered based on hoveredId from above. */}
+      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
         <Animated.View
           style={[
             StyleSheet.absoluteFill,
             { backgroundColor: "rgba(0,0,0,0.45)", opacity: animProgress },
           ]}
         />
-        {/* Centered iOS-style title — updates as the finger slides
-            over circles. Big, bold, no overlap with circle bodies.
-            Falls back to the active pet's name when nothing is
-            hovered yet, then to the call-to-action hint. */}
+        {/* Hero title — updates as the finger slides. Positioned at
+            vertical mid-screen so the user reading the name is close
+            to where their finger is hovering. Falls back to the
+            active pet's name when nothing is hovered. */}
         <Animated.View
-          pointerEvents="none"
           style={[
             styles.titleHero,
-            { top: insets.top + 36, opacity: animProgress },
+            { top: height * 0.34, opacity: animProgress },
           ]}
         >
           {(() => {
@@ -212,7 +117,7 @@ export default function FloofFanOverlay({
                 <Text style={styles.titleHeroHint}>
                   {hoveredId
                     ? "Release to switch"
-                    : "Tap a floof · or slide to one and release"}
+                    : "Slide to a floof · release to switch"}
                 </Text>
               </>
             );
@@ -220,44 +125,24 @@ export default function FloofFanOverlay({
         </Animated.View>
 
         {pets.map((p, i) => {
-          const t = n === 1 ? 0.5 : i / (n - 1);
-          const angle = angleStart + t * (angleEnd - angleStart);
-          const offsetX = ARC_RADIUS * Math.cos(angle);
-          const offsetY = ARC_RADIUS * Math.sin(angle);
-
-          const translateX = animProgress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, offsetX],
-          });
-          const translateY = animProgress.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, offsetY],
-          });
-          // Hovered circle scales up; others stay at 1. Use a separate
-          // Animated value that reacts to hover state.
+          const center = centers[i];
+          if (!center) return null;
           const isHovered = p.id === hoveredId;
+          const isActive = p.id === activeId;
           const baseScale = animProgress.interpolate({
             inputRange: [0, 1],
             outputRange: [0, 1],
           });
 
-          const isActive = p.id === activeId;
-          const primary = getPrimaryBreed(p);
-          const firstName = (p.name || "").split(" ")[0] || p.name;
-          const fanUri = pickPhotoForSlot(p, "primary");
-
           return (
             <Animated.View
               key={p.id || i}
-              pointerEvents="none"
               style={[
                 styles.circleAnchor,
                 {
-                  left: originX - CIRCLE_DIAMETER / 2,
-                  top: originY - CIRCLE_DIAMETER / 2,
+                  left: center.cx - CIRCLE_DIAMETER / 2,
+                  top: center.cy - CIRCLE_DIAMETER / 2,
                   transform: [
-                    { translateX },
-                    { translateY },
                     { scale: baseScale },
                     { scale: isHovered ? 1.18 : 1 },
                   ],
@@ -282,11 +167,6 @@ export default function FloofFanOverlay({
                   </View>
                 )}
               </View>
-              {/* Per-circle name labels removed — names now appear
-                  as a single centered hero title at the top of the
-                  modal that updates as the finger slides. With 4+
-                  floofs in a tight arc, per-circle labels collided
-                  into the next circle's body. */}
             </Animated.View>
           );
         })}

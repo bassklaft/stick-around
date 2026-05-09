@@ -11,7 +11,10 @@ import { initAnalytics, screen as trackScreen, track } from "./src/lib/analytics
 import { initHaptics, tapLight, tapMedium, tapHeavy } from "./src/lib/haptics";
 import { Pets } from "./src/lib/storage";
 import FloofFanOverlay from "./src/components/FloofFanOverlay";
+import MyFloofsTabButton from "./src/components/MyFloofsTabButton";
 import GuidedTour from "./src/components/GuidedTour";
+import { computeFanCenters, hitTestFan } from "./src/lib/fanGeometry";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Bumped from _v1 → _v2 with the v1.2.0 release so existing users
 // (who already dismissed v1's text-bullet tutorial) see the new
@@ -48,6 +51,17 @@ import { theme } from "./src/theme";
 const RootStack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();
 
+// Tiny child of SafeAreaProvider whose only job is to read the
+// bottom safe-area inset and report it back to App.js (which lives
+// outside the provider and can't useSafeAreaInsets directly). The
+// fan-out gesture math needs the bottom inset to position circles
+// correctly above the tab bar.
+function FanInsetSentinel({ onBottom }) {
+  const insets = useSafeAreaInsets();
+  useEffect(() => { onBottom?.(insets.bottom); }, [insets.bottom, onBottom]);
+  return null;
+}
+
 function HamburgerLeft({ navigation }) {
   return (
     <TouchableOpacity
@@ -78,7 +92,15 @@ function tabIcon(routeName) {
 // Three tabs: Checklist | Home (center) | Your Pets. Home is the hub
 // that links out to Toxic, Vets, Diet, Recalls (each pushed from the
 // root stack, not in the tab bar).
-function MainTabs({ navigation, onMyFloofsLongPress }) {
+function MainTabs({
+  navigation,
+  onMyFloofsLongPress,
+  onFanLongPressStart,
+  onFanLongPressMove,
+  onFanLongPressEnd,
+  onFanShortTap,
+  fanCenters,
+}) {
   return (
     <Tabs.Navigator
       initialRouteName="Home"
@@ -110,15 +132,29 @@ function MainTabs({ navigation, onMyFloofsLongPress }) {
         {(props) => <HomeScreen {...props} onShowFloofFan={onMyFloofsLongPress} />}
       </Tabs.Screen>
       <Tabs.Screen name="YourPets"  component={YourPetsScreen}
-        options={{ title: "My Floofs", tabBarLabel: "My Floofs" }}
-        listeners={{
-          tabPress: () => tapLight(),
-          tabLongPress: () => {
-            // Long-press the My Floofs tab → opens a quick pet switcher
-            // popup (App-root state, see App() below). Multi-pet
-            // households only — single-pet households get a no-op.
-            if (onMyFloofsLongPress) onMyFloofsLongPress();
-          },
+        options={{
+          title: "My Floofs",
+          tabBarLabel: "My Floofs",
+          // Custom tab button so the long-press → slide → release
+          // gesture is one continuous touch session (not split into
+          // long-press-then-lift-then-tap). The default tab button
+          // fires `tabLongPress` as a discrete event which forces a
+          // touch handoff that breaks the continuous-slide UX.
+          tabBarButton: (btnProps) => (
+            <MyFloofsTabButton
+              {...btnProps}
+              onShortTap={() => tapLight()}
+              onLongPressStart={() => {
+                onFanLongPressStart?.();
+              }}
+              onLongPressMove={(x, y) => {
+                onFanLongPressMove?.(x, y);
+              }}
+              onLongPressEnd={(x, y) => {
+                onFanLongPressEnd?.(x, y);
+              }}
+            />
+          ),
         }} />
     </Tabs.Navigator>
   );
@@ -158,14 +194,31 @@ export default function App() {
   useEffect(() => { initAnalytics(); }, []);
   useEffect(() => { initHaptics(); }, []);
 
-  // Long-press-on-My-Floofs-tab quick-switcher. Hoisted to App root so
-  // it can render over any tab. Fetches pets+activeId fresh each time
-  // so it always reflects current storage state.
+  // Floof fan-out state. Hoisted to App root so the gesture (long-
+  // press → slide → release) can be one continuous touch session
+  // owned by the custom My Floofs tab button. The button calls
+  // these handlers in sequence; this component drives the visual
+  // state of FloofFanOverlay accordingly.
   const [longPressSwitcherVisible, setLongPressSwitcherVisible] = useState(false);
   const [longPressPets, setLongPressPets] = useState([]);
   const [longPressActiveId, setLongPressActiveId] = useState(null);
+  const [longPressHoveredId, setLongPressHoveredId] = useState(null);
+  // Cached fan-circle centers, recomputed when pets change. Used by
+  // the move/end handlers to hit-test touch coordinates.
+  const fanCentersRef = useRef([]);
+  const safeAreaBottomRef = useRef(0);
+  // Refs so the handlers (passed as props) see latest values without
+  // re-creating the closure on every render.
+  const longPressVisibleRef = useRef(false);
+  const longPressPetsRef = useRef([]);
+  const longPressActiveIdRef = useRef(null);
+  const longPressHoveredIdRef = useRef(null);
+  longPressVisibleRef.current = longPressSwitcherVisible;
+  longPressPetsRef.current = longPressPets;
+  longPressActiveIdRef.current = longPressActiveId;
+  longPressHoveredIdRef.current = longPressHoveredId;
 
-  async function showLongPressSwitcher() {
+  async function handleFanLongPressStart() {
     const list = await Pets.listSortedOldestFirst();
     if (list.length <= 1) return; // no-op for single-pet households
     let active = await Pets.getActiveId();
@@ -174,28 +227,43 @@ export default function App() {
     }
     setLongPressPets(list);
     setLongPressActiveId(active);
+    setLongPressHoveredId(null);
     setLongPressSwitcherVisible(true);
+    fanCentersRef.current = computeFanCenters(list, safeAreaBottomRef.current);
     tapMedium();
     track("active_pet_switcher_opened", { source: "tab_long_press" });
   }
 
-  async function handleLongPressPick(petId) {
-    if (!petId || petId === longPressActiveId) {
-      setLongPressSwitcherVisible(false);
+  function handleFanLongPressMove(x, y) {
+    if (!longPressVisibleRef.current) return;
+    const hit = hitTestFan(x, y, fanCentersRef.current);
+    if (hit !== longPressHoveredIdRef.current) {
+      setLongPressHoveredId(hit);
+      if (hit) tapLight();
+    }
+  }
+
+  async function handleFanLongPressEnd(x, y) {
+    if (!longPressVisibleRef.current) {
+      // Long-press never opened the fan (e.g., single-pet household).
+      // Nothing to commit.
       return;
     }
-    await Pets.setActive(petId);
-    track("active_pet_switched", { source: "tab_long_press", pet_count: longPressPets.length });
-    tapLight();
+    const picked = hitTestFan(x, y, fanCentersRef.current);
     setLongPressSwitcherVisible(false);
-    // Refresh nav so the now-active pet's data shows on the active screen
-    // (Home / Checklist / Health Tracker all re-load on focus).
-    if (navRef.current?.getCurrentRoute) {
-      // Force a focus event by navigating to Home (lands the user on
-      // the freshly-active pet's hero/checklist).
+    setLongPressHoveredId(null);
+    if (picked && picked !== longPressActiveIdRef.current) {
       try {
-        navRef.current.navigate("Main", { screen: "Home" });
-      } catch {}
+        await Pets.setActive(picked);
+        track("active_pet_switched", {
+          source: "tab_long_press",
+          pet_count: longPressPetsRef.current.length,
+        });
+        tapLight();
+        if (navRef.current?.navigate) {
+          try { navRef.current.navigate("Main", { screen: "Home" }); } catch {}
+        }
+      } catch { /* swallow */ }
     }
   }
 
@@ -262,7 +330,18 @@ export default function App() {
           ) : (
             <>
               <RootStack.Screen name="Main">
-                {(props) => <MainTabs {...props} onMyFloofsLongPress={showLongPressSwitcher} />}
+                {(props) => (
+                  <MainTabs
+                    {...props}
+                    // Legacy prop — kept for HomeScreen's onShowFloofFan
+                    // pinch-in / hard-press shortcut (still uses the
+                    // discrete-event open path, no slide).
+                    onMyFloofsLongPress={handleFanLongPressStart}
+                    onFanLongPressStart={handleFanLongPressStart}
+                    onFanLongPressMove={handleFanLongPressMove}
+                    onFanLongPressEnd={handleFanLongPressEnd}
+                  />
+                )}
               </RootStack.Screen>
               <RootStack.Screen name="Toxic"    component={ToxicScreen}    options={{ ...pushScreenOptions, title: "Toxic Foods & Plants" }} />
               <RootStack.Screen name="Vets"     component={VetsScreen}     options={{ ...pushScreenOptions, title: "Vets Near Me" }} />
@@ -309,12 +388,14 @@ export default function App() {
           circle to switch active pet. Rendered at App root so it
           overlays any tab. Single-pet households never see it
           (showLongPressSwitcher early-returns). */}
+      <FanInsetSentinel onBottom={(b) => { safeAreaBottomRef.current = b; }} />
       <FloofFanOverlay
         visible={longPressSwitcherVisible}
         onClose={() => setLongPressSwitcherVisible(false)}
         pets={longPressPets}
         activeId={longPressActiveId}
-        onPick={handleLongPressPick}
+        hoveredId={longPressHoveredId}
+        bottomInset={safeAreaBottomRef.current}
       />
       {/* First-run tutorial — shown once after onboarding completes,
           plus once for any existing user who hasn't seen it (the

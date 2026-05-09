@@ -39,31 +39,39 @@ const COLORS = {
   year:  { fill: "#9C2A0F", stroke: "#9C2A0F", dim: "#9C2A0F33" },
 };
 
-// Layout — 5 segments inside a 200×200 bounding box. Designed to
-// match the FloofLife logo (the paw + green-check brand mark used
-// in the header). Outer toes are dramatically tilted teardrops
-// fanning outward; inner toes barely tilt; heel pad is a clean
-// 3-lobe trefoil with deep valleys between bumps and a wide
-// rounded bottom.
+// Layout — 5 segments inside a 200×200 bounding box. Matches the
+// user's latest reference image: outer toes splay OUTWARD (top
+// tilts away from center, bottom toward heel), inner toes lean
+// slightly inward (top toward center). Heel pad has wing-shape
+// side curves that rise UP toward the outer toes before dropping
+// to a wide rounded bottom — like the FloofLife logo paw silhouette.
 //
 //   key           cx   cy   rx  ry  rot°    label
-//   movement     50   80   14  22   -32    outer-left toe (pinky)
-//   food         80   48   15  24    -8    inner-left toe (index)
-//   mind        120   48   15  24    +8    inner-right toe (middle)
-//   body        150   80   14  22   +32    outer-right toe (ring)
-//   special     3-lobe heel-pad path             main pad (heel)
+//   movement     50   90   14  26   -28    outer-left toe (splays OUT)
+//   food         82   60   16  28    -8    inner-left toe (slight CCW)
+//   mind        118   60   16  28    +8    inner-right toe (slight CW)
+//   body        150   90   14  26   +28    outer-right toe (splays OUT)
+//   special     wing-top heel-pad path     main pad
+const PAW_VIEWBOX = "0 0 200 200";
 const TOE_PADS = [
-  { key: "movement", cx: 50,  cy: 80, rx: 14, ry: 22, rot: -32 },
-  { key: "food",     cx: 80,  cy: 48, rx: 15, ry: 24, rot: -8 },
-  { key: "mind",     cx: 120, cy: 48, rx: 15, ry: 24, rot: 8 },
-  { key: "body",     cx: 150, cy: 80, rx: 14, ry: 22, rot: 32 },
+  { key: "movement", cx: 50,  cy: 90, rx: 14, ry: 26, rot: -28 },
+  { key: "food",     cx: 82,  cy: 60, rx: 16, ry: 28, rot: -8 },
+  { key: "mind",     cx: 118, cy: 60, rx: 16, ry: 28, rot: 8 },
+  { key: "body",     cx: 150, cy: 90, rx: 14, ry: 26, rot: 28 },
 ];
-// Heel pad — three distinct rounded lobes at the top with deep
-// valleys between (the toe-attach points), sides curve inward,
-// bottom is wide and rounded. Control points pulled tight (y=80)
-// at lobe peaks for crisp, dome-shaped bumps; valleys between
-// (~y=98) read as clear separations.
-const MAIN_PAD_PATH = "M 56 130 C 44 105 60 86 76 96 C 82 80 96 80 100 96 C 104 80 118 80 124 96 C 140 86 156 105 144 130 C 156 162 130 188 100 192 C 70 188 44 162 56 130 Z";
+// Heel pad — wing-style top with side curves that lift UP toward
+// the outer toes, soft V-notch at center top, wide rounded bottom.
+// Whole-number coordinates only so the path renders crisp on iOS
+// without sub-pixel anti-aliasing fuzz.
+const MAIN_PAD_PATH = "M 50 130 C 32 100 54 80 80 100 C 86 88 96 88 100 100 C 104 88 114 88 120 100 C 146 80 168 100 150 130 C 165 162 132 192 100 196 C 68 192 35 162 50 130 Z";
+// Tap-target zones in 200×200 user-space.
+const TAP_TARGETS = {
+  movement: { cx: 50,  cy: 90,  r: 32 },
+  food:     { cx: 82,  cy: 60,  r: 32 },
+  mind:     { cx: 118, cy: 60,  r: 32 },
+  body:     { cx: 150, cy: 90,  r: 32 },
+  special:  { cx: 100, cy: 150, r: 55 },
+};
 
 function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
   const scale = useRef(new Animated.Value(filled ? 1 : 0.92)).current;
@@ -75,13 +83,16 @@ function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
     }).start();
   }, [filled, scale]);
 
+  // Filled state: fill-only (no stroke) for crisp brand-mark edges
+  // — matches the FloofLife logo silhouette which is fill-only.
+  // Unfilled state: thin stroke as a "tap me" outline cue.
   const fillColor = filled ? color.fill : "transparent";
-  const strokeColor = filled ? color.stroke : color.dim;
-  const strokeWidth = filled ? 2 : 3;
+  const strokeColor = filled ? "transparent" : color.dim;
+  const strokeWidth = filled ? 0 : 3;
 
   if (isPath) {
     return (
-      <AnimatedG transform={[{ scale }]} originX="100" originY="138">
+      <AnimatedG transform={[{ scale }]} originX="100" originY="148">
         <Path
           d={MAIN_PAD_PATH}
           fill={fillColor}
@@ -92,11 +103,6 @@ function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
       </AnimatedG>
     );
   }
-  // Toe pad — tilted ellipse to evoke a teardrop / soft fingertip,
-  // matching the MCI paw silhouette. Rotation is applied to the
-  // ellipse via the SVG transform attribute (rotate around the
-  // ellipse's own center); the surrounding G handles the fill-in
-  // scale animation around that same point.
   return (
     <AnimatedG transform={[{ scale }]} originX={String(x)} originY={String(y)}>
       <Ellipse
@@ -237,7 +243,7 @@ export default function PawgressPaw({
     <View style={[styles.wrap, { width: size, height: size }]}>
       <Animated.View style={{ transform: [{ rotate: spinTransform }] }}>
         <Animated.View style={{ transform: [{ rotate: idleRotationDeg }, { scale: idleScale }] }}>
-        <Svg width={size} height={size} viewBox="0 0 200 200">
+        <Svg width={size} height={size} viewBox={PAW_VIEWBOX}>
           {TOE_PADS.map((toe) => (
             <Segment
               key={toe.key}
@@ -259,40 +265,29 @@ export default function PawgressPaw({
             isPath
           />
         </Svg>
-        {/* Tap targets layered on top of the SVG. Positioned via percent
-            of the box so they scale with `size` correctly. Only renders
-            when onSegmentTap is provided (display mode skips them). The
-            tap targets sit INSIDE the rotating Animated.View so they
-            rotate with the paw — but since the spin only fires after
-            completion (not during normal tapping), this doesn't hurt
-            tap accuracy in practice. */}
+        {/* Tap targets layered on top of the SVG. Positioned in
+            200×200 user-space (via TAP_TARGETS) and converted to
+            actual pixel space via `size`. Sit INSIDE the rotating
+            Animated.View so they rotate with the paw — but since
+            the spin only fires AFTER completion (not during tapping),
+            this doesn't hurt accuracy in practice. */}
         {onSegmentTap && (
           <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
-            {TOE_PADS.map((toe) => {
-              // Approximate the rotated-ellipse tap region with an
-              // axis-aligned rectangle that fits the ellipse's larger
-              // axis — slightly generous, which is fine for tapping.
-              const tapR = Math.max(toe.rx, toe.ry) + 2;
-              const left = (toe.cx - tapR) / 200 * size;
-              const top  = (toe.cy - tapR) / 200 * size;
-              const w    = (tapR * 2) / 200 * size;
+            {PAW_SEGMENT_KEYS.map((key) => {
+              const t = TAP_TARGETS[key];
+              const left = (t.cx - t.r) / 200 * size;
+              const top  = (t.cy - t.r) / 200 * size;
+              const w    = (t.r * 2) / 200 * size;
               return (
                 <Animated.View
-                  key={toe.key}
-                  onTouchEnd={() => onSegmentTap(toe.key)}
+                  key={key}
+                  onTouchEnd={() => onSegmentTap(key)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Toggle ${toe.key} segment`}
+                  accessibilityLabel={`Toggle ${key} segment`}
                   style={{ position: "absolute", left, top, width: w, height: w, borderRadius: w / 2 }}
                 />
               );
             })}
-            {/* Main pad tap area — sized to the heel-pad path bounds */}
-            <Animated.View
-              onTouchEnd={() => onSegmentTap("special")}
-              accessibilityRole="button"
-              accessibilityLabel="Toggle special segment"
-              style={{ position: "absolute", left: 46 / 200 * size, top: 86 / 200 * size, width: 108 / 200 * size, height: 100 / 200 * size, borderRadius: 40 / 200 * size }}
-            />
           </View>
         )}
         </Animated.View>

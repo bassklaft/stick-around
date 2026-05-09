@@ -7,7 +7,7 @@ import { breedFacts, dogBreeds, catBreeds, breedEmoji } from "../data/breeds";
 import { MAX_BREEDS, shortBreedName } from "../lib/petBreeds";
 import { pickPetPhoto } from "../lib/photoPicker";
 import { track } from "../lib/analytics";
-import { tapMedium, notifySuccess } from "../lib/haptics";
+import { tapMedium, tapHeavy, notifySuccess } from "../lib/haptics";
 import { theme } from "../theme";
 import PhotoboothAnimation from "../components/PhotoboothAnimation";
 import { PHOTO_PROMPTS, PROMPT_SLOTS } from "../lib/petPhotos";
@@ -733,6 +733,39 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
 
             <PrimaryButton label={editMode ? `Save changes` : addMode ? `Add ${name.trim() || "this pet"}` : `Start with ${name.trim() || "your pet"}`} onPress={finish} />
             <SecondaryButton label="Back" onPress={() => setStep(5)} />
+
+            {editMode && editPetId && (
+              <TouchableOpacity
+                onPress={() => {
+                  Alert.alert(
+                    `Remove ${name.trim() || "this floof"}?`,
+                    "All of their photos, checklist progress, Pawgress streak, Tummy Tracker entries, and health records will be permanently removed from this device. This cannot be undone.",
+                    [
+                      { text: "Cancel", style: "cancel" },
+                      {
+                        text: "Remove",
+                        style: "destructive",
+                        onPress: async () => {
+                          try {
+                            await Pets.remove(editPetId);
+                            track("pet_removed", { species });
+                            tapHeavy();
+                            onDone();
+                          } catch {
+                            Alert.alert("Couldn't remove", "Something went wrong. Try again.");
+                          }
+                        },
+                      },
+                    ],
+                  );
+                }}
+                style={s.removePetBtn}
+                activeOpacity={0.7}
+              >
+                <MaterialCommunityIcons name="trash-can-outline" size={16} color="#9C2A0F" />
+                <Text style={s.removePetText}>Remove this floof from FloofLife</Text>
+              </TouchableOpacity>
+            )}
           </View>
         )}
       </ScrollView>
@@ -825,4 +858,6 @@ const s = StyleSheet.create({
   secondaryBtnText: { color: theme.muted, fontSize: 14 },
   founder:          { marginTop: 36, paddingTop: 20, borderTopWidth: 1, borderTopColor: theme.line, gap: 10 },
   founderText:      { fontSize: 12, color: theme.muted, lineHeight: 18, fontStyle: "italic" },
+  removePetBtn:     { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 28, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: "#9C2A0F" + "44" },
+  removePetText:    { color: "#9C2A0F", fontSize: 13, fontWeight: "600", letterSpacing: 0.3 },
 });
