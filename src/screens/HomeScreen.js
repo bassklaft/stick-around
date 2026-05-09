@@ -349,7 +349,26 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
             accessibilityRole="button"
             accessibilityLabel={`Pawgress: ${Pawgress.countCompleted(pawgressDay)} of 5 pads filled today`}
           >
-            <PawgressPaw completion={pawgressDay} size={56} colorMode="today" />
+            {(() => {
+              // Green check on the Home card mirrors the detail-screen
+              // gate: 5 pads filled AND no daily checklist items still
+              // pending. Otherwise the paw shows partially filled with
+              // no check, signaling there's still something to do today.
+              const dailyPending = items.filter((it) => {
+                if (it.frequency !== "daily") return false;
+                const status = effectiveStatus(it, state[it.id]);
+                return status !== "done" && status !== "skipped";
+              }).length;
+              const fullyDone = Pawgress.isAllFive(pawgressDay) && dailyPending === 0;
+              return (
+                <PawgressPaw
+                  completion={pawgressDay}
+                  size={56}
+                  colorMode="today"
+                  isComplete={fullyDone}
+                />
+              );
+            })()}
             <View style={{ flex: 1, marginLeft: 14 }}>
               <Text style={s.pawgressTitle}>Today's Pawgress</Text>
               <Text style={s.pawgressSubtitle}>

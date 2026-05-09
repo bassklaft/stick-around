@@ -78,13 +78,19 @@ export default function PawgressScreen() {
     if (next?.[segment]) tapMedium();
     else tapLight();
 
-    // Celebrate if all five just got filled.
-    if (Pawgress.isAllFive(next)) {
+    // Celebrate when "today is fully done" — 5 pads AND daily
+    // checklist all-clear. Fires only once per pet+date via the
+    // celebration-key ref. Pads-only completion no longer triggers
+    // the green-check + spin (that was the build-23 mismatch the
+    // user flagged: "Max is set for today" while daily items still
+    // pending).
+    if (Pawgress.isAllFive(next) && dailyRemaining === 0) {
       const key = `${pet.id}:${dateKey}`;
       if (lastCelebratedKeyRef.current !== key) {
         lastCelebratedKeyRef.current = key;
         track("pawgress_day_completed", {
           all_five: true,
+          daily_checklist_done: true,
           pet_species: pet.species,
           time_of_day: new Date().getHours(),
         });
@@ -111,7 +117,16 @@ export default function PawgressScreen() {
         contentContainerStyle={{ paddingTop: 12, paddingBottom: insets.bottom + 60, paddingHorizontal: 20 }}
       >
         <View style={s.heroCard}>
-          <PawgressPaw completion={day} size={220} colorMode="today" />
+          {/* Green-check + spin only fire when the user has wrapped
+              everything for today — 5 pads AND no pending daily
+              checklist items. Reads as "today is fully done"
+              instead of "5 pads alone". */}
+          <PawgressPaw
+            completion={day}
+            size={220}
+            colorMode="today"
+            isComplete={allFive && dailyRemaining === 0}
+          />
           <Text style={s.heroSummary}>
             {allFive
               ? `Today's 5 pads filled · ${pet.name}`

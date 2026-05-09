@@ -40,29 +40,27 @@ const COLORS = {
 };
 
 // Layout — 5 segments inside a 200×200 bounding box. Designed to match
-// the silhouette of MaterialCommunityIcons "paw" (the icon used in the
-// nav-bar tab) so the Pawgress paw and the tab paw read as the same
-// brand mark. Toe pads are softly tilted ovals (rounder than the
-// previous teardrops) and the heel is a smooth heart-shaped pad
-// without the pronounced "3 knuckle" bumps the earlier version had.
+// the FloofLife logo silhouette so the Pawgress paw and the brand
+// mark read as the same identity. Toes are tilted teardrop ovals;
+// heel is a 3-lobe trefoil pad with distinct (but soft) bumps where
+// the toes attach.
 //
 //   key           cx   cy   rx  ry  rot°    label
-//   movement     48   74   16  20   -20    outer-left toe (pinky)
-//   food         78   44   17  22    -6    inner-left toe (index)
-//   mind        122   44   17  22    +6    inner-right toe (middle)
-//   body        152   74   16  20   +20    outer-right toe (ring)
-//   special     heart-pad path                  main pad (heel)
+//   movement     48   78   14  22   -28    outer-left toe (pinky)
+//   food         80   48   15  24    -6    inner-left toe (index)
+//   mind        120   48   15  24    +6    inner-right toe (middle)
+//   body        152   78   14  22   +28    outer-right toe (ring)
+//   special     3-lobe heel-pad path             main pad (heel)
 const TOE_PADS = [
-  { key: "movement", cx: 48,  cy: 74, rx: 16, ry: 20, rot: -20 },
-  { key: "food",     cx: 78,  cy: 44, rx: 17, ry: 22, rot: -6 },
-  { key: "mind",     cx: 122, cy: 44, rx: 17, ry: 22, rot: 6 },
-  { key: "body",     cx: 152, cy: 74, rx: 16, ry: 20, rot: 20 },
+  { key: "movement", cx: 48,  cy: 78, rx: 14, ry: 22, rot: -28 },
+  { key: "food",     cx: 80,  cy: 48, rx: 15, ry: 24, rot: -6 },
+  { key: "mind",     cx: 120, cy: 48, rx: 15, ry: 24, rot: 6 },
+  { key: "body",     cx: 152, cy: 78, rx: 14, ry: 22, rot: 28 },
 ];
-// Heel pad — smooth fat heart silhouette. Wide rounded top tapers
-// to a rounded bottom point. Quadratic curves only (no cubic
-// over-shoots) keep the outline clean and free of the prominent
-// 3-bump knuckle pattern the earlier cubic-bezier version had.
-const MAIN_PAD_PATH = "M 56 122 Q 56 96 100 92 Q 144 96 144 122 Q 156 156 130 178 Q 100 192 70 178 Q 44 156 56 122 Z";
+// Heel pad — 3-lobe trefoil silhouette mirroring the FloofLife logo.
+// Soft bumps along the top where each toe pad attaches, sides curve
+// gently inward, bottom is wide and rounded (not pointy).
+const MAIN_PAD_PATH = "M 54 130 C 46 108, 60 92, 76 98 C 84 90, 95 88, 100 98 C 105 88, 116 90, 124 98 C 140 92, 154 108, 146 130 C 154 158, 130 180, 100 184 C 70 180, 46 158, 54 130 Z";
 
 function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
   const scale = useRef(new Animated.Value(filled ? 1 : 0.92)).current;
@@ -117,9 +115,19 @@ export default function PawgressPaw({
   size = 200,
   colorMode = "today",
   onSegmentTap,
+  // Optional override controlling when the spin + green-check
+  // celebration fires. Default = "all 5 pads filled". Callers can
+  // pass a wider signal (e.g., 5 pads filled AND daily checklist
+  // complete) so the green check only appears when the user has
+  // genuinely wrapped today's care — at which point the paw +
+  // check together render as the FloofLife logo.
+  isComplete: isCompleteOverride,
 }) {
   const color = COLORS[colorMode] || COLORS.today;
-  const isComplete = PAW_SEGMENT_KEYS.every((s) => !!completion[s]);
+  const allFivePads = PAW_SEGMENT_KEYS.every((s) => !!completion[s]);
+  const isComplete = isCompleteOverride != null
+    ? !!isCompleteOverride
+    : allFivePads;
   const wasCompleteRef = useRef(isComplete);
 
   // Animated values for the completion transition:
