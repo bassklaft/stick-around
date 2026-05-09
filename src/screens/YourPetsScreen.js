@@ -83,8 +83,9 @@ export default function YourPetsScreen() {
   function toggleAbout(sectionId) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     setAboutOpen(prev => {
-      // About defaults expanded — undefined ⇒ expanded → tap collapses.
-      const currentlyExpanded = prev[sectionId] ?? true;
+      // All My Floofs sections default COLLAPSED — cleaner first
+      // impression on the screen. Tap to expand.
+      const currentlyExpanded = prev[sectionId] ?? false;
       const next = !currentlyExpanded;
       if (next) track("about_breed_expanded");
       return { ...prev, [sectionId]: next };
@@ -314,7 +315,7 @@ export default function YourPetsScreen() {
               const breed = breedFacts[breedKey];
               if (!breed?.about && !breed?.summary) return null;
               const sectionId = `${pet.id}:${breedKey}`;
-              const aboutExpanded = aboutOpen[sectionId] ?? true;
+              const aboutExpanded = aboutOpen[sectionId] ?? false;
               const healthExpanded = !!healthOpen[sectionId];
               const originStoryExpanded = !!originStoryOpen[sectionId];
               const sourcesExpanded = !!sourcesOpen[sectionId];
