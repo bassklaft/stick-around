@@ -285,6 +285,29 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                 height={HERO_HEIGHT}
                 onActivate={async (petId) => {
                   if (!petId || petId === pet.id) return;
+                  // Optimistic: update the displayed pet + clear
+                  // pawgress/checklist state immediately so the
+                  // Pawgress card, "This week" counter, and other
+                  // children re-render with the new pet right
+                  // alongside the swipe animation. Without this,
+                  // the FloofCardStack's internal index updates
+                  // instantly (hero shows Paco) but parent state
+                  // doesn't refresh until `await load()` finishes
+                  // — so the Pawgress card briefly reads Max's
+                  // data with Paco's name. Optimistic prevents
+                  // that flash of mismatched state.
+                  const newPet = pets.find((p) => p.id === petId);
+                  if (newPet) {
+                    setPet(newPet);
+                    setItems(generateChecklist(newPet));
+                    setState({});
+                    // Empty placeholder so the Pawgress card stays
+                    // visible (gate is {pawgressDay && ...}) and
+                    // reads "0 of 5" until load() fills in the
+                    // real per-pet day record below.
+                    setPawgressDay({ food: false, movement: false, body: false, mind: false, special: false });
+                    setHealthRecords([]);
+                  }
                   await Pets.setActive(petId);
                   await load();
                 }}
@@ -295,6 +318,13 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                   // the wrong pet's profile.
                   if (!tappedPet?.id) return;
                   if (tappedPet.id !== pet.id) {
+                    // Same optimistic update as the swipe path —
+                    // see the comment above.
+                    setPet(tappedPet);
+                    setItems(generateChecklist(tappedPet));
+                    setState({});
+                    setPawgressDay({ food: false, movement: false, body: false, mind: false, special: false });
+                    setHealthRecords([]);
                     await Pets.setActive(tappedPet.id);
                     await load();
                   }
