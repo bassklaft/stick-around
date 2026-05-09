@@ -328,19 +328,8 @@ export default function HomeScreen({ navigation }) {
           <Text style={s.progressCount}>{completed} of {items.length} done →</Text>
         </TouchableOpacity>
 
-        {/* Emergency pinned at the top — needs to be findable in 2 seconds */}
-        <TouchableOpacity onPress={() => { tapHeavy(); navigation.navigate("Emergency"); }} style={s.emergencyCard} activeOpacity={0.7}>
-          <View style={s.emergencyIcon}>
-            <MaterialCommunityIcons name="hospital-box" size={28} color="#fff" />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Text style={s.emergencyTitle}>EMERGENCY RESOURCES</Text>
-            <Text style={s.emergencySubtitle}>Poison-control hotlines · find an ER vet · pet first-aid course</Text>
-          </View>
-          <MaterialCommunityIcons name="chevron-right" size={22} color="#fff" />
-        </TouchableOpacity>
-
-        {/* Pawgress card — today's daily-care paw at a glance. */}
+        {/* Pawgress card first — daily-care paw is the everyday-action
+            entry point and reads as the "next thing to do today". */}
         {pawgressDay && (
           <TouchableOpacity
             onPress={() => navigation.navigate("Pawgress")}
@@ -361,6 +350,20 @@ export default function HomeScreen({ navigation }) {
             <MaterialCommunityIcons name="chevron-right" size={22} color={theme.muted} />
           </TouchableOpacity>
         )}
+
+        {/* Emergency below — still findable in 2 seconds via the bold
+            red card + tabular position. The everyday Pawgress action
+            takes the top slot. */}
+        <TouchableOpacity onPress={() => { tapHeavy(); navigation.navigate("Emergency"); }} style={s.emergencyCard} activeOpacity={0.7}>
+          <View style={s.emergencyIcon}>
+            <MaterialCommunityIcons name="hospital-box" size={28} color="#fff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={s.emergencyTitle}>EMERGENCY RESOURCES</Text>
+            <Text style={s.emergencySubtitle}>Poison-control hotlines · find an ER vet · pet first-aid course</Text>
+          </View>
+          <MaterialCommunityIcons name="chevron-right" size={22} color="#fff" />
+        </TouchableOpacity>
 
         <Text style={s.sectionHd}>QUICK ACCESS</Text>
         {cards.map(c => (
