@@ -24,7 +24,7 @@ const TIPS = [
   { icon: "home-outline",                 text: "All your tools live on the Home page — checklist, recalls, vets, emergency, more." },
   { icon: "paw",                          text: "Switch between your floofs from the My Floofs tab, OR long-press the 🐾 in the bottom-right for a quick fan-out." },
   { icon: "stomach",                      text: "Tap the pawprint at the top of Pawgress to fill today's 5 care segments. Daily reset, streaks for the consistent." },
-  { icon: "hospital-box",                 text: "The red Emergency card is always one tap away. Poison-control hotlines, ER vet finder, first-aid resources." },
+  { icon: "hospital-box",                 text: "The red Emergency card is easily accessible. Poison-control hotlines, ER vet finder, first-aid resources." },
 ];
 
 export default function FirstRunTutorial({ visible, onClose }) {
