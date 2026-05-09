@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useLayoutEffect } from "react";
 import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -33,7 +33,7 @@ const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).j
 // finish() routes through Pets.update(editPetId, ...) preserving the
 // original createdAt. Caller passes `editPetId` so we know which record
 // to load and update.
-export default function OnboardingScreen({ onDone, addMode = false, editMode = false, editPetId = null }) {
+export default function OnboardingScreen({ onDone, addMode = false, editMode = false, editPetId = null, navigation }) {
   const insets = useSafeAreaInsets();
   const [step, setStep] = useState(0);
   const [name, setName] = useState("");
@@ -230,6 +230,59 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
     }
     return out;
   }
+
+  // ────────── Delete a floof (editMode only) ──────────
+  // Lives in the navigation header's top-right, as a red "Delete"
+  // text button — no trash icon (a trash icon for a possibly-
+  // deceased pet would be the wrong tone). Confirmation alert
+  // explains the data scope; on success, the user sees a gentle
+  // farewell ("Goodbye for now / Your Floof left your home, but
+  // never your heart.") before the modal dismisses back.
+  function confirmDeleteFloof() {
+    Alert.alert(
+      `Delete ${name?.trim() || "this floof"}?`,
+      "All of their photos, checklist progress, Pawgress streak, Tummy Tracker entries, and health records will be permanently removed from this device. This cannot be undone.",
+      [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Delete",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              await Pets.remove(editPetId);
+              track("pet_removed", { species });
+              tapHeavy();
+              Alert.alert(
+                "Goodbye for now",
+                "Your Floof left your home, but never your heart.",
+                [{ text: "OK", onPress: () => onDone?.() }],
+              );
+            } catch {
+              Alert.alert("Couldn't delete", "Something went wrong. Try again.");
+            }
+          },
+        },
+      ],
+    );
+  }
+
+  useLayoutEffect(() => {
+    if (!editMode || !editPetId || !navigation?.setOptions) return;
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity
+          onPress={confirmDeleteFloof}
+          style={{ paddingHorizontal: 12, paddingVertical: 6 }}
+          accessibilityRole="button"
+          accessibilityLabel={`Delete ${name || "this floof"}`}
+          hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+        >
+          <Text style={{ color: "#9C2A0F", fontSize: 16, fontWeight: "600" }}>Delete</Text>
+        </TouchableOpacity>
+      ),
+    });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [navigation, editMode, editPetId, name]);
 
   // Build the payload, persist it, then trigger the photobooth animation
   // (if any photos were captured). When the photobooth ends — by either
@@ -733,39 +786,6 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
 
             <PrimaryButton label={editMode ? `Save changes` : addMode ? `Add ${name.trim() || "this pet"}` : `Start with ${name.trim() || "your pet"}`} onPress={finish} />
             <SecondaryButton label="Back" onPress={() => setStep(5)} />
-
-            {editMode && editPetId && (
-              <TouchableOpacity
-                onPress={() => {
-                  Alert.alert(
-                    `Remove ${name.trim() || "this floof"}?`,
-                    "All of their photos, checklist progress, Pawgress streak, Tummy Tracker entries, and health records will be permanently removed from this device. This cannot be undone.",
-                    [
-                      { text: "Cancel", style: "cancel" },
-                      {
-                        text: "Remove",
-                        style: "destructive",
-                        onPress: async () => {
-                          try {
-                            await Pets.remove(editPetId);
-                            track("pet_removed", { species });
-                            tapHeavy();
-                            onDone();
-                          } catch {
-                            Alert.alert("Couldn't remove", "Something went wrong. Try again.");
-                          }
-                        },
-                      },
-                    ],
-                  );
-                }}
-                style={s.removePetBtn}
-                activeOpacity={0.7}
-              >
-                <MaterialCommunityIcons name="trash-can-outline" size={16} color="#9C2A0F" />
-                <Text style={s.removePetText}>Remove this floof from FloofLife</Text>
-              </TouchableOpacity>
-            )}
           </View>
         )}
       </ScrollView>
@@ -858,6 +878,4 @@ const s = StyleSheet.create({
   secondaryBtnText: { color: theme.muted, fontSize: 14 },
   founder:          { marginTop: 36, paddingTop: 20, borderTopWidth: 1, borderTopColor: theme.line, gap: 10 },
   founderText:      { fontSize: 12, color: theme.muted, lineHeight: 18, fontStyle: "italic" },
-  removePetBtn:     { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 28, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: "#9C2A0F" + "44" },
-  removePetText:    { color: "#9C2A0F", fontSize: 13, fontWeight: "600", letterSpacing: 0.3 },
 });

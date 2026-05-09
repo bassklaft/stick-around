@@ -99,7 +99,27 @@ export const Pets = {
     const arr = (await this.list()).filter(p => p.id !== id);
     await this.setAll(arr);
     const activeId = await AsyncStorage.getItem(KEY_ACTIVE);
-    if (activeId === id) await AsyncStorage.removeItem(KEY_ACTIVE);
+    if (activeId === id) {
+      // Auto-rotate active pet to the next-up (oldest-first) so the
+      // user isn't left in an empty-active state. If no pets remain,
+      // clear active — App.js consumers (useActivePet listeners)
+      // can route back to onboarding.
+      const sorted = arr.slice().sort((a, b) => {
+        const ageA = a.ageYears ?? -1, ageB = b.ageYears ?? -1;
+        if (ageA !== ageB) return ageB - ageA;
+        return (a.createdAt || 0) - (b.createdAt || 0);
+      });
+      const next = sorted[0]?.id || null;
+      if (next) {
+        await AsyncStorage.setItem(KEY_ACTIVE, next);
+      } else {
+        await AsyncStorage.removeItem(KEY_ACTIVE);
+      }
+      try {
+        const mod = require("./activePet");
+        mod.notifyActivePetChanged?.();
+      } catch { /* swallow */ }
+    }
   },
 
   // ─────────────── Health records (v1.2) ─────────────────────────

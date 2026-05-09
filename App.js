@@ -15,6 +15,7 @@ import MyFloofsTabButton from "./src/components/MyFloofsTabButton";
 import PawIcon from "./src/components/PawIcon";
 import GuidedTour from "./src/components/GuidedTour";
 import { computeFanCenters, hitTestFan } from "./src/lib/fanGeometry";
+import { useActivePet } from "./src/lib/activePet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 // Bumped from _v1 → _v2 with the v1.2.0 release so existing users
@@ -196,6 +197,25 @@ export default function App() {
 
   useEffect(() => { initAnalytics(); }, []);
   useEffect(() => { initHaptics(); }, []);
+
+  // Watch active-pet state — if the active id becomes null AND the
+  // pets list is empty (e.g., the user just deleted their last
+  // floof from EditPet → Delete), route back to onboarding so the
+  // app doesn't sit in an empty-active state. Pets.remove
+  // auto-rotates to the next-up pet when there's one remaining,
+  // so this listener only fires for the genuinely-empty case.
+  const { petId: activePetId } = useActivePet();
+  useEffect(() => {
+    if (activePetId != null) return;
+    if (!onboarded) return;
+    (async () => {
+      const list = await Pets.list();
+      if (list.length === 0) {
+        setOnboarded(false);
+        try { await AsyncStorage.removeItem("pawrent_pet"); } catch { /* swallow */ }
+      }
+    })();
+  }, [activePetId, onboarded]);
 
   // Floof fan-out state. Hoisted to App root so the gesture (long-
   // press → slide → release) can be one continuous touch session
