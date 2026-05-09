@@ -25,7 +25,7 @@
 // React Navigation's focused state.
 import React, { useRef } from "react";
 import { View, Text, PanResponder, StyleSheet } from "react-native";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import PawIcon from "./PawIcon";
 import { theme } from "../theme";
 
 const LONG_PRESS_MS = 450;
@@ -124,11 +124,7 @@ export default function MyFloofsTabButton(props) {
       accessibilityLabel="My Floofs · long-press for the floof fan"
       accessibilityState={{ selected: focused }}
     >
-      <MaterialCommunityIcons
-        name={focused ? "paw" : "paw-outline"}
-        size={24}
-        color={focused ? theme.accent : theme.muted}
-      />
+      <PawIcon size={24} color={focused ? theme.accent : theme.muted} />
       <Text style={[styles.label, { color: focused ? theme.accent : theme.muted }]}>
         My Floofs
       </Text>

@@ -1,31 +1,39 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
-  FloofLife brand mark — paw + green check overlay on cream
-  background. Silhouette is the literal MaterialDesignIcons "paw"
-  glyph, the same icon @expo/vector-icons renders for the in-app
-  Logo header and (now) for the in-app PawgressPaw activity ring.
-  All three render the same vector → guaranteed brand consistency.
+  FloofLife brand mark — paw + green check on cream. Geometry is
+  the canonical PawIcon (src/components/PawIcon.js): 4 toes
+  (PAW_TOES) + heel pad (PAW_HEEL_PATH), 100×100 user-space. Same
+  silhouette used by the in-app PawgressPaw, Logo header, and tab
+  bar — no drift between surfaces.
 
-  Export to PNG:
+  Re-export PNGs:
     qlmanage -t -s 1024 -o . logo-paw-check.svg
+    sips -Z 512 logo-paw-check@1024.png --out logo-paw-check@512.png
+    sips -Z 256 logo-paw-check@1024.png --out logo-paw-check@256.png
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 280" width="320" height="280">
   <!-- Cream background, rounded card -->
   <rect width="320" height="280" rx="24" fill="#FBE4DC"/>
 
-  <!-- Paw — MCI "paw" glyph (24×24 viewBox) translated and scaled
-       into the 320×280 canvas. Fill-only for crisp brand-mark edges. -->
-  <g transform="translate(48 38) scale(8.5)" fill="#C04A2C">
-    <path d="M8.35,3C7,2.85 5.62,4.1 5.34,5.84C5.06,7.57 5.96,9.13 7.34,9.27C8.71,9.42 10.09,8.17 10.37,6.43C10.65,4.69 9.75,3.13 8.35,3Z"/>
-    <path d="M15.65,3C14.25,3.13 13.35,4.69 13.63,6.43C13.91,8.17 15.29,9.42 16.66,9.27C18.04,9.13 18.94,7.57 18.66,5.84C18.38,4.1 17,2.85 15.65,3Z"/>
-    <path d="M3.79,9.5C2.45,9.78 1.71,11.55 2.16,13.21C2.6,14.86 4.04,15.97 5.38,15.7C6.71,15.42 7.45,13.65 7,12C6.5,10.34 5.12,9.23 3.79,9.5Z"/>
-    <path d="M20.21,9.5C18.88,9.23 17.5,10.34 17,12C16.55,13.65 17.29,15.42 18.62,15.7C19.96,15.97 21.4,14.86 21.84,13.21C22.29,11.55 21.55,9.78 20.21,9.5Z"/>
-    <path d="M11.59,11.46C10.83,11.5 10.11,11.84 9.5,12.32C8.39,13.21 7.5,14.34 6.62,15.5C5.77,16.65 4.86,17.81 4.5,19.16C4.18,20.41 4.5,21.94 5.71,22.6C7.06,23.34 8.78,23 10.16,22.69C11.53,22.38 12.93,22.31 14.32,22.42C15.59,22.5 16.91,22.83 18.13,22.34C18.95,22 19.66,21.13 19.59,20.18C19.51,18.84 18.61,17.7 17.81,16.66C16.93,15.5 16.07,14.32 14.96,13.4C13.82,12.45 12.84,11.4 11.59,11.46Z"/>
+  <!-- Paw — PawIcon's 100×100 viewBox translated and scaled into
+       the 320×280 canvas. Translate (60, 40), scale 2.0 → paw
+       fills a centered 200×200 region. -->
+  <g transform="translate(60 40) scale(2)" fill="#C04A2C">
+    <!-- Toes (PAW_TOES) -->
+    <ellipse cx="22" cy="33" rx="8" ry="14" transform="rotate(-22 22 33)"/>
+    <ellipse cx="41" cy="22" rx="8" ry="14" transform="rotate(-6 41 22)"/>
+    <ellipse cx="59" cy="22" rx="8" ry="14" transform="rotate(6 59 22)"/>
+    <ellipse cx="78" cy="33" rx="8" ry="14" transform="rotate(22 78 33)"/>
+    <!-- Heel (PAW_HEEL_PATH) -->
+    <path d="M 22 58 C 14 58 10 70 14 80 C 18 92 32 96 50 96 C 68 96 82 92 86 80 C 90 70 86 58 78 58 L 22 58 Z"/>
   </g>
 
-  <!-- Green check badge — bottom-right of the paw -->
-  <g transform="translate(225 215)">
-    <circle r="34" fill="#3F8E5C" stroke="#FBE4DC" stroke-width="4"/>
-    <path d="M -13 0 L -4 9 L 15 -10" stroke="#fff" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  <!-- Green check badge — same anatomy as the in-app PawIcon's
+       optional `withCheck`. Translated to land at the bottom-right
+       of the paw silhouette. -->
+  <g transform="translate(216 200)">
+    <circle r="28" fill="#FBE4DC"/>
+    <circle r="22" fill="#3F8E5C"/>
+    <path d="M -10 0 L -2 8 L 12 -8" stroke="#fff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   </g>
 </svg>

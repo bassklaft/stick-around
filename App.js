@@ -12,6 +12,7 @@ import { initHaptics, tapLight, tapMedium, tapHeavy } from "./src/lib/haptics";
 import { Pets } from "./src/lib/storage";
 import FloofFanOverlay from "./src/components/FloofFanOverlay";
 import MyFloofsTabButton from "./src/components/MyFloofsTabButton";
+import PawIcon from "./src/components/PawIcon";
 import GuidedTour from "./src/components/GuidedTour";
 import { computeFanCenters, hitTestFan } from "./src/lib/fanGeometry";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -78,13 +79,15 @@ function tabIcon(routeName) {
   return function TabIcon({ focused, color }) {
     const isHome = routeName === "Home";
     const size = isHome ? 30 : 24;
+    // Tab bar paws use the canonical PawIcon — same silhouette as
+    // the Logo header but without the green-check badge (per Max's
+    // spec: dock icons stay identical to the brand mark minus the
+    // checkmark). Focused / unfocused is signalled via color, not
+    // a separate outline glyph.
     return (
-      <MaterialCommunityIcons
-        name={focused ? "paw" : "paw-outline"}
-        size={size}
-        color={color}
-        style={isHome ? { marginTop: -4 } : null}
-      />
+      <View style={isHome ? { marginTop: -4 } : null}>
+        <PawIcon size={size} color={color} />
+      </View>
     );
   };
 }
@@ -333,9 +336,11 @@ export default function App() {
                 {(props) => (
                   <MainTabs
                     {...props}
-                    // Legacy prop — kept for HomeScreen's onShowFloofFan
-                    // pinch-in / hard-press shortcut (still uses the
-                    // discrete-event open path, no slide).
+                    // Discrete open used by FloofCardStack's
+                    // hold-on-stack path (the in-stack alternative
+                    // to the long-press-on-tab gesture). The
+                    // continuous slide-to-pick path goes through
+                    // onFanLongPress* below.
                     onMyFloofsLongPress={handleFanLongPressStart}
                     onFanLongPressStart={handleFanLongPressStart}
                     onFanLongPressMove={handleFanLongPressMove}
