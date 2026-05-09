@@ -355,7 +355,7 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
               <Text style={s.pawgressSubtitle}>
                 {Pawgress.isAllFive(pawgressDay)
                   ? `Today's 5 pads filled · ${pet.name}`
-                  : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — tap a pad as you go`}
+                  : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — complete today's checklist to fill the paw`}
               </Text>
             </View>
             <MaterialCommunityIcons name="chevron-right" size={22} color={theme.muted} />

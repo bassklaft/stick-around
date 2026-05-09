@@ -128,7 +128,7 @@ export default function PawgressScreen() {
               ? (dailyRemaining > 0
                   ? `Pads done — but ${dailyRemaining} daily checklist item${dailyRemaining === 1 ? "" : "s"} still need attention. Tap "This Week" on Home to finish those.`
                   : "Sweet dreams. Come back tomorrow for another paw.")
-              : "Tap a pad as you go through the day."}
+              : "Complete today's pawgress checklist to fill in the paw!"}
           </Text>
         </View>
 
