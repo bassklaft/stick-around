@@ -174,9 +174,21 @@ export const Pets = {
   async setActive(id) {
     if (!id) return;
     await AsyncStorage.setItem(KEY_ACTIVE, id);
+    // Notify in-process useActivePet() consumers so any open modal
+    // (e.g., the photo manager) re-syncs to the new active pet
+    // immediately, without waiting for a focus event. Lazy import
+    // avoids a circular-init issue (activePet.js imports Pets).
+    try {
+      const mod = require("./activePet");
+      mod.notifyActivePetChanged?.();
+    } catch { /* swallow */ }
   },
   async clearActive() {
     await AsyncStorage.removeItem(KEY_ACTIVE);
+    try {
+      const mod = require("./activePet");
+      mod.notifyActivePetChanged?.();
+    } catch { /* swallow */ }
   },
 };
 

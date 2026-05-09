@@ -1,7 +1,21 @@
 // PhotoManagerSheet — modal for adding and removing photos for a
-// single pet. Bound to one pet at a time; caller passes `pet` and an
-// `onChange(photos)` callback that should persist via
-// Pets.update(pet.id, { photos: next }).
+// single pet.
+//
+// IMPORTANT: writes ALWAYS resolve the target petId via
+// readActivePetId() at the moment of the write, not from the
+// `pet` prop. Build-32 surfaced a class of bug where the user
+// swiped the home card-stack to a new pet, the modal mounted
+// with one pet's `pet` prop, and uploads kept landing on the
+// previous pet because the prop was captured stale. Both call
+// sites (HomeScreen card-tap, YourPetsScreen avatar-tap) now
+// call Pets.setActive BEFORE opening this modal — so
+// readActivePetId() at write time always returns the pet the
+// user means.
+//
+// The `pet` prop is still used for the HEADER display so the
+// title doesn't flicker as the modal animates in (the live
+// active pet matches the header in both call sites because of
+// the setActive-before-open pattern).
 //
 // Layout:
 //   - 5 LABELED prompt slots, one per item in PHOTO_PROMPTS. The
@@ -45,15 +59,17 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { theme } from "../theme";
 import { pickPetPhoto } from "../lib/photoPicker";
+import { Pets } from "../lib/storage";
 import {
   MAX_PHOTOS_PER_PET,
   PHOTO_PROMPTS,
   PROMPT_SLOTS,
 } from "../lib/petPhotos";
 import { tapLight, tapMedium, notifySuccess } from "../lib/haptics";
+import { readActivePetId } from "../lib/activePet";
 import { track } from "../lib/analytics";
 
-export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
+export default function PhotoManagerSheet({ visible, pet, onClose, onAfterChange }) {
   const insets = useSafeAreaInsets();
 
   // Source-of-truth array, sparse-array-aware. Pulls from pet.photos
@@ -112,13 +128,20 @@ export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
     return arr.slice(0, lastIdx + 1);
   }
 
-  // Ensure we always write at least PROMPT_SLOTS positions if any
-  // labeled slot is filled — keeps `photos[idx]` semantics intact
-  // for sparse labeled records on read.
-  function persist(nextSparse) {
+  // Resolve the live active pet id at WRITE time (not at modal
+  // mount), then persist via Pets.update. Returns the live id so
+  // the caller can also tell the parent to refresh its view of
+  // the same pet.
+  async function persist(nextSparse) {
     const compacted = compactWriteArray(nextSparse);
     const final = compacted.map((u) => (typeof u === "string" && u.length > 0 ? u : null));
-    onChange?.(final);
+    const livePetId = await readActivePetId();
+    if (!livePetId) return null;
+    try {
+      await Pets.update(livePetId, { photos: final, photoUri: final[0] || null });
+    } catch { /* swallow — caller's onAfterChange still fires for refresh */ }
+    onAfterChange?.(livePetId);
+    return livePetId;
   }
 
   function petName() {
@@ -138,14 +161,22 @@ export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
 
   async function pickPhotoIntoSlot(idx) {
     if (atCap && !photos[idx]) return;
-    const uri = await pickPetPhoto({ petId: pet?.id });
+    // Resolve live pet id BEFORE writing the file — pickPetPhoto
+    // copies the picked image into documentDirectory/pets/{petId}/.
+    // If we used pet?.id from the prop and the user had swiped to
+    // a new pet, the file would land in the WRONG directory while
+    // the URI would be written to the live pet's photos[]. Same
+    // live id is then used for the storage write inside persist().
+    const livePetId = await readActivePetId();
+    if (!livePetId) return;
+    const uri = await pickPetPhoto({ petId: livePetId });
     if (!uri) return;
     const next = photos.slice();
     // Pad up to idx+1 so position is preserved (sparse — empties
     // stay null).
     while (next.length <= idx) next.push(null);
     next[idx] = uri;
-    persist(next);
+    await persist(next);
     track("pet_photo_added", { context: "photo_manager", slot: idx, total: filledCount + (photos[idx] ? 0 : 1) });
     notifySuccess();
   }
@@ -169,6 +200,9 @@ export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
             } else {
               next.splice(idx, 1);
             }
+            // persist() is async + reads readActivePetId at write
+            // time — fire-and-forget here is fine since we don't
+            // need to await before the alert closes.
             persist(next);
             track("pet_photo_removed", { slot: idx });
             tapLight();
@@ -202,14 +236,18 @@ export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
 
   async function handleAddExtra() {
     if (atCap) return;
-    const uri = await pickPetPhoto({ petId: pet?.id });
+    // Same live-pet-id resolution as pickPhotoIntoSlot — see comment
+    // there for why we don't trust pet?.id from props at write time.
+    const livePetId = await readActivePetId();
+    if (!livePetId) return;
+    const uri = await pickPetPhoto({ petId: livePetId });
     if (!uri) return;
     // Find the first available extra slot (>=5) or append at the
     // end of the array up to MAX.
     const next = photos.slice();
     while (next.length < PROMPT_SLOTS) next.push(null);
     next.push(uri);
-    persist(next.slice(0, MAX_PHOTOS_PER_PET));
+    await persist(next.slice(0, MAX_PHOTOS_PER_PET));
     track("pet_photo_added", { context: "photo_manager", slot: "extra" });
     notifySuccess();
   }

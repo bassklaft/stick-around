@@ -484,13 +484,12 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
         visible={showPhotoManager}
         pet={pet}
         onClose={() => setShowPhotoManager(false)}
-        onChange={async (next) => {
-          // Persist + reload so the hero photo picker refreshes. We
-          // also write photoUri = photos[0] so the legacy mirror is
-          // up to date for any read sites that haven't migrated yet.
-          await Pets.update(pet.id, { photos: next, photoUri: next[0] || null });
-          await load();
-        }}
+        // PhotoManagerSheet does the storage write itself via
+        // readActivePetId() at write time — onAfterChange just
+        // tells us to re-pull data so the hero rotates to the
+        // newly-uploaded photo and the Quick Access subtitle
+        // refreshes.
+        onAfterChange={async () => { await load(); }}
       />
     </ScrollView>
   );

@@ -136,7 +136,19 @@ export default function YourPetsScreen() {
   // multi-photo feature shipped, who would otherwise never see the
   // labeled prompts. The actual pickPetPhoto call lives inside the
   // sheet now, scoped per slot.
-  function openPhotoManager(petId) {
+  // Opening the photo manager always activates the chosen pet
+  // first. PhotoManagerSheet resolves write target via
+  // readActivePetId() at upload time, so opening for a
+  // not-currently-active pet (e.g., user is on Bella's card while
+  // Max is the active pet) needs to flip active to that pet up
+  // front. Otherwise uploads would land on the active pet, not
+  // the one whose card was tapped.
+  async function openPhotoManager(petId) {
+    if (!petId) return;
+    try {
+      await Pets.setActive(petId);
+      setActiveId(petId);
+    } catch { /* swallow */ }
     setPhotoMgrPetId(petId);
     tapMedium();
   }
@@ -573,11 +585,13 @@ export default function YourPetsScreen() {
         visible={!!photoMgrPetId}
         pet={pets.find((p) => p.id === photoMgrPetId) || null}
         onClose={() => setPhotoMgrPetId(null)}
-        onChange={async (next) => {
-          if (!photoMgrPetId) return;
-          await Pets.update(photoMgrPetId, { photos: next, photoUri: next[0] || null });
-          await load();
-        }}
+        // openPhotoManager (above) calls Pets.setActive on the
+        // tapped pet BEFORE setting photoMgrPetId, so by the time
+        // PhotoManagerSheet writes via readActivePetId() it lands
+        // on the correct (active) pet. This callback just tells
+        // us to refresh so the card avatar rotates to the new
+        // photo.
+        onAfterChange={async () => { await load(); }}
       />
     </ScrollView>
   );
