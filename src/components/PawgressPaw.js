@@ -40,27 +40,29 @@ const COLORS = {
 };
 
 // Layout — 5 segments inside a 200×200 bounding box. Designed to match
-// the FloofLife logo silhouette so the Pawgress paw and the brand
-// mark read as the same identity. Toes are tilted teardrop ovals;
-// heel is a 3-lobe trefoil pad with distinct (but soft) bumps where
-// the toes attach.
+// the MaterialCommunityIcons "paw" glyph used in the active-pet chip
+// + tab bar exactly, so the big Pawgress paw and the small tab/chip
+// paw read as the SAME brand mark. Toes are nearly-uniform ovals
+// with subtle outward tilt; heel pad has crisp evenly-spaced 3-lobe
+// top bumps and a chubby rounded bottom.
 //
 //   key           cx   cy   rx  ry  rot°    label
-//   movement     48   78   14  22   -28    outer-left toe (pinky)
-//   food         80   48   15  24    -6    inner-left toe (index)
-//   mind        120   48   15  24    +6    inner-right toe (middle)
-//   body        152   78   14  22   +28    outer-right toe (ring)
+//   movement     52   76   16  20   -18    outer-left toe (pinky)
+//   food         80   50   16  23    -6    inner-left toe (index)
+//   mind        120   50   16  23    +6    inner-right toe (middle)
+//   body        148   76   16  20   +18    outer-right toe (ring)
 //   special     3-lobe heel-pad path             main pad (heel)
 const TOE_PADS = [
-  { key: "movement", cx: 48,  cy: 78, rx: 14, ry: 22, rot: -28 },
-  { key: "food",     cx: 80,  cy: 48, rx: 15, ry: 24, rot: -6 },
-  { key: "mind",     cx: 120, cy: 48, rx: 15, ry: 24, rot: 6 },
-  { key: "body",     cx: 152, cy: 78, rx: 14, ry: 22, rot: 28 },
+  { key: "movement", cx: 52,  cy: 76, rx: 16, ry: 20, rot: -18 },
+  { key: "food",     cx: 80,  cy: 50, rx: 16, ry: 23, rot: -6 },
+  { key: "mind",     cx: 120, cy: 50, rx: 16, ry: 23, rot: 6 },
+  { key: "body",     cx: 148, cy: 76, rx: 16, ry: 20, rot: 18 },
 ];
-// Heel pad — 3-lobe trefoil silhouette mirroring the FloofLife logo.
-// Soft bumps along the top where each toe pad attaches, sides curve
-// gently inward, bottom is wide and rounded (not pointy).
-const MAIN_PAD_PATH = "M 54 130 C 46 108, 60 92, 76 98 C 84 90, 95 88, 100 98 C 105 88, 116 90, 124 98 C 140 92, 154 108, 146 130 C 154 158, 130 180, 100 184 C 70 180, 46 158, 54 130 Z";
+// Heel pad — three distinct rounded lobes at the top (each its own
+// dome rather than a soft wave), sides curve inward, bottom is
+// chubby and rounded with a soft taper. Control points pulled UP
+// at the toe-attach valleys to crisp up each lobe.
+const MAIN_PAD_PATH = "M 60 130 C 50 110, 64 88, 78 100 C 84 86, 96 86, 100 100 C 104 86, 116 86, 122 100 C 136 88, 150 110, 140 130 C 148 156, 128 174, 100 178 C 72 174, 52 156, 60 130 Z";
 
 function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
   const scale = useRef(new Animated.Value(filled ? 1 : 0.92)).current;
