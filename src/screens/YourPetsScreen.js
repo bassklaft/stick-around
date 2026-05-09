@@ -16,7 +16,7 @@ import { pickPhotoForSlot, MAX_PHOTOS_PER_PET } from "../lib/petPhotos";
 import { usePurchases } from "../lib/purchasesContext";
 import { getPetBreeds, getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
 import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
-import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
+import { breedFacts, breedDisplayName, breedAdjective, breedEmoji } from "../data/breeds";
 import { track } from "../lib/analytics";
 import { tapLight, tapMedium } from "../lib/haptics";
 import PhotoManagerSheet from "../components/PhotoManagerSheet";
@@ -451,7 +451,7 @@ export default function YourPetsScreen() {
                     onPress={() => toggleSubSection(setTipsOpen, sectionId, "insider_tips_expanded")}
                     style={s.tipsHeader}
                   >
-                    <Text style={s.tipsTitle} numberOfLines={2}>💡 Insider Tips · {breed.tips.length} {breed.tips.length === 1 ? "thing" : "things"} only {breedDisplayName(breedKey)} owners know</Text>
+                    <Text style={s.tipsTitle} numberOfLines={2}>💡 Insider Tips · {breed.tips.length} {breed.tips.length === 1 ? "thing" : "things"} only {breedAdjective(breedKey)} owners know</Text>
                     <Text style={s.tipsHeaderHint}>{tipsExpanded ? "Tap to hide" : "Tap to show"}</Text>
                   </TouchableOpacity>
                   {tipsExpanded && (

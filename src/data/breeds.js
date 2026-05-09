@@ -4251,3 +4251,18 @@ export function breedDisplayName(breedKey) {
   const titled = breedKey.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
   return titled.endsWith("s") ? titled : titled + "s";
 }
+
+// Singular adjectival form of a breed — used for natural-language
+// composition like "Cavapoo owners" (not "Cavapoos owners") or "what
+// only Bernedoodle owners know" (not "Bernedoodles owners"). Falls
+// back to "floof" / "dog" / "cat" for unknown / generic keys.
+export function breedAdjective(breedKey) {
+  const b = breedFacts[(breedKey || "").toLowerCase()];
+  if (b?.adjective) return b.adjective;
+  if (!breedKey) return "floof";
+  if (breedKey === "mixed") return "mixed-breed dog";
+  if (breedKey === "mixed cat") return "mixed-breed cat";
+  if (breedKey === "other dog") return "dog";
+  if (breedKey === "other cat") return "cat";
+  return breedKey.split(" ").map((w) => w[0]?.toUpperCase() + w.slice(1)).join(" ");
+}

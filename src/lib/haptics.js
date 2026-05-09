@@ -1,42 +1,25 @@
 // Haptic feedback wrapper. Six calibrated channels tied to the
 // importance of the action — heavier feedback for transactional or
-// destructive actions, lighter feedback for routine UI taps. Honors
-// a user setting (Settings → Notifications → Haptic feedback) with
-// three levels:
+// destructive actions, lighter feedback for routine UI taps.
 //
-//   "on"     — full haptics across all channels (default)
-//   "subtle" — light + success only; medium / heavy / warning /
-//              error all collapse to light
-//   "off"    — no haptics at all
+// Per build 24 smoke-test feedback the user-facing haptics toggle
+// was removed: haptics are always on. The legacy pref helpers
+// (getHapticsPref / setHapticsPref) remain as no-ops so any old
+// import sites keep building, but `fire()` no longer reads them.
 //
 // All calls are silent no-ops on platforms / devices where haptics
-// aren't supported. iOS users can also disable haptics globally in
-// Settings → Sounds & Haptics; Expo Haptics respects that.
+// aren't supported. iOS users can still disable haptics globally
+// from iOS Settings → Sounds & Haptics; Expo Haptics respects
+// that, so we don't need an in-app override.
 import * as Haptics from "expo-haptics";
-import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const KEY = "pawrent_haptics_pref";
-let cached = null; // "on" | "subtle" | "off"
-
-export async function getHapticsPref() {
-  if (cached) return cached;
-  const v = await AsyncStorage.getItem(KEY);
-  cached = (v === "subtle" || v === "off") ? v : "on";
-  return cached;
-}
-
-export async function setHapticsPref(pref) {
-  cached = pref;
-  await AsyncStorage.setItem(KEY, pref);
-}
+// Back-compat shims — preserved so any not-yet-deleted import sites
+// don't break the build. Always reports "on"; setting is a no-op.
+export async function getHapticsPref() { return "on"; }
+export async function setHapticsPref(_pref) { /* no-op */ }
 
 function fire(fn) {
-  // Read pref synchronously from cache. The cache is warmed on app
-  // start by the Settings screen mount; until then we default to
-  // "on" so first-launch feedback works.
-  const pref = cached || "on";
-  if (pref === "off") return;
-  try { fn(pref); } catch { /* swallow — never crash for haptics */ }
+  try { fn(); } catch { /* swallow — never crash for haptics */ }
 }
 
 // Light tap — UI navigation, card taps, settings rows, generic taps.
@@ -47,16 +30,12 @@ export function tapLight() {
 // Medium tap — checklist completion, photo upload, pet added,
 // active pet switch, premium purchase initiation.
 export function tapMedium() {
-  fire((pref) => Haptics.impactAsync(
-    pref === "subtle" ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Medium
-  ));
+  fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium));
 }
 
 // Heavy tap — premium purchase confirm, restore, reset, pet deletion.
 export function tapHeavy() {
-  fire((pref) => Haptics.impactAsync(
-    pref === "subtle" ? Haptics.ImpactFeedbackStyle.Light : Haptics.ImpactFeedbackStyle.Heavy
-  ));
+  fire(() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Heavy));
 }
 
 // Success — trial started, subscription confirmed, restore success.
@@ -66,21 +45,14 @@ export function notifySuccess() {
 
 // Warning — paywall blocked an action, soft validation error.
 export function notifyWarning() {
-  fire((pref) => {
-    if (pref === "subtle") return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning);
-  });
+  fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning));
 }
 
 // Error — purchase failed, network error, unrecoverable failure.
 export function notifyError() {
-  fire((pref) => {
-    if (pref === "subtle") return Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-    return Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error);
-  });
+  fire(() => Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error));
 }
 
-// Initialize the cache on app start. Call from the root once.
-export async function initHaptics() {
-  await getHapticsPref();
-}
+// Initialize the haptics module on app start. Now a no-op since
+// there's no pref to warm; kept for App.js back-compat.
+export async function initHaptics() { /* no-op */ }

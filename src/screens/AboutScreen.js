@@ -53,7 +53,31 @@ export default function AboutScreen() {
         <Text style={[s.body, { marginTop: 10 }]}>
           The age calculator blends AVMA size-adjusted formulas, the Wang et al. 2020 epigenetic clock for dogs, and the AAFP feline life-stage curve for cats.
         </Text>
-        <Text style={[s.body, { marginTop: 10, fontStyle: "italic" }]}>
+        <Text style={[s.body, { marginTop: 12, fontWeight: "700" }]}>
+          Veterinary reference texts
+        </Text>
+        <Text style={[s.body, { marginTop: 4 }]}>
+          Health-considerations content is cross-referenced against the standard veterinary medical canon used in clinics and vet-school curricula:
+        </Text>
+        <Text style={[s.body, { marginTop: 8 }]}>
+          • <Text style={{ fontWeight: "600" }}>Merck Veterinary Manual</Text> — the most-cited general veterinary reference; freely available online, kept current by veterinary specialists worldwide.
+        </Text>
+        <Text style={s.body}>
+          • <Text style={{ fontWeight: "600" }}>Ettinger & Feldman, Textbook of Veterinary Internal Medicine</Text> (8th ed.) — the definitive reference for canine and feline internal medicine.
+        </Text>
+        <Text style={s.body}>
+          • <Text style={{ fontWeight: "600" }}>Nelson & Couto, Small Animal Internal Medicine</Text> (6th ed.) — clinical-decision-making text used in most US vet-school curricula.
+        </Text>
+        <Text style={s.body}>
+          • <Text style={{ fontWeight: "600" }}>Plumb's Veterinary Drug Handbook</Text> (10th ed.) — the standard pharmacology reference vets keep at the exam table.
+        </Text>
+        <Text style={s.body}>
+          • <Text style={{ fontWeight: "600" }}>Saunders Comprehensive Veterinary Dictionary</Text> (5th ed., Studdert/Gay/Blood) — the canonical terminology source.
+        </Text>
+        <Text style={[s.body, { marginTop: 8 }]}>
+          • <Text style={{ fontWeight: "600" }}>Cornell University College of Veterinary Medicine</Text> — public-facing breed and health resources from one of the top US veterinary schools (Cornell Riney Canine Health Center, Cornell Feline Health Center).
+        </Text>
+        <Text style={[s.body, { marginTop: 12, fontStyle: "italic" }]}>
           Breed origin information reflects current scholarly consensus where available, and acknowledged debate where it exists. We don't pick a side in academic disputes about ancient lineages.
         </Text>
       </View>
