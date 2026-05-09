@@ -155,7 +155,7 @@ export default function PhotoboothAnimation({ visible, photos = [], onDone }) {
                 },
               ]}
             >
-              <Image source={{ uri }} style={styles.photo} />
+              <Image source={{ uri }} style={styles.photo} onError={() => {}} />
             </Animated.View>
           ))}
           <Animated.Text style={[styles.label, { opacity: labelFade }]}>

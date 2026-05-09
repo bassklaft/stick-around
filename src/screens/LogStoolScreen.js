@@ -193,7 +193,7 @@ export default function LogStoolScreen() {
       <Text style={s.help}>Photos help your vet identify color + consistency. Stays on your device.</Text>
       <TouchableOpacity onPress={showPhotoMenu} style={s.photoBtn} activeOpacity={0.85}>
         {photoUri ? (
-          <Image source={{ uri: photoUri }} style={s.photoPreview} />
+          <Image source={{ uri: photoUri }} style={s.photoPreview} onError={() => {}} />
         ) : (
           <View style={s.photoPlaceholder}>
             <MaterialCommunityIcons name="camera-plus-outline" size={28} color={theme.accent} />

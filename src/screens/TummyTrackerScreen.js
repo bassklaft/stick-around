@@ -284,7 +284,7 @@ export default function TummyTrackerScreen() {
                   <Text style={s.rowMeta}>{fmtTs(e.ts)}</Text>
                 </View>
                 {e.photoUri ? (
-                  <Image source={{ uri: e.photoUri }} style={s.rowPhoto} />
+                  <Image source={{ uri: e.photoUri }} style={s.rowPhoto} onError={() => {}} />
                 ) : null}
               </TouchableOpacity>
             );

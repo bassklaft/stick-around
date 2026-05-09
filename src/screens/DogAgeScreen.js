@@ -135,7 +135,7 @@ export default function DogAgeScreen() {
       <View style={s.hero}>
         <View style={s.heroPhotoWrap}>
           {pet.photoUri ? (
-            <Image source={{ uri: pet.photoUri }} style={s.heroPhoto} />
+            <Image source={{ uri: pet.photoUri }} style={s.heroPhoto} onError={() => {}} />
           ) : (
             <View style={[s.heroPhoto, s.heroFallback]}>
               <Text style={{ fontSize: 64 }}>{breedEmoji(primaryBreed)}</Text>

@@ -169,6 +169,10 @@ export default function LogDietScreen() {
       <TouchableOpacity onPress={save} disabled={saving} style={[s.saveBtn, saving && { opacity: 0.6 }]} activeOpacity={0.85}>
         <Text style={s.saveBtnText}>{saving ? "Saving…" : (editEntryId ? "Save changes" : "Log this meal")}</Text>
       </TouchableOpacity>
+
+      <Text style={s.disclaimer}>
+        FloofLife is a personal log, not medical advice. Discuss diet changes with your veterinarian.
+      </Text>
     </ScrollView>
   );
 }
@@ -187,4 +191,5 @@ const s = StyleSheet.create({
   input:       { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.line, borderRadius: 10, paddingVertical: 12, paddingHorizontal: 14, color: theme.fg, fontSize: 14 },
   saveBtn:     { marginTop: 22, paddingVertical: 16, borderRadius: 12, backgroundColor: theme.accent, alignItems: "center" },
   saveBtnText: { color: "#fff", fontWeight: "800", fontSize: 15 },
+  disclaimer:  { fontSize: 11, color: theme.muted, marginTop: 16, textAlign: "center", fontStyle: "italic", lineHeight: 16 },
 });
