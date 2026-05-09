@@ -259,12 +259,13 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
     >
       {/* Hero — single-pet households see the active pet's photo
           full-bleed. Multi-pet households see a SWIPEABLE STACK of
-          pet cards — flip through with a finger, pinch in or
-          long-press to fan out (FloofFanOverlay), tap a card to
-          activate that pet AND open the photo manager scoped to
-          them. Each card is bound to one pet, so taps + swipes
-          always know which floof they're acting on (fixes the
-          earlier "tap Falafel → land on Bella" bug). */}
+          pet cards — flip through with a finger, long-press the
+          My Floofs tab to open the floof fan (FloofFanOverlay),
+          tap a card to activate that pet AND open the photo
+          manager scoped to them. Each card is bound to one pet,
+          so taps + swipes always know which floof they're acting
+          on. Pinch-in to open the fan was removed in build 33
+          (recurring TurboModule crash on multi-touch). */}
       {(() => {
         const isMultiPet = petsCount > 1;
         const HeroWrap = TouchableOpacity;

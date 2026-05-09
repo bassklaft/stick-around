@@ -2,26 +2,21 @@
 // bleed card; horizontal swipes flip through the deck like a stack
 // of polaroids. Settling on a card sets that pet active.
 //
-// Gestures (single PanResponder owns all three):
-//   - SWIPE  (horizontal drag past threshold) → commit to next/prev
+// Gestures (single PanResponder owns three actions):
+//   - SWIPE (horizontal drag past threshold) → commit to next/prev
 //     pet, animate active state through onActivate(petId).
-//   - TAP    (release with negligible movement) → onTapFront(pet)
+//   - TAP   (release with negligible movement) → onTapFront(pet)
 //     so the caller can open that pet's photo manager.
-//   - HOLD   (~450ms touchdown without movement) → onLongPress()
-//     so the caller can show the FloofFanOverlay for "see all
-//     floofs at once" picking.
+//   - HOLD  (~450ms touchdown without movement) → onLongPress()
+//     for callers that want a hold-on-stack alternative entry to
+//     the floof fan. (Long-press on the My Floofs tab button is
+//     the primary path — see MyFloofsTabButton.)
 //
-// The active pet's card is drawn with the brand accent ring; the
-// previous and next cards peek in from off-screen at -W and +W so
-// the swipe motion has visible content sliding into view. No card
-// is rendered for households with a single pet — caller renders
-// the standard single-pet hero in that case.
-//
-// Per build 21 smoke-test feedback: "I think it would be best if
-// these were stacked like cards where you can flip through them
-// with your finger and that way the photos take over more space on
-// the page and you see your pet larger and then if you hard press,
-// they'll fan out and you can see them all at the same time."
+// Pinch-in to open the fan-out was REMOVED in build 33 — the two-
+// touch detection caused a recurring TurboModule queue crash that
+// surfaced in builds 28-32 (`com.meta.react.turbomodulemanager.queue`
+// SIGABRT during multi-touch tracking). Long-press on the My
+// Floofs tab is the canonical opener.
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
@@ -41,18 +36,6 @@ const SWIPE_THRESHOLD = 60;        // px — beyond this, commit a flip
 const TAP_THRESHOLD = 8;           // px — below this on release, treat as tap
 const LONG_PRESS_MS = 450;
 const SWIPE_OUT_MS = 200;          // animate-off duration on commit
-// Pinch-in threshold — when the user puts two fingers on the deck
-// and squeezes them ≥30% closer, fire the fan-out. Detected via
-// PanResponder's nativeEvent.touches without adding a native
-// gesture-handler dependency.
-const PINCH_IN_RATIO = 0.7;
-// Distance helper for the two-touch pinch detection.
-function touchDistance(touches) {
-  if (!touches || touches.length < 2) return 0;
-  const dx = touches[0].pageX - touches[1].pageX;
-  const dy = touches[0].pageY - touches[1].pageY;
-  return Math.sqrt(dx * dx + dy * dy);
-}
 
 const titleCase = (s) => (s || "").split(" ").map((w) => w[0]?.toUpperCase() + w.slice(1)).join(" ");
 
@@ -155,13 +138,6 @@ export default function FloofCardStack({
   const longPressTimerRef = useRef(null);
   const movedRef = useRef(false);
   const isCommittingRef = useRef(false);
-  // Pinch state — captured on the first 2-touch frame. Reset on
-  // touchdown / release. When the live distance drops below
-  // initialDistance * PINCH_IN_RATIO, we fire onLongPress (the
-  // fan-out trigger) and lock the gesture so swipe/tap don't also
-  // run on release.
-  const pinchInitialRef = useRef(0);
-  const pinchFiredRef = useRef(false);
 
   function clearLongPressTimer() {
     if (longPressTimerRef.current) {
@@ -178,11 +154,9 @@ export default function FloofCardStack({
       onPanResponderGrant: () => {
         if (isCommittingRef.current) return;
         movedRef.current = false;
-        pinchInitialRef.current = 0;
-        pinchFiredRef.current = false;
         clearLongPressTimer();
         longPressTimerRef.current = setTimeout(() => {
-          if (!movedRef.current && !pinchFiredRef.current) {
+          if (!movedRef.current) {
             tapMedium();
             onLongPress?.();
           }
@@ -190,31 +164,10 @@ export default function FloofCardStack({
       },
       onPanResponderMove: (e, g) => {
         if (isCommittingRef.current) return;
-        const touches = e?.nativeEvent?.touches;
-        // 2-finger pinch detection: capture initial spread on first
-        // 2-touch frame, then watch for ≥30% squeeze to trigger fan.
-        if (touches && touches.length >= 2) {
-          movedRef.current = true;
-          clearLongPressTimer();
-          const dist = touchDistance(touches);
-          if (!pinchInitialRef.current) {
-            pinchInitialRef.current = dist;
-          } else if (
-            !pinchFiredRef.current
-            && dist > 0
-            && pinchInitialRef.current > 0
-            && dist / pinchInitialRef.current < PINCH_IN_RATIO
-          ) {
-            pinchFiredRef.current = true;
-            tapMedium();
-            onLongPress?.();
-            // Snap the deck back to rest so the fan-out doesn't open
-            // over a half-translated card.
-            Animated.spring(dragX, { toValue: 0, friction: 7, useNativeDriver: true }).start();
-          }
-          return;
-        }
-        // Single-finger drag — normal swipe path.
+        // Single-finger drag — swipe path. Multi-touch pinch
+        // detection was removed in build 33: it caused a recurring
+        // TurboModule crash, and the long-press on the My Floofs
+        // tab is the canonical way to open the floof fan.
         if (Math.abs(g.dx) > 4 || Math.abs(g.dy) > 4) {
           movedRef.current = true;
           clearLongPressTimer();
@@ -224,13 +177,6 @@ export default function FloofCardStack({
       onPanResponderRelease: (_, g) => {
         clearLongPressTimer();
         if (isCommittingRef.current) return;
-        // Pinch already fired — don't also commit a swipe/tap on release.
-        if (pinchFiredRef.current) {
-          pinchFiredRef.current = false;
-          pinchInitialRef.current = 0;
-          Animated.spring(dragX, { toValue: 0, friction: 7, useNativeDriver: true }).start();
-          return;
-        }
         const dx = g.dx;
 
         // Tap path: little to no movement, no long-press fired.
@@ -313,7 +259,7 @@ export default function FloofCardStack({
         <View style={styles.dotsRow}>{dots}</View>
       </View>
       <View pointerEvents="none" style={styles.bottomHintRow}>
-        <Text style={styles.hint}>← swipe · pinch in or hold to fan out</Text>
+        <Text style={styles.hint}>← swipe · long-press My Floofs to switch</Text>
       </View>
     </View>
   );
