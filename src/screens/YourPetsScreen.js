@@ -20,6 +20,7 @@ import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { track } from "../lib/analytics";
 import { tapLight, tapMedium } from "../lib/haptics";
 import PhotoManagerSheet from "../components/PhotoManagerSheet";
+import PetAvatar from "../components/PetAvatar";
 import { theme } from "../theme";
 
 const titleCase = s => (s || "").split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).join(" ");
@@ -264,26 +265,22 @@ export default function YourPetsScreen() {
             <View style={{ alignItems: "center", marginTop: 4 }}>
               {(() => {
                 // Card avatar rotates per session across the pet's
-                // photos[] so opening the screen later in the day or
-                // tomorrow shows a different shot of the same floof.
-                const cardUri = pickPhotoForSlot(pet, "card");
-                const photoCount = Array.isArray(pet.photos) ? pet.photos.length : (pet.photoUri ? 1 : 0);
+                // photos[] (PetAvatar handles slot rotation + branded
+                // fallback for photoless pets).
+                const photos = Array.isArray(pet.photos)
+                  ? pet.photos.filter((u) => typeof u === "string" && u.length > 0)
+                  : (pet.photoUri ? [pet.photoUri] : []);
+                const photoCount = photos.length;
                 return (
                   <>
                     <TouchableOpacity onPress={() => openPhotoManager(pet.id)} activeOpacity={0.7} style={s.avatarWrap}>
-                      {cardUri ? (
-                        <Image source={{ uri: cardUri }} style={s.avatar} />
-                      ) : (
-                        <View style={s.avatarFallback}>
-                          <Text style={{ fontSize: 44 }}>{breedEmoji(primary)}</Text>
-                        </View>
-                      )}
+                      <PetAvatar pet={pet} size={88} slot="card" showName={photoCount === 0} />
                       <View style={s.avatarBadge}>
                         <MaterialCommunityIcons name="camera" size={16} color="#fff" />
                       </View>
                     </TouchableOpacity>
                     <Text style={s.avatarHint}>
-                      {cardUri
+                      {photoCount > 0
                         ? `Tap to manage photos · ${photoCount}/${MAX_PHOTOS_PER_PET}`
                         : "Tap to add the 5 photos that tell their story"}
                     </Text>

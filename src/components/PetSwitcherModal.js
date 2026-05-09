@@ -9,9 +9,7 @@ import React from "react";
 import { Modal, View, Text, TouchableOpacity, Image, FlatList, StyleSheet, Pressable } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { breedEmoji } from "../data/breeds";
-import { getPrimaryBreed } from "../lib/petBreeds";
-import { pickPhotoForSlot } from "../lib/petPhotos";
+import PetAvatar from "./PetAvatar";
 import { theme } from "../theme";
 
 export default function PetSwitcherModal({ visible, onClose, pets, activeId, onPick }) {
@@ -40,10 +38,6 @@ export default function PetSwitcherModal({ visible, onClose, pets, activeId, onP
           contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 24 }}
           renderItem={({ item }) => {
             const isActive = item.id === activeId;
-            const primary = getPrimaryBreed(item);
-            // Switcher always uses photos[0] — same canonical face every
-            // time so the user can recognize "this is X" at a glance.
-            const switcherUri = pickPhotoForSlot(item, "primary");
             return (
               <Pressable
                 onPress={() => onPick(item.id)}
@@ -56,13 +50,7 @@ export default function PetSwitcherModal({ visible, onClose, pets, activeId, onP
                 accessibilityLabel={`Switch to ${item.name}`}
                 accessibilityState={{ selected: isActive }}
               >
-                {switcherUri ? (
-                  <Image source={{ uri: switcherUri }} style={s.avatar} />
-                ) : (
-                  <View style={s.avatarFallback}>
-                    <Text style={{ fontSize: 22 }}>{breedEmoji(primary)}</Text>
-                  </View>
-                )}
+                <PetAvatar pet={item} size={48} slot="primary" />
                 <View style={{ flex: 1 }}>
                   <Text style={s.name}>{item.name}</Text>
                   <Text style={s.meta} numberOfLines={1}>

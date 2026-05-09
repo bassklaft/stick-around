@@ -33,9 +33,9 @@ import {
   PanResponder,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { breedEmoji } from "../data/breeds";
 import { getPrimaryBreed } from "../lib/petBreeds";
 import { pickPhotoForSlot } from "../lib/petPhotos";
+import PetAvatar from "./PetAvatar";
 import { tapLight } from "../lib/haptics";
 import { theme } from "../theme";
 
@@ -256,13 +256,7 @@ export default function FloofFanOverlay({
                 accessibilityLabel={`Switch to ${p.name}`}
                 accessibilityState={{ selected: isActive }}
               >
-                {fanUri ? (
-                  <Image source={{ uri: fanUri }} style={styles.circleImage} />
-                ) : (
-                  <View style={styles.circlePlaceholder}>
-                    <Text style={{ fontSize: 32 }}>{breedEmoji(primary)}</Text>
-                  </View>
-                )}
+                <PetAvatar pet={p} size={CIRCLE_DIAMETER - 6} slot="primary" />
                 {isActive && (
                   <View style={styles.activeDot}>
                     <View style={styles.activeDotInner} />
