@@ -83,23 +83,18 @@ function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
     }).start();
   }, [filled, scale]);
 
-  // Filled state: fill-only (no stroke) for crisp brand-mark edges
-  // — matches the FloofLife logo silhouette which is fill-only.
-  // Unfilled state: thin stroke as a "tap me" outline cue.
-  const fillColor = filled ? color.fill : "transparent";
-  const strokeColor = filled ? "transparent" : color.dim;
-  const strokeWidth = filled ? 0 : 3;
+  // Both filled and empty states use FILL (no stroke). The empty
+  // state uses a low-opacity tint so the silhouette is visible
+  // but obviously "not done yet". Same silhouette geometry both
+  // states — solves the "empty heel looks different from filled
+  // heel" issue where a stroked outline rendered the curves
+  // differently than a filled shape.
+  const fillColor = filled ? color.fill : color.dim;
 
   if (isPath) {
     return (
       <AnimatedG transform={[{ scale }]} originX="100" originY="148">
-        <Path
-          d={MAIN_PAD_PATH}
-          fill={fillColor}
-          stroke={strokeColor}
-          strokeWidth={strokeWidth}
-          strokeLinejoin="round"
-        />
+        <Path d={MAIN_PAD_PATH} fill={fillColor} />
       </AnimatedG>
     );
   }
@@ -112,8 +107,6 @@ function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
         ry={ry}
         transform={`rotate(${rot} ${x} ${y})`}
         fill={fillColor}
-        stroke={strokeColor}
-        strokeWidth={strokeWidth}
       />
     </AnimatedG>
   );

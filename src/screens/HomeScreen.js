@@ -286,20 +286,30 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                 onActivate={async (petId) => {
                   if (!petId || petId === pet.id) return;
                   try {
+                    // setActive FIRST so any quick navigation
+                    // (e.g. user taps "Today's Pawgress" right
+                    // after the swipe lands) reads the correct
+                    // active pet from storage. Earlier flow did
+                    // optimistic state updates BEFORE setActive,
+                    // which left a window where Pet.get() in the
+                    // next screen returned the OLD active pet —
+                    // user saw "Falafel's Pawgress" land as
+                    // "Paco's Pawgress" because Paco was still
+                    // the persisted active id.
+                    await Pets.setActive(petId);
                     const newPet = pets.find((p) => p.id === petId);
                     if (newPet) {
+                      setPet(newPet);
+                      setItems(generateChecklist(newPet));
                       const [nextState, nextDay, nextHr] = await Promise.all([
                         ChecklistState.get(newPet.id),
                         Pawgress.getDay(newPet.id, todayKey()),
                         Pets.listHealthRecords(newPet.id),
                       ]);
-                      setPet(newPet);
-                      setItems(generateChecklist(newPet));
                       setState(nextState);
                       setPawgressDay(nextDay);
                       setHealthRecords(nextHr);
                     }
-                    await Pets.setActive(petId);
                     await load();
                   } catch {
                     // Swallow — the swipe is non-destructive UX; if any
@@ -315,17 +325,18 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                   if (!tappedPet?.id) return;
                   if (tappedPet.id !== pet.id) {
                     try {
+                      // Same setActive-first ordering as onActivate.
+                      await Pets.setActive(tappedPet.id);
+                      setPet(tappedPet);
+                      setItems(generateChecklist(tappedPet));
                       const [nextState, nextDay, nextHr] = await Promise.all([
                         ChecklistState.get(tappedPet.id),
                         Pawgress.getDay(tappedPet.id, todayKey()),
                         Pets.listHealthRecords(tappedPet.id),
                       ]);
-                      setPet(tappedPet);
-                      setItems(generateChecklist(tappedPet));
                       setState(nextState);
                       setPawgressDay(nextDay);
                       setHealthRecords(nextHr);
-                      await Pets.setActive(tappedPet.id);
                       await load();
                     } catch { /* see onActivate */ }
                   }
