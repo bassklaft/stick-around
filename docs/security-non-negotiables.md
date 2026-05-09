@@ -250,15 +250,44 @@ Suggested starting tiers (review before any feature ships, these are illustrativ
 
 ## Rule 5 — sensitive API calls never made directly from the client
 
-The moment FloofLife has a backend, **sensitive third-party API calls are proxied through it**. The client never holds the credential and never makes the upstream request directly. This applies to:
+The moment FloofLife has a backend, **sensitive third-party API calls are proxied through it**. The client never holds the credential and never makes the upstream request directly. This is non-negotiable for **all** of the following categories:
 
-- LLM providers (OpenAI, Anthropic, etc.) — keys, usage budgets
-- Email / SMS senders (Resend, SES, Twilio) — abuse vectors
-- RevenueCat **server-side** secret key (the public SDK key is fine in-app; the secret key for webhooks / server-side entitlement checks is not)
-- Anything billed per-request where the client could fan out unbounded calls
-- Anything that returns content the user could re-use for free if the API call were exposed (e.g. premium-gated AI feature)
+### Category 1 — AI / LLM providers
+OpenAI, Anthropic, Google, Cohere, any model-hosting provider. Keys are billable per-token; one leaked key drains a credit card in minutes. Examples that go through the backend:
+- Breed-suggestion ("describe my floof and tell me what mix")
+- Photo analysis (vision-LLM "what's in this photo")
+- Free-text health-question responses
+- Any chat / completion / embedding call
 
-The pattern is always the same: client calls a FloofLife Edge Function with a user JWT (or, until accounts ship, just a request that hits the IP-based rate limiter from Rule 4). The Edge Function holds the upstream credential, calls the provider, returns only what the user is entitled to receive.
+### Category 2 — Payment providers
+Stripe, PayPal, Square, Adyen, RevenueCat **server-side secret key**, Apple's StoreKit server APIs, Google Play Billing server APIs. The on-device SDK key (e.g. RevenueCat's `appl_...` public key) is meant to ship in-app — that's fine. The **server-side secret** that authorizes refunds, webhooks, charge creation, and entitlement queries from a trusted source is backend-only.
+- Charge / refund / dispute handling
+- Webhook handlers (always server-side)
+- Server-to-server entitlement re-verification
+- Any flow that mutates payment state
+
+### Category 3 — Email / SMS / push senders
+Resend, SendGrid, SES, Postmark, Twilio, Pushover, etc. Direct client access lets anyone use FloofLife's sending domain to spam from. Even a "send a single welcome email" flow goes through a backend endpoint that the rate limiter from Rule 4 protects.
+
+### Category 4 — Cloud storage providers
+S3, Cloudflare R2, GCS, Azure Blob, Supabase Storage with the service-role key. Two anti-patterns to avoid:
+- ❌ Shipping the provider's master credential in the client (full read/write of every bucket forever)
+- ❌ Routing all file bytes through the Edge Function (kills throughput, blows up Edge Function CPU bills)
+
+Correct pattern: client calls a FloofLife Edge Function which **mints a short-lived presigned URL** (S3 / R2 / GCS / Supabase Storage all support this), scoped to a single object key the user is authorized to read or write, with a small TTL (5–15 min). Client then uploads / downloads directly to the storage provider using that signed URL. This counts as "server-mediated" — the backend gates access — without proxying the bytes.
+
+### Category 5 — Anything else that…
+- Is **billed per-request** in a way the user can amplify (search APIs, geocoding, transcription, OCR, etc.)
+- Returns content that could be **re-used for free** if the call were exposed (premium-gated AI output, paid datasets)
+- Could be used to **impersonate FloofLife** (sending domain, support contact, internal Slack webhooks)
+
+If a new third-party integration looks like any of those, it goes through the backend before it ships.
+
+### The pattern, reduced
+
+Client → FloofLife Edge Function (rate-limited per Rule 4, JWT-authed if accounts exist) → upstream provider with the credential held in Edge secret store → response back to client (filtered to only what the user is entitled to receive).
+
+For storage specifically, swap "response back to client" for "presigned URL back to client" and let the bytes flow direct to/from the storage provider.
 
 ### Why client-direct is never acceptable
 
