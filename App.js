@@ -11,9 +11,13 @@ import { initAnalytics, screen as trackScreen, track } from "./src/lib/analytics
 import { initHaptics, tapLight, tapMedium, tapHeavy } from "./src/lib/haptics";
 import { Pets } from "./src/lib/storage";
 import FloofFanOverlay from "./src/components/FloofFanOverlay";
-import FirstRunTutorial from "./src/components/FirstRunTutorial";
+import GuidedTour from "./src/components/GuidedTour";
 
-const TUTORIAL_SEEN_KEY = "pawrent_tutorial_seen_v1";
+// Bumped from _v1 → _v2 with the v1.2.0 release so existing users
+// (who already dismissed v1's text-bullet tutorial) see the new
+// visual guided tour fresh once after updating. Future content
+// updates that warrant a re-show should bump this again.
+const TUTORIAL_SEEN_KEY = "pawrent_tutorial_seen_v2";
 
 import Logo from "./src/components/Logo";
 import OnboardingScreen from "./src/screens/OnboardingScreen";
@@ -316,7 +320,7 @@ export default function App() {
           plus once for any existing user who hasn't seen it (the
           AsyncStorage flag is the gate). Tap "Got it" → flag is set
           and the overlay never re-appears. */}
-      <FirstRunTutorial
+      <GuidedTour
         visible={tutorialVisible}
         onClose={dismissTutorial}
       />
