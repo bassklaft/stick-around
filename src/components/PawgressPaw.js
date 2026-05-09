@@ -21,9 +21,9 @@
 // screen-level.
 import React, { useEffect, useRef } from "react";
 import { View, Animated, StyleSheet } from "react-native";
-import Svg, { Ellipse, Path, G } from "react-native-svg";
+import Svg, { Path, G } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { PAW_VIEWBOX, PAW_TOES, PAW_HEEL_PATH } from "./PawIcon";
+import { PAW_VIEWBOX, PAW_PATHS, PAW_CENTROIDS, PAW_TAP_TARGETS } from "./PawIcon";
 import { theme } from "../theme";
 
 const PAW_SEGMENT_KEYS = ["food", "movement", "body", "mind", "special"];
@@ -40,25 +40,10 @@ const COLORS = {
   year:  { fill: "#9C2A0F", stroke: "#9C2A0F", dim: "#9C2A0F33" },
 };
 
-// Geometry comes from the canonical PawIcon component (PAW_TOES +
-// PAW_HEEL_PATH), so the Pawgress activity ring renders the SAME
-// vector as the Logo header, the tab bar, and the asset PNGs. No
-// drift between surfaces. Per Build-33 spec: the 100×100 viewBox
-// values are LOCKED — do not adjust here.
-//
-// Tap targets in 100×100 user-space (fractions of `size`).
-const TAP_TARGETS = {
-  movement: { cx: 0.22, cy: 0.33, r: 0.13 },
-  food:     { cx: 0.41, cy: 0.22, r: 0.13 },
-  mind:     { cx: 0.59, cy: 0.22, r: 0.13 },
-  body:     { cx: 0.78, cy: 0.33, r: 0.13 },
-  special:  { cx: 0.50, cy: 0.78, r: 0.28 },
-};
-// Lookup by toe key for centroid (origin of the per-segment scale
-// animation). Heel uses (50, 78) — the rough center of the heel-pad
-// path's bounding box.
-const TOE_BY_KEY = PAW_TOES.reduce((acc, t) => { acc[t.key] = t; return acc; }, {});
-const HEEL_CENTROID = { x: 50, y: 78 };
+// Geometry + tap-target fractions come from the canonical PawIcon
+// (PAW_PATHS, PAW_CENTROIDS, PAW_TAP_TARGETS), so the Pawgress
+// activity ring renders the IDENTICAL MCI paw vector as the Logo
+// header, the tab bar, and the asset PNGs.
 
 function Segment({ kind, filled, color }) {
   const scale = useRef(new Animated.Value(filled ? 1 : 0.92)).current;
@@ -74,34 +59,16 @@ function Segment({ kind, filled, color }) {
   // the color theme. Filled: solid theme color. Same vector path
   // either way — identical geometry between empty and filled.
   const fillColor = filled ? color.fill : color.dim;
-
-  if (kind === "special") {
-    return (
-      <AnimatedG
-        transform={[{ scale }]}
-        originX={String(HEEL_CENTROID.x)}
-        originY={String(HEEL_CENTROID.y)}
-      >
-        <Path d={PAW_HEEL_PATH} fill={fillColor} />
-      </AnimatedG>
-    );
-  }
-  const t = TOE_BY_KEY[kind];
-  if (!t) return null;
+  const centroid = PAW_CENTROIDS[kind];
+  const d = PAW_PATHS[kind];
+  if (!centroid || !d) return null;
   return (
     <AnimatedG
       transform={[{ scale }]}
-      originX={String(t.cx)}
-      originY={String(t.cy)}
+      originX={String(centroid.x)}
+      originY={String(centroid.y)}
     >
-      <Ellipse
-        cx={t.cx}
-        cy={t.cy}
-        rx={t.rx}
-        ry={t.ry}
-        transform={`rotate(${t.rot} ${t.cx} ${t.cy})`}
-        fill={fillColor}
-      />
+      <Path d={d} fill={fillColor} />
     </AnimatedG>
   );
 }
@@ -245,7 +212,7 @@ export default function PawgressPaw({
         {onSegmentTap && (
           <View style={StyleSheet.absoluteFill} pointerEvents="box-none">
             {PAW_SEGMENT_KEYS.map((key) => {
-              const t = TAP_TARGETS[key];
+              const t = PAW_TAP_TARGETS[key];
               const left = Math.round(size * (t.cx - t.r));
               const top  = Math.round(size * (t.cy - t.r));
               const w    = Math.round(size * t.r * 2);
