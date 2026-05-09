@@ -188,16 +188,35 @@ export default function FloofFanOverlay({
             { backgroundColor: "rgba(0,0,0,0.45)", opacity: animProgress },
           ]}
         />
+        {/* Centered iOS-style title — updates as the finger slides
+            over circles. Big, bold, no overlap with circle bodies.
+            Falls back to the active pet's name when nothing is
+            hovered yet, then to the call-to-action hint. */}
         <Animated.View
           pointerEvents="none"
           style={[
-            styles.hint,
-            { top: insets.top + 24, opacity: animProgress },
+            styles.titleHero,
+            { top: insets.top + 36, opacity: animProgress },
           ]}
         >
-          <Text style={styles.hintText}>
-            Tap a floof — or slide to one and release
-          </Text>
+          {(() => {
+            const hovered = hoveredId ? pets.find((p) => p.id === hoveredId) : null;
+            const fallbackActive = pets.find((p) => p.id === activeId);
+            const target = hovered || fallbackActive;
+            const targetName = (target?.name || "").split(" ")[0] || target?.name || "";
+            return (
+              <>
+                {targetName ? (
+                  <Text style={styles.titleHeroName} numberOfLines={1}>{targetName}</Text>
+                ) : null}
+                <Text style={styles.titleHeroHint}>
+                  {hoveredId
+                    ? "Release to switch"
+                    : "Tap a floof · or slide to one and release"}
+                </Text>
+              </>
+            );
+          })()}
         </Animated.View>
 
         {pets.map((p, i) => {
@@ -263,19 +282,11 @@ export default function FloofFanOverlay({
                   </View>
                 )}
               </View>
-              {/* Name only renders for the hovered (or active-when-
-                  nothing-hovered) circle — with 4+ floofs in the arc,
-                  4 simultaneous labels collide into the next circle's
-                  body. The hovered name appears as a tooltip as the
-                  finger slides over circles. */}
-              {(isHovered || (isActive && !hoveredId)) && (
-                <Text
-                  style={[styles.label, isHovered && styles.labelHovered]}
-                  numberOfLines={1}
-                >
-                  {firstName}
-                </Text>
-              )}
+              {/* Per-circle name labels removed — names now appear
+                  as a single centered hero title at the top of the
+                  modal that updates as the finger slides. With 4+
+                  floofs in a tight arc, per-circle labels collided
+                  into the next circle's body. */}
             </Animated.View>
           );
         })}
@@ -285,21 +296,30 @@ export default function FloofFanOverlay({
 }
 
 const styles = StyleSheet.create({
-  hint: {
+  titleHero: {
     position: "absolute",
     left: 0,
     right: 0,
     alignItems: "center",
+    paddingHorizontal: 24,
   },
-  hintText: {
+  titleHeroName: {
     color: "#fff",
-    fontSize: 14,
-    fontWeight: "700",
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    backgroundColor: "rgba(0,0,0,0.4)",
-    borderRadius: 999,
-    overflow: "hidden",
+    fontSize: 38,
+    fontWeight: "800",
+    letterSpacing: -0.6,
+    textShadowColor: "rgba(0,0,0,0.45)",
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 6,
+    textTransform: "capitalize",
+  },
+  titleHeroHint: {
+    color: "rgba(255,255,255,0.85)",
+    fontSize: 13,
+    fontWeight: "600",
+    letterSpacing: 0.4,
+    marginTop: 6,
+    textAlign: "center",
   },
   circleAnchor: {
     position: "absolute",

@@ -211,7 +211,7 @@ export default function DietScreen() {
     >
       <View style={s.intro}>
         <Text style={s.introBody}>
-          Universally helpful additions to the average pet routine — supplements, fresh foods, clean-ingredient treats, and grooming/skin-care products that owner communities and integrative vets consistently recommend.
+          Supplements, fresh foods, clean-ingredient treats, and grooming/skin-care products owner communities and integrative vets consistently recommend. Always verify with your veterinarian.
         </Text>
       </View>
 

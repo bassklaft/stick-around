@@ -39,30 +39,31 @@ const COLORS = {
   year:  { fill: "#9C2A0F", stroke: "#9C2A0F", dim: "#9C2A0F33" },
 };
 
-// Layout — 5 segments inside a 200×200 bounding box. Designed to match
-// the MaterialCommunityIcons "paw" glyph used in the active-pet chip
-// + tab bar exactly, so the big Pawgress paw and the small tab/chip
-// paw read as the SAME brand mark. Toes are nearly-uniform ovals
-// with subtle outward tilt; heel pad has crisp evenly-spaced 3-lobe
-// top bumps and a chubby rounded bottom.
+// Layout — 5 segments inside a 200×200 bounding box. Designed to
+// match the FloofLife logo (the paw + green-check brand mark used
+// in the header). Outer toes are dramatically tilted teardrops
+// fanning outward; inner toes barely tilt; heel pad is a clean
+// 3-lobe trefoil with deep valleys between bumps and a wide
+// rounded bottom.
 //
 //   key           cx   cy   rx  ry  rot°    label
-//   movement     52   76   16  20   -18    outer-left toe (pinky)
-//   food         80   50   16  23    -6    inner-left toe (index)
-//   mind        120   50   16  23    +6    inner-right toe (middle)
-//   body        148   76   16  20   +18    outer-right toe (ring)
+//   movement     50   80   14  22   -32    outer-left toe (pinky)
+//   food         80   48   15  24    -8    inner-left toe (index)
+//   mind        120   48   15  24    +8    inner-right toe (middle)
+//   body        150   80   14  22   +32    outer-right toe (ring)
 //   special     3-lobe heel-pad path             main pad (heel)
 const TOE_PADS = [
-  { key: "movement", cx: 52,  cy: 76, rx: 16, ry: 20, rot: -18 },
-  { key: "food",     cx: 80,  cy: 50, rx: 16, ry: 23, rot: -6 },
-  { key: "mind",     cx: 120, cy: 50, rx: 16, ry: 23, rot: 6 },
-  { key: "body",     cx: 148, cy: 76, rx: 16, ry: 20, rot: 18 },
+  { key: "movement", cx: 50,  cy: 80, rx: 14, ry: 22, rot: -32 },
+  { key: "food",     cx: 80,  cy: 48, rx: 15, ry: 24, rot: -8 },
+  { key: "mind",     cx: 120, cy: 48, rx: 15, ry: 24, rot: 8 },
+  { key: "body",     cx: 150, cy: 80, rx: 14, ry: 22, rot: 32 },
 ];
-// Heel pad — three distinct rounded lobes at the top (each its own
-// dome rather than a soft wave), sides curve inward, bottom is
-// chubby and rounded with a soft taper. Control points pulled UP
-// at the toe-attach valleys to crisp up each lobe.
-const MAIN_PAD_PATH = "M 60 130 C 50 110, 64 88, 78 100 C 84 86, 96 86, 100 100 C 104 86, 116 86, 122 100 C 136 88, 150 110, 140 130 C 148 156, 128 174, 100 178 C 72 174, 52 156, 60 130 Z";
+// Heel pad — three distinct rounded lobes at the top with deep
+// valleys between (the toe-attach points), sides curve inward,
+// bottom is wide and rounded. Control points pulled tight (y=80)
+// at lobe peaks for crisp, dome-shaped bumps; valleys between
+// (~y=98) read as clear separations.
+const MAIN_PAD_PATH = "M 56 130 C 44 105 60 86 76 96 C 82 80 96 80 100 96 C 104 80 118 80 124 96 C 140 86 156 105 144 130 C 156 162 130 188 100 192 C 70 188 44 162 56 130 Z";
 
 function Segment({ kind, filled, color, x, y, rx, ry, rot, isPath }) {
   const scale = useRef(new Animated.Value(filled ? 1 : 0.92)).current;

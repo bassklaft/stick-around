@@ -358,18 +358,22 @@ export default function YourPetsScreen() {
                   {expanded && (
                     <>
                       {answered.map((q) => {
-                        const display = LIFESTYLE_DISPLAY[q.key];
+                        const display = LIFESTYLE_DISPLAY[q.key] || { valueToLabel: {} };
+                        const valueToLabel = display.valueToLabel || {};
                         const v = lifestyle[q.key];
-                        let valueText;
+                        let valueText = "";
                         if (q.type === "multi") {
-                          valueText = (Array.isArray(v) ? v : []).map((x) => display.valueToLabel[x] || x).join(", ");
+                          valueText = (Array.isArray(v) ? v : [])
+                            .map((x) => valueToLabel[x] || String(x))
+                            .filter(Boolean)
+                            .join(", ");
                         } else {
-                          valueText = display.valueToLabel[v] || v;
+                          valueText = valueToLabel[v] || (v == null ? "" : String(v));
                         }
                         return (
                           <View key={q.key} style={s.lifestyleAnswerRow}>
-                            <Text style={s.lifestyleAnswerLabel}>{q.title.replace(/\{pet\}/g, pet.name)}</Text>
-                            <Text style={s.lifestyleAnswerValue}>{valueText}</Text>
+                            <Text style={s.lifestyleAnswerLabel}>{q.title.replace(/\{pet\}/g, pet.name || "")}</Text>
+                            <Text style={s.lifestyleAnswerValue}>{valueText || "—"}</Text>
                           </View>
                         );
                       })}
@@ -477,13 +481,19 @@ export default function YourPetsScreen() {
                       onPress={() => toggleHealth(sectionId)}
                       style={s.healthCard}
                     >
-                      <View style={s.healthHeader}>
-                        <Text style={s.healthHeaderText} numberOfLines={2}>
-                          💛 Health Considerations · {breed.health.length} to know about for {breedDisplayName(breedKey)}
-                        </Text>
-                        <Text style={s.healthHeaderHint}>
-                          {healthExpanded ? "Tap to hide" : "Tap to expand"}
-                        </Text>
+                      <View style={s.cardHeaderClean}>
+                        <Text style={s.cardHeaderEmoji}>💛</Text>
+                        <View style={{ flex: 1 }}>
+                          <Text style={s.cardHeaderTitle}>Health Considerations</Text>
+                          <Text style={s.cardHeaderSubtitle} numberOfLines={1}>
+                            {breed.health.length} to know about for {breedDisplayName(breedKey)}
+                          </Text>
+                        </View>
+                        <MaterialCommunityIcons
+                          name={healthExpanded ? "chevron-up" : "chevron-down"}
+                          size={22}
+                          color={theme.muted}
+                        />
                       </View>
                       {healthExpanded && (
                         <View style={{ marginTop: 10 }}>
@@ -521,10 +531,20 @@ export default function YourPetsScreen() {
                   <TouchableOpacity
                     activeOpacity={0.7}
                     onPress={() => toggleSubSection(setTipsOpen, sectionId, "insider_tips_expanded")}
-                    style={s.tipsHeader}
+                    style={s.cardHeaderClean}
                   >
-                    <Text style={s.tipsTitle} numberOfLines={2}>💡 Insider Tips · {breed.tips.length} {breed.tips.length === 1 ? "thing" : "things"} only {breedAdjective(breedKey)} owners know</Text>
-                    <Text style={s.tipsHeaderHint}>{tipsExpanded ? "Tap to hide" : "Tap to show"}</Text>
+                    <Text style={s.cardHeaderEmoji}>💡</Text>
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.cardHeaderTitle}>Insider Tips</Text>
+                      <Text style={s.cardHeaderSubtitle} numberOfLines={1}>
+                        {breed.tips.length} {breed.tips.length === 1 ? "thing" : "things"} only {breedAdjective(breedKey)} owners know
+                      </Text>
+                    </View>
+                    <MaterialCommunityIcons
+                      name={tipsExpanded ? "chevron-up" : "chevron-down"}
+                      size={22}
+                      color={theme.muted}
+                    />
                   </TouchableOpacity>
                   {tipsExpanded && (
                     <>
@@ -612,6 +632,10 @@ const s = StyleSheet.create({
   brachyText:    { fontSize: 12, color: "#5A3F0A", lineHeight: 18 },
   healthDisclosure:{ marginTop: 12, padding: 12, backgroundColor: theme.bg, borderRadius: 10, borderWidth: 1, borderColor: theme.line },
   healthCard:      { marginTop: 12, padding: 14, backgroundColor: theme.card, borderRadius: 12, borderWidth: 1, borderColor: theme.line },
+  cardHeaderClean: { flexDirection: "row", alignItems: "center", gap: 12 },
+  cardHeaderEmoji: { fontSize: 22 },
+  cardHeaderTitle: { fontSize: 15, fontWeight: "800", color: theme.fg, letterSpacing: -0.2 },
+  cardHeaderSubtitle: { fontSize: 12, color: theme.muted, marginTop: 2 },
   healthHeader:    { flexDirection: "row", justifyContent: "space-between", alignItems: "center", gap: 12 },
   healthHeaderText:{ flex: 1, fontSize: 13, fontWeight: "700", color: theme.fg },
   healthHeaderHint:{ flexShrink: 0, fontSize: 11, color: theme.accent, fontWeight: "600" },

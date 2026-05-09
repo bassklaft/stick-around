@@ -595,7 +595,15 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
         )}
 
         {step === 5 && (() => {
+          // Defensive guard — never render with an out-of-range
+          // lifestyleStep. Bail to step 6 if somehow misaligned;
+          // the visible no-op render avoids a crash from accessing
+          // properties on an undefined `q`.
+          if (lifestyleStep < 0 || lifestyleStep >= LIFESTYLE_QUESTIONS.length) {
+            return null;
+          }
           const q = LIFESTYLE_QUESTIONS[lifestyleStep];
+          if (!q || !Array.isArray(q.options)) return null;
           const isLast = lifestyleStep === LIFESTYLE_QUESTIONS.length - 1;
           const total = LIFESTYLE_QUESTIONS.length;
           const stepNum = lifestyleStep + 1;
