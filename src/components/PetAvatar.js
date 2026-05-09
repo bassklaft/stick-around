@@ -15,7 +15,7 @@
 // Sizing: a single `size` prop drives both width/height. Inner
 // elements scale proportionally so the avatar reads cleanly at
 // 32px (chip) and at 200px (collage tile / card-stack hero).
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useCallback } from "react";
 import { View, Text, Image, StyleSheet } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { pickPhotoForSlot } from "../lib/petPhotos";
@@ -30,24 +30,49 @@ export default function PetAvatar({
   // pet — useful for "Add a floof" empty-state surfaces.
   emptyName = "FloofLife",
 }) {
-  const [imgError, setImgError] = useState(false);
+  // Track which URIs have failed to load. When the slot-picked photo
+  // (or any candidate) is broken — e.g. file deleted from
+  // documentDirectory after a reinstall — we cycle to the next
+  // available candidate before falling through to the branded
+  // placeholder. This is what fixes "icon is blank even though the
+  // pet has photos" — a broken-but-truthy URI used to short-circuit
+  // straight to the placeholder. Now we exhaust all candidates first.
+  const [errored, setErrored] = useState(() => new Set());
 
-  // Prefer the slot-rotated photo. If the slot picker returns null
-  // (defensive — shouldn't happen when pet has photos), fall through
-  // to ANY available photo so we never render a blank avatar when
-  // the user has uploaded at least one shot.
-  const slotUri = useMemo(() => pickPhotoForSlot(pet, slot), [pet, slot]);
-  const fallbackUri = useMemo(() => {
-    if (!pet) return null;
+  // Build the full list of candidate URIs in priority order:
+  //   1. The slot-specific pick (rotation logic)
+  //   2. Every photo in pet.photos[]
+  //   3. Legacy pet.photoUri (if not already covered)
+  // Then filter out anything in the errored set.
+  const candidates = useMemo(() => {
+    if (!pet) return [];
+    const list = [];
+    const add = (u) => {
+      if (typeof u === "string" && u.length > 0 && !list.includes(u)) list.push(u);
+    };
+    add(pickPhotoForSlot(pet, slot));
     if (Array.isArray(pet.photos)) {
-      const first = pet.photos.find((u) => typeof u === "string" && u.length > 0);
-      if (first) return first;
+      for (const u of pet.photos) add(u);
     }
-    if (typeof pet.photoUri === "string" && pet.photoUri.length > 0) return pet.photoUri;
+    add(pet.photoUri);
+    return list;
+  }, [pet, slot]);
+
+  const photoUri = useMemo(() => {
+    for (const c of candidates) if (!errored.has(c)) return c;
     return null;
-  }, [pet]);
-  const photoUri = slotUri || fallbackUri;
-  const hasUsablePhoto = !!photoUri && !imgError;
+  }, [candidates, errored]);
+  const hasUsablePhoto = !!photoUri;
+
+  const onImgError = useCallback(() => {
+    if (!photoUri) return;
+    setErrored((prev) => {
+      if (prev.has(photoUri)) return prev;
+      const next = new Set(prev);
+      next.add(photoUri);
+      return next;
+    });
+  }, [photoUri]);
 
   const placeholderName = (pet?.name && pet.name.trim()) || emptyName;
   const radius = size / 2;
@@ -60,9 +85,13 @@ export default function PetAvatar({
   if (hasUsablePhoto) {
     return (
       <Image
+        // key forces React to mount a fresh Image when the candidate
+        // changes, so onError fires reliably on each new attempt
+        // rather than only on the very first source.
+        key={photoUri}
         source={{ uri: photoUri }}
         style={[s.image, { width: size, height: size, borderRadius: radius }]}
-        onError={() => setImgError(true)}
+        onError={onImgError}
       />
     );
   }

@@ -30,7 +30,7 @@
 //   - Removing a file does NOT delete the underlying file from
 //     disk; orphan cleanup is a separate concern. We just drop
 //     the URI from the array slot.
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import {
   Modal,
   View,
@@ -68,6 +68,35 @@ export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
     }
     return pet.photoUri ? [pet.photoUri] : [];
   }, [pet]);
+
+  // Track which slot indexes have a broken image (file deleted from
+  // documentDirectory after a reinstall, etc.). When a tile's Image
+  // fails to load, we treat that slot as empty for both display and
+  // tap-handling — the user sees an "Add the silly one" CTA instead
+  // of a "Replace" action sheet for a slot that LOOKS empty.
+  const [brokenSlots, setBrokenSlots] = useState(() => new Set());
+
+  // Reset broken-slot tracking whenever the pet changes (different
+  // pet → different photo set → start fresh) and when the photos
+  // array itself changes (new uploads might fix previously-broken
+  // slots if URIs were reassigned).
+  useEffect(() => {
+    setBrokenSlots(new Set());
+  }, [pet?.id, photos.join("|")]);
+
+  function markSlotBroken(idx) {
+    setBrokenSlots((prev) => {
+      if (prev.has(idx)) return prev;
+      const next = new Set(prev);
+      next.add(idx);
+      return next;
+    });
+  }
+
+  function isSlotUsable(idx) {
+    const u = photos[idx];
+    return typeof u === "string" && u.length > 0 && !brokenSlots.has(idx);
+  }
 
   // Total photos actually filled (sparse positions don't count).
   const filledCount = photos.filter((u) => typeof u === "string" && u.length > 0).length;
@@ -150,14 +179,14 @@ export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
   }
 
   function handleSlotTap(idx) {
-    const uri = photos[idx];
-    if (!uri) {
-      // Empty slot — direct add.
+    if (!isSlotUsable(idx)) {
+      // Empty OR broken slot — direct picker, no Replace/Remove
+      // sheet (nothing visually there to act on).
       pickPhotoIntoSlot(idx);
       tapMedium();
       return;
     }
-    // Filled slot — offer Replace / Remove.
+    // Filled + loadable slot — offer Replace / Remove.
     Alert.alert(
       promptTitle(idx),
       idx === 0
@@ -224,39 +253,46 @@ export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
         <ScrollView contentContainerStyle={{ paddingBottom: insets.bottom + 24 }}>
           <Text style={s.sectionHd}>YOUR STORY IN 5 PHOTOS</Text>
           <View style={s.gridWrap}>
-            {labeledSlots.map(({ idx, uri }) => (
-              <TouchableOpacity
-                key={`labeled-${idx}`}
-                onPress={() => handleSlotTap(idx)}
-                activeOpacity={0.85}
-                style={[s.tile, !uri && s.tileEmpty]}
-                accessibilityRole="button"
-                accessibilityLabel={uri ? `${shortLabel(idx)}. Tap to replace or remove.` : `Add ${shortLabel(idx)}.`}
-              >
-                {uri ? (
-                  <>
-                    <Image source={{ uri }} style={s.tileImage} />
-                    {idx === 0 && (
-                      <View style={s.primaryStar}>
-                        <Text style={s.primaryStarText}>★</Text>
+            {labeledSlots.map(({ idx, uri }) => {
+              const usable = isSlotUsable(idx);
+              return (
+                <TouchableOpacity
+                  key={`labeled-${idx}`}
+                  onPress={() => handleSlotTap(idx)}
+                  activeOpacity={0.85}
+                  style={[s.tile, !usable && s.tileEmpty]}
+                  accessibilityRole="button"
+                  accessibilityLabel={usable ? `${shortLabel(idx)}. Tap to replace or remove.` : `Add ${shortLabel(idx)}.`}
+                >
+                  {usable ? (
+                    <>
+                      <Image
+                        source={{ uri }}
+                        style={s.tileImage}
+                        onError={() => markSlotBroken(idx)}
+                      />
+                      {idx === 0 && (
+                        <View style={s.primaryStar}>
+                          <Text style={s.primaryStarText}>★</Text>
+                        </View>
+                      )}
+                      <View style={s.tileLabelOverlay}>
+                        <Text style={s.tileLabelText} numberOfLines={1}>
+                          {shortLabel(idx)}
+                        </Text>
                       </View>
-                    )}
-                    <View style={s.tileLabelOverlay}>
-                      <Text style={s.tileLabelText} numberOfLines={1}>
-                        {shortLabel(idx)}
+                    </>
+                  ) : (
+                    <View style={s.tileEmptyContent}>
+                      <MaterialCommunityIcons name="camera-plus" size={28} color={theme.accent} />
+                      <Text style={s.tileEmptyHint} numberOfLines={2}>
+                        Add{"\n"}{shortLabel(idx)}
                       </Text>
                     </View>
-                  </>
-                ) : (
-                  <View style={s.tileEmptyContent}>
-                    <MaterialCommunityIcons name="camera-plus" size={28} color={theme.accent} />
-                    <Text style={s.tileEmptyHint} numberOfLines={2}>
-                      Add{"\n"}{shortLabel(idx)}
-                    </Text>
-                  </View>
-                )}
-              </TouchableOpacity>
-            ))}
+                  )}
+                </TouchableOpacity>
+              );
+            })}
           </View>
 
           {(extras.length > 0 || (!atCap && filledCount > 0)) && (
@@ -272,7 +308,11 @@ export default function PhotoManagerSheet({ visible, pet, onClose, onChange }) {
                     accessibilityRole="button"
                     accessibilityLabel={`Extra photo ${idx - PROMPT_SLOTS + 1}. Tap to replace or remove.`}
                   >
-                    <Image source={{ uri }} style={s.tileImage} />
+                    <Image
+                      source={{ uri }}
+                      style={s.tileImage}
+                      onError={() => markSlotBroken(idx)}
+                    />
                     <View style={s.tileOverlay}>
                       <MaterialCommunityIcons name="dots-horizontal-circle" size={22} color="#fff" />
                     </View>
