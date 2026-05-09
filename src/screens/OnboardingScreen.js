@@ -267,38 +267,48 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       // optional, no schema migration required.
       lifestyle: compactLifestyle(),
     };
-    if (editMode && editPetId) {
-      // Don't overwrite createdAt on edits.
-      await Pets.update(editPetId, basePayload);
-      track("pet_edited", {
-        species,
-        has_photo: hasPhoto,
-        photo_count: photosList.length,
-        is_mix: !!basePayload.mixOf,
-      });
-      notifySuccess();
-    } else if (addMode) {
-      await Pets.add({ ...basePayload, createdAt: Date.now() });
-      track("pet_added", {
-        species,
-        has_photo: hasPhoto,
-        photo_count: photosList.length,
-        has_age: basePayload.ageYears != null,
-        has_weight: basePayload.weightLbs != null,
-        is_mix: !!basePayload.mixOf,
-      });
-      notifySuccess();
-    } else {
-      await Pet.set({ ...basePayload, createdAt: Date.now() });
-      track("onboarding_completed", {
-        species,
-        has_photo: hasPhoto,
-        photo_count: photosList.length,
-        has_age: basePayload.ageYears != null,
-        has_weight: basePayload.weightLbs != null,
-        is_mix: !!basePayload.mixOf,
-      });
-      notifySuccess();
+    try {
+      if (editMode && editPetId) {
+        // Don't overwrite createdAt on edits.
+        await Pets.update(editPetId, basePayload);
+        track("pet_edited", {
+          species,
+          has_photo: hasPhoto,
+          photo_count: photosList.length,
+          is_mix: !!basePayload.mixOf,
+        });
+        notifySuccess();
+      } else if (addMode) {
+        await Pets.add({ ...basePayload, createdAt: Date.now() });
+        track("pet_added", {
+          species,
+          has_photo: hasPhoto,
+          photo_count: photosList.length,
+          has_age: basePayload.ageYears != null,
+          has_weight: basePayload.weightLbs != null,
+          is_mix: !!basePayload.mixOf,
+        });
+        notifySuccess();
+      } else {
+        await Pet.set({ ...basePayload, createdAt: Date.now() });
+        track("onboarding_completed", {
+          species,
+          has_photo: hasPhoto,
+          photo_count: photosList.length,
+          has_age: basePayload.ageYears != null,
+          has_weight: basePayload.weightLbs != null,
+          is_mix: !!basePayload.mixOf,
+        });
+        notifySuccess();
+      }
+    } catch (err) {
+      // Storage write failed — surface gracefully instead of letting
+      // an unhandled promise rejection kill the JS bridge.
+      Alert.alert(
+        "Couldn't save",
+        "Something went wrong saving this floof. Please try again.",
+      );
+      return;
     }
     // Show the photobooth strip animation if the user captured ≥1
     // photo. It's skippable per guardrail C and auto-dismisses ≤3.5s.
@@ -469,7 +479,16 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
 
               <TouchableOpacity onPress={() => pickPhotoForPrompt(photoPromptIdx)} style={s.photoPicker} activeOpacity={0.8}>
                 {currentUri ? (
-                  <Image source={{ uri: currentUri }} style={s.photoPreview} />
+                  <Image
+                    source={{ uri: currentUri }}
+                    style={s.photoPreview}
+                    // onError swallowed — broken URIs after TestFlight
+                    // reinstall (sandbox path changes) can throw
+                    // NSException on iOS 26. Native-thrown exceptions
+                    // from Image have been linked to TurboModule
+                    // crashes in this app's logs.
+                    onError={() => {}}
+                  />
                 ) : (
                   <View style={s.photoPlaceholder}>
                     <MaterialCommunityIcons name="camera-plus" size={42} color={theme.accent} />

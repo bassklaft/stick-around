@@ -19,7 +19,14 @@ export async function getHapticsPref() { return "on"; }
 export async function setHapticsPref(_pref) { /* no-op */ }
 
 function fire(fn) {
-  try { fn(); } catch { /* swallow — never crash for haptics */ }
+  try {
+    const ret = fn();
+    // expo-haptics returns a Promise; catch its rejection so a
+    // native-side throw (e.g. iOS 26+ feedback-generator fault on
+    // TurboModule queue) doesn't bubble up as an unhandled rejection
+    // and abort the app.
+    if (ret && typeof ret.catch === "function") ret.catch(() => {});
+  } catch { /* swallow — never crash for haptics */ }
 }
 
 // Light tap — UI navigation, card taps, settings rows, generic taps.

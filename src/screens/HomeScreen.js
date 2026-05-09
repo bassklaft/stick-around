@@ -285,33 +285,27 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                 height={HERO_HEIGHT}
                 onActivate={async (petId) => {
                   if (!petId || petId === pet.id) return;
-                  // Synchronously load the NEW pet's checklist /
-                  // pawgress / health data alongside the optimistic
-                  // pet swap, so all dependent UI (Pawgress card
-                  // subtitle, This-week counter, health row) renders
-                  // consistent with the swipe animation. The earlier
-                  // build-27 fix used a blank placeholder + trusted
-                  // load() to backfill, but the timing window still
-                  // showed mismatched data ("Today's 5 pads filled ·
-                  // Paco" while the hero rendered Falafel). Loading
-                  // upfront here guarantees a single coherent render.
-                  const newPet = pets.find((p) => p.id === petId);
-                  if (newPet) {
-                    const [nextState, nextDay, nextHr] = await Promise.all([
-                      ChecklistState.get(newPet.id),
-                      Pawgress.getDay(newPet.id, todayKey()),
-                      Pets.listHealthRecords(newPet.id),
-                    ]);
-                    setPet(newPet);
-                    setItems(generateChecklist(newPet));
-                    setState(nextState);
-                    setPawgressDay(nextDay);
-                    setHealthRecords(nextHr);
+                  try {
+                    const newPet = pets.find((p) => p.id === petId);
+                    if (newPet) {
+                      const [nextState, nextDay, nextHr] = await Promise.all([
+                        ChecklistState.get(newPet.id),
+                        Pawgress.getDay(newPet.id, todayKey()),
+                        Pets.listHealthRecords(newPet.id),
+                      ]);
+                      setPet(newPet);
+                      setItems(generateChecklist(newPet));
+                      setState(nextState);
+                      setPawgressDay(nextDay);
+                      setHealthRecords(nextHr);
+                    }
+                    await Pets.setActive(petId);
+                    await load();
+                  } catch {
+                    // Swallow — the swipe is non-destructive UX; if any
+                    // read fails we still want the visual swap to land
+                    // and the next interaction to retry.
                   }
-                  await Pets.setActive(petId);
-                  // load() still runs to refresh `pets` array if any
-                  // pet was added / edited elsewhere; cheap idempotent.
-                  await load();
                 }}
                 onTapFront={async (tappedPet) => {
                   // Tap a card → activate that pet + open the
@@ -320,19 +314,20 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                   // the wrong pet's profile.
                   if (!tappedPet?.id) return;
                   if (tappedPet.id !== pet.id) {
-                    // Same upfront-load pattern as the swipe path.
-                    const [nextState, nextDay, nextHr] = await Promise.all([
-                      ChecklistState.get(tappedPet.id),
-                      Pawgress.getDay(tappedPet.id, todayKey()),
-                      Pets.listHealthRecords(tappedPet.id),
-                    ]);
-                    setPet(tappedPet);
-                    setItems(generateChecklist(tappedPet));
-                    setState(nextState);
-                    setPawgressDay(nextDay);
-                    setHealthRecords(nextHr);
-                    await Pets.setActive(tappedPet.id);
-                    await load();
+                    try {
+                      const [nextState, nextDay, nextHr] = await Promise.all([
+                        ChecklistState.get(tappedPet.id),
+                        Pawgress.getDay(tappedPet.id, todayKey()),
+                        Pets.listHealthRecords(tappedPet.id),
+                      ]);
+                      setPet(tappedPet);
+                      setItems(generateChecklist(tappedPet));
+                      setState(nextState);
+                      setPawgressDay(nextDay);
+                      setHealthRecords(nextHr);
+                      await Pets.setActive(tappedPet.id);
+                      await load();
+                    } catch { /* see onActivate */ }
                   }
                   setShowPhotoManager(true);
                 }}
