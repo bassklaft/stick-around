@@ -11,6 +11,7 @@ import { tapMedium, notifySuccess } from "../lib/haptics";
 import { theme } from "../theme";
 import PhotoboothAnimation from "../components/PhotoboothAnimation";
 import { PHOTO_PROMPTS, PROMPT_SLOTS } from "../lib/petPhotos";
+import { LIFESTYLE_QUESTIONS, LIFESTYLE_FIELDS } from "../data/lifestyleQuestions";
 
 // 5-photo onboarding reel — pulls prompt copy from petPhotos.js (single
 // source of truth shared with PhotoManagerSheet so existing users see
@@ -52,6 +53,11 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
   const [dnaNotes, setDnaNotes] = useState("");
   const [microchipStatus, setMicrochipStatus] = useState(null); // 'confirmed' | 'pending' | 'none' | 'unsure' | null
   const [microchipNumber, setMicrochipNumber] = useState("");
+  // Lifestyle / habits questionnaire. Object keyed by question key
+  // (see src/data/lifestyleQuestions.js). Sub-step counter walks
+  // through LIFESTYLE_QUESTIONS while step === 5.
+  const [lifestyle, setLifestyle] = useState({});
+  const [lifestyleStep, setLifestyleStep] = useState(0);
   // Photobooth-animation overlay shown right before onDone(). Only
   // mounted while we're transitioning out of the form.
   const [showPhotobooth, setShowPhotobooth] = useState(false);
@@ -80,6 +86,9 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       setDnaNotes(target.dnaNotes || "");
       setMicrochipStatus(target.microchipStatus || "unsure");
       setMicrochipNumber(target.microchipNumber || "");
+      // Lifestyle: pull whatever's been saved; missing fields stay
+      // undefined so the wizard renders empty options for them.
+      setLifestyle(target.lifestyle && typeof target.lifestyle === "object" ? { ...target.lifestyle } : {});
       // Edit jumps straight to step 1 (name) since the form is pre-filled
       // and the species toggle is rarely meaningful for an existing pet.
       setStep(1);
@@ -164,6 +173,64 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
     return photos.filter((u) => typeof u === "string" && u.length > 0);
   }
 
+  // ───────────────── Lifestyle wizard helpers ─────────────────
+  function setLifestyleAnswer(key, value, type) {
+    setLifestyle((prev) => {
+      if (type === "multi") {
+        const arr = Array.isArray(prev[key]) ? prev[key] : [];
+        const has = arr.includes(value);
+        const toggled = has ? arr.filter((x) => x !== value) : [...arr, value];
+        // "none" is exclusive — picking it clears everything else; picking
+        // anything else clears "none".
+        const final = value === "none"
+          ? (has ? [] : ["none"])
+          : toggled.filter((x) => x !== "none");
+        return { ...prev, [key]: final };
+      }
+      return { ...prev, [key]: value };
+    });
+  }
+
+  function isLifestyleSelected(question, optionValue) {
+    const v = lifestyle[question.key];
+    if (question.type === "multi") return Array.isArray(v) && v.includes(optionValue);
+    return v === optionValue;
+  }
+
+  function nextLifestyle() {
+    if (lifestyleStep < LIFESTYLE_QUESTIONS.length - 1) {
+      setLifestyleStep(lifestyleStep + 1);
+      tapMedium();
+    } else {
+      setStep(6);
+    }
+  }
+
+  function prevLifestyle() {
+    if (lifestyleStep > 0) {
+      setLifestyleStep(lifestyleStep - 1);
+    } else {
+      setStep(4);
+    }
+  }
+
+  function skipAllLifestyle() {
+    track("lifestyle_skipped_all", { from_question: lifestyleStep });
+    setStep(6);
+  }
+
+  // Compact answered representation for storage — drops undefined keys
+  // and empty arrays so the persisted object only contains real input.
+  function compactLifestyle() {
+    const out = {};
+    for (const k of LIFESTYLE_FIELDS) {
+      const v = lifestyle[k];
+      if (Array.isArray(v) && v.length > 0) out[k] = v;
+      else if (typeof v === "string" && v.length > 0) out[k] = v;
+    }
+    return out;
+  }
+
   // Build the payload, persist it, then trigger the photobooth animation
   // (if any photos were captured). When the photobooth ends — by either
   // its own timer or the Skip button — we call the original onDone().
@@ -195,6 +262,10 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       photoUri: photosList[0] || null,
       microchipStatus: finalMicrochipStatus,
       microchipNumber: finalMicrochipNumber,
+      // Lifestyle questionnaire answers (compacted — empty/undefined
+      // fields not persisted). Object subkey on the pet record;
+      // optional, no schema migration required.
+      lifestyle: compactLifestyle(),
     };
     if (editMode && editPetId) {
       // Don't overwrite createdAt on edits.
@@ -523,7 +594,101 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
           </View>
         )}
 
-        {step === 5 && (
+        {step === 5 && (() => {
+          const q = LIFESTYLE_QUESTIONS[lifestyleStep];
+          const isLast = lifestyleStep === LIFESTYLE_QUESTIONS.length - 1;
+          const total = LIFESTYLE_QUESTIONS.length;
+          const stepNum = lifestyleStep + 1;
+          const promptTitle = q.title.replace(/\{pet\}/g, name.trim() || "them");
+          const petPossessive = (name.trim() || "your floof") + (name.trim().endsWith("s") ? "'" : "'s");
+          return (
+            <View style={s.section}>
+              {/* Progress dots — one per lifestyle question; filled if
+                  answered, accent if current. */}
+              <View style={s.lifestyleDots}>
+                {LIFESTYLE_QUESTIONS.map((qq, i) => {
+                  const v = lifestyle[qq.key];
+                  const answered = qq.type === "multi" ? Array.isArray(v) && v.length > 0 : !!v;
+                  const active = i === lifestyleStep;
+                  return (
+                    <View
+                      key={qq.key}
+                      style={[
+                        s.lifestyleDot,
+                        answered && s.lifestyleDotFilled,
+                        active && s.lifestyleDotActive,
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+              <Text style={s.eyebrow}>🐾  {q.section} · {stepNum} of {total}</Text>
+              <Text style={s.h1}>{promptTitle}</Text>
+              <Text style={s.sub}>{q.sub}</Text>
+
+              <View style={{ marginTop: 8 }}>
+                {q.options.map((opt) => {
+                  const selected = isLifestyleSelected(q, opt.value);
+                  return (
+                    <TouchableOpacity
+                      key={opt.value}
+                      onPress={() => { tapLight(); setLifestyleAnswer(q.key, opt.value, q.type); }}
+                      style={[s.lifestyleOption, selected && s.lifestyleOptionActive]}
+                      activeOpacity={0.7}
+                      accessibilityRole={q.type === "multi" ? "checkbox" : "radio"}
+                      accessibilityState={{ selected }}
+                    >
+                      <View style={{ flex: 1 }}>
+                        <Text style={[s.lifestyleOptionLabel, selected && s.lifestyleOptionLabelActive]}>
+                          {opt.label}
+                        </Text>
+                        {opt.help && (
+                          <Text style={[s.lifestyleOptionHelp, selected && s.lifestyleOptionHelpActive]}>
+                            {opt.help}
+                          </Text>
+                        )}
+                      </View>
+                      <MaterialCommunityIcons
+                        name={
+                          q.type === "multi"
+                            ? (selected ? "check-circle" : "circle-outline")
+                            : (selected ? "radiobox-marked" : "radiobox-blank")
+                        }
+                        size={22}
+                        color={selected ? theme.accent : theme.muted}
+                      />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {q.cta === "tummyTracker" && (
+                <View style={s.lifestyleCta}>
+                  <Text style={s.lifestyleCtaTitle}>💩😉  Track {petPossessive} input + output</Text>
+                  <Text style={s.lifestyleCtaBody}>
+                    The Tummy Tracker on Home logs every meal + every poop, scans for FDA recalls (locally — third-party never sees what you log), and turns into a vet-share PDF when you need it. Open it from Home anytime.
+                  </Text>
+                </View>
+              )}
+              {q.cta === "healthTracker" && (
+                <View style={s.lifestyleCta}>
+                  <Text style={s.lifestyleCtaTitle}>🏥  Add {petPossessive} health records</Text>
+                  <Text style={s.lifestyleCtaBody}>
+                    Vaccines, preventatives, and full health history go in Health Tracker on My Floofs — keeps you ahead of every due date and gives your vet a one-tap PDF for visits.
+                  </Text>
+                </View>
+              )}
+
+              <PrimaryButton label={isLast ? "Looking great — next" : "Next"} onPress={nextLifestyle} />
+              <SecondaryButton label="Back" onPress={prevLifestyle} />
+              <TouchableOpacity onPress={skipAllLifestyle} style={{ alignSelf: "center", padding: 6 }}>
+                <Text style={s.skipAllText}>Skip the rest · I'll fill these in later</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })()}
+
+        {step === 6 && (
           <View style={s.section}>
             <Text style={s.h1}>A few quick details</Text>
             <Text style={s.label}>Age (years)</Text>
@@ -540,7 +705,7 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
             </View>
 
             <PrimaryButton label={editMode ? `Save changes` : addMode ? `Add ${name.trim() || "this pet"}` : `Start with ${name.trim() || "your pet"}`} onPress={finish} />
-            <SecondaryButton label="Back" onPress={() => setStep(4)} />
+            <SecondaryButton label="Back" onPress={() => setStep(5)} />
           </View>
         )}
       </ScrollView>
@@ -579,6 +744,20 @@ const s = StyleSheet.create({
   reelDotFilled: { backgroundColor: theme.accent + "55", borderColor: theme.accent + "AA" },
   reelDotActive: { backgroundColor: theme.accent, borderColor: theme.accent, transform: [{ scale: 1.15 }] },
   skipAllText:   { color: theme.muted, fontSize: 12, fontStyle: "italic", marginTop: 6 },
+  // Lifestyle wizard — progress dots + option rows + inline CTA card
+  lifestyleDots:        { flexDirection: "row", flexWrap: "wrap", gap: 5, marginBottom: 14 },
+  lifestyleDot:         { width: 8, height: 8, borderRadius: 4, backgroundColor: theme.line, borderWidth: 1, borderColor: theme.line },
+  lifestyleDotFilled:   { backgroundColor: theme.accent + "55", borderColor: theme.accent + "AA" },
+  lifestyleDotActive:   { backgroundColor: theme.accent, borderColor: theme.accent, transform: [{ scale: 1.2 }] },
+  lifestyleOption:      { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderRadius: 12, borderWidth: 1, borderColor: theme.line, backgroundColor: theme.card, marginTop: 8 },
+  lifestyleOptionActive:{ borderColor: theme.accent, borderWidth: 2, backgroundColor: theme.accentSoft },
+  lifestyleOptionLabel: { fontSize: 14, fontWeight: "600", color: theme.fg },
+  lifestyleOptionLabelActive:{ color: theme.accent },
+  lifestyleOptionHelp:  { fontSize: 12, color: theme.muted, marginTop: 2 },
+  lifestyleOptionHelpActive:{ color: theme.accent + "CC" },
+  lifestyleCta:         { marginTop: 18, padding: 14, borderRadius: 12, backgroundColor: theme.accentSoft, borderWidth: 1, borderColor: theme.accent + "44" },
+  lifestyleCtaTitle:    { fontSize: 14, fontWeight: "800", color: theme.accent, marginBottom: 6, letterSpacing: -0.2 },
+  lifestyleCtaBody:     { fontSize: 12, color: theme.fg, lineHeight: 18 },
   label:    { fontSize: 12, fontWeight: "600", color: theme.muted, marginTop: 16, marginBottom: 6, textTransform: "uppercase", letterSpacing: 0.6 },
   input:    { backgroundColor: theme.card, borderWidth: 1, borderColor: theme.line, borderRadius: 10, paddingVertical: 14, paddingHorizontal: 14, fontSize: 17, color: theme.fg, marginBottom: 4 },
   section:  { marginTop: 8 },

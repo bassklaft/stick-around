@@ -17,6 +17,7 @@ import { usePurchases } from "../lib/purchasesContext";
 import { getPetBreeds, getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
 import { findType, statusFor, daysUntilDue } from "../lib/healthRecordTypes";
 import { breedFacts, breedDisplayName, breedAdjective, breedEmoji } from "../data/breeds";
+import { LIFESTYLE_QUESTIONS, LIFESTYLE_DISPLAY } from "../data/lifestyleQuestions";
 import { track } from "../lib/analytics";
 import { tapLight, tapMedium } from "../lib/haptics";
 import PhotoManagerSheet from "../components/PhotoManagerSheet";
@@ -76,6 +77,7 @@ export default function YourPetsScreen() {
   const [tipsOpen, setTipsOpen] = useState({});
   const [sourcesOpen, setSourcesOpen] = useState({});
   const [originStoryOpen, setOriginStoryOpen] = useState({});
+  const [lifestyleOpen, setLifestyleOpen] = useState({});
   // Pet ID currently being edited in the photo manager sheet, or null.
   const [photoMgrPetId, setPhotoMgrPetId] = useState(null);
   const { isPremium } = usePurchases();
@@ -311,6 +313,76 @@ export default function YourPetsScreen() {
 
             <HealthTrackerRow pet={pet} navigation={navigation} />
 
+            {/* Lifestyle card — collapsed by default. Shows answered
+                questions if pet.lifestyle has any entries; shows a
+                CTA to fill the questionnaire (jumps into EditPet)
+                when empty. Same toggle pattern as the breed cards. */}
+            {(() => {
+              const lifestyle = (pet && typeof pet.lifestyle === "object" && pet.lifestyle) || {};
+              const answered = LIFESTYLE_QUESTIONS.filter((q) => {
+                const v = lifestyle[q.key];
+                return q.type === "multi" ? Array.isArray(v) && v.length > 0 : !!v;
+              });
+              const total = LIFESTYLE_QUESTIONS.length;
+              const expanded = !!lifestyleOpen[pet.id];
+              if (answered.length === 0) {
+                return (
+                  <TouchableOpacity
+                    onPress={() => editPet(pet.id)}
+                    style={s.lifestyleEmpty}
+                    activeOpacity={0.7}
+                  >
+                    <MaterialCommunityIcons name="clipboard-text-outline" size={18} color={theme.accent} />
+                    <View style={{ flex: 1 }}>
+                      <Text style={s.lifestyleEmptyTitle}>Tell us about {pet.name}</Text>
+                      <Text style={s.lifestyleEmptyBody}>Activity, food, tummy, vet, health — quick taps, all skippable.</Text>
+                    </View>
+                    <MaterialCommunityIcons name="chevron-right" size={20} color={theme.accent} />
+                  </TouchableOpacity>
+                );
+              }
+              return (
+                <View style={s.breedCard}>
+                  <TouchableOpacity
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+                      setLifestyleOpen((prev) => ({ ...prev, [pet.id]: !prev[pet.id] }));
+                      tapLight();
+                    }}
+                    style={s.breedHeader}
+                  >
+                    <Text style={s.breedTitle}>🐾 {pet.name}'s lifestyle · {answered.length} of {total}</Text>
+                    <Text style={s.breedHeaderHint}>{expanded ? "Tap to hide" : "Tap to expand"}</Text>
+                  </TouchableOpacity>
+                  {expanded && (
+                    <>
+                      {answered.map((q) => {
+                        const display = LIFESTYLE_DISPLAY[q.key];
+                        const v = lifestyle[q.key];
+                        let valueText;
+                        if (q.type === "multi") {
+                          valueText = (Array.isArray(v) ? v : []).map((x) => display.valueToLabel[x] || x).join(", ");
+                        } else {
+                          valueText = display.valueToLabel[v] || v;
+                        }
+                        return (
+                          <View key={q.key} style={s.lifestyleAnswerRow}>
+                            <Text style={s.lifestyleAnswerLabel}>{q.title.replace(/\{pet\}/g, pet.name)}</Text>
+                            <Text style={s.lifestyleAnswerValue}>{valueText}</Text>
+                          </View>
+                        );
+                      })}
+                      <TouchableOpacity onPress={() => editPet(pet.id)} style={s.lifestyleEditBtn} activeOpacity={0.7}>
+                        <MaterialCommunityIcons name="pencil-outline" size={14} color={theme.accent} />
+                        <Text style={s.lifestyleEditBtnText}>Edit answers</Text>
+                      </TouchableOpacity>
+                    </>
+                  )}
+                </View>
+              );
+            })()}
+
             {breedKeys.map((breedKey) => {
               const breed = breedFacts[breedKey];
               if (!breed?.about && !breed?.summary) return null;
@@ -517,6 +589,14 @@ const s = StyleSheet.create({
   petMeta:       { fontSize: 13, color: theme.muted, marginTop: 4, textAlign: "center", textTransform: "capitalize" },
   mixMeta:       { fontSize: 12, color: theme.accent, marginTop: 4, textAlign: "center", fontStyle: "italic" },
   breedCard:     { marginTop: 16, padding: 14, backgroundColor: theme.bg, borderRadius: 12, borderWidth: 1, borderColor: theme.line },
+  lifestyleEmpty:        { flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12, padding: 14, borderRadius: 12, backgroundColor: theme.accentSoft, borderWidth: 1, borderColor: theme.accent + "55" },
+  lifestyleEmptyTitle:   { fontSize: 14, fontWeight: "700", color: theme.accent },
+  lifestyleEmptyBody:    { fontSize: 12, color: theme.fg, marginTop: 2, lineHeight: 17 },
+  lifestyleAnswerRow:    { paddingVertical: 8, borderTopWidth: 1, borderTopColor: theme.line },
+  lifestyleAnswerLabel:  { fontSize: 12, fontWeight: "700", color: theme.muted, letterSpacing: 0.2 },
+  lifestyleAnswerValue:  { fontSize: 14, color: theme.fg, marginTop: 3, lineHeight: 19, textTransform: "capitalize" },
+  lifestyleEditBtn:      { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, marginTop: 14, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 999, backgroundColor: theme.accentSoft, alignSelf: "center" },
+  lifestyleEditBtnText:  { color: theme.accent, fontSize: 12, fontWeight: "700", letterSpacing: 0.3 },
   breedSectionHd:{ flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 8 },
   breedSectionLabel:{ fontSize: 10, fontWeight: "800", color: theme.accent, letterSpacing: 1.4 },
   breedChipEmoji:{ fontSize: 14 },
