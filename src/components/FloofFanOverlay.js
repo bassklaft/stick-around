@@ -263,12 +263,19 @@ export default function FloofFanOverlay({
                   </View>
                 )}
               </View>
-              <Text
-                style={[styles.label, isHovered && styles.labelHovered]}
-                numberOfLines={1}
-              >
-                {firstName}
-              </Text>
+              {/* Name only renders for the hovered (or active-when-
+                  nothing-hovered) circle — with 4+ floofs in the arc,
+                  4 simultaneous labels collide into the next circle's
+                  body. The hovered name appears as a tooltip as the
+                  finger slides over circles. */}
+              {(isHovered || (isActive && !hoveredId)) && (
+                <Text
+                  style={[styles.label, isHovered && styles.labelHovered]}
+                  numberOfLines={1}
+                >
+                  {firstName}
+                </Text>
+              )}
             </Animated.View>
           );
         })}
