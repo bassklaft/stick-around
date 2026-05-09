@@ -6,9 +6,9 @@
 import React, { useEffect, useState, useCallback, useLayoutEffect, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Animated } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { useFocusEffect, useNavigation } from "@react-navigation/native";
+import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { Pet, ChecklistState } from "../lib/storage";
+import { Pet, Pets, ChecklistState } from "../lib/storage";
 import { Pawgress, PAW_SEGMENTS, SEGMENT_LABELS, SEGMENT_DESCRIPTIONS, todayKey, dailySpecialFor } from "../lib/pawgress";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { usePurchases } from "../lib/purchasesContext";
@@ -22,6 +22,7 @@ import { theme } from "../theme";
 export default function PawgressScreen() {
   const insets = useSafeAreaInsets();
   const navigation = useNavigation();
+  const route = useRoute();
   const { isPremium } = usePurchases();
   const [pet, setPet] = useState(null);
   const [day, setDay] = useState(null);
@@ -35,9 +36,19 @@ export default function PawgressScreen() {
 
   const dateKey = todayKey();
   const special = dailySpecialFor(dateKey);
+  // Caller passes petId as a route param so we don't have to read
+  // AsyncStorage's activeId — bulletproof against any race window
+  // where storage hasn't yet caught up with the user's most recent
+  // active-pet swipe on Home.
+  const routePetId = route?.params?.petId || null;
 
   const load = useCallback(async () => {
-    const p = await Pet.get();
+    let p = null;
+    if (routePetId) {
+      const all = await Pets.list();
+      p = all.find((x) => x.id === routePetId) || null;
+    }
+    if (!p) p = await Pet.get();
     setPet(p);
     if (!p?.id) return;
     const d = await Pawgress.getDay(p.id, dateKey);
@@ -54,7 +65,7 @@ export default function PawgressScreen() {
       return status !== "done" && status !== "skipped";
     }).length;
     setDailyRemaining(dailyPending);
-  }, [dateKey]);
+  }, [dateKey, routePetId]);
 
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));

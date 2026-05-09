@@ -36,11 +36,11 @@ export default function ActivePetChip({ pet, onPress }) {
 }
 
 const s = StyleSheet.create({
-  // Larger avatars per build 19 smoke-test feedback ("mini circular
-  // icons are so small that its hard to see him so enlarge"). Bumped
-  // from 22px to 32px; chip background padding adjusted so the
-  // avatar looks at home and the first-name still fits.
-  chip:          { flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 6, paddingVertical: 4, borderRadius: 999, backgroundColor: theme.accentSoft, borderWidth: 1.5, borderColor: theme.accent + "66", marginRight: 8, maxWidth: 140 },
-  avatarRing:    { width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: "#fff", alignItems: "center", justifyContent: "center", overflow: "hidden" },
-  name:          { fontSize: 13, fontWeight: "700", color: theme.fg, textTransform: "capitalize", maxWidth: 80, paddingRight: 8 },
+  // Compact pill that fits the navigation header's right slot
+  // without cropping. Earlier 32px avatar + thick white border was
+  // bleeding off the right edge; ring color now blends with the
+  // chip background so no visible "white perimeter."
+  chip:          { flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 4, paddingRight: 10, paddingVertical: 3, borderRadius: 999, backgroundColor: theme.accentSoft, borderWidth: 1.5, borderColor: theme.accent + "66", marginRight: 12, maxWidth: 130 },
+  avatarRing:    { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", overflow: "hidden" },
+  name:          { fontSize: 13, fontWeight: "700", color: theme.fg, textTransform: "capitalize", maxWidth: 70 },
 });

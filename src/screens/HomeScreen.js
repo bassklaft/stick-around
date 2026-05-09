@@ -240,7 +240,7 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
   const cards = [
     { key: "pets",     title: "My Floofs",            subtitle: `${pet.name} · ${breedDisplay}`,    icon: "paw",            tint: theme.accent, onPress: () => navigation.navigate("Main", { screen: "YourPets" }) },
     { key: "diet",     title: "Diet & Care",          subtitle: "Supplements, fresh foods, grooming products",     icon: "food-apple",     tint: "#3F8E5C",    onPress: () => navigation.navigate("Diet") },
-    { key: "tummy",    title: "Tummy Tracker",        subtitle: "Stool + diet log · FDA recall match · vet-share PDF", icon: "stomach", tint: "#7A4F0A", onPress: () => navigation.navigate("TummyTracker") },
+    { key: "tummy",    title: "Tummy Tracker",        subtitle: "Stool + diet log · FDA recall match · vet-share PDF", icon: "stomach", tint: "#7A4F0A", onPress: () => navigation.navigate("TummyTracker", { petId: pet.id }) },
     { key: "health",   title: "Health Tracker",       subtitle: healthSubtitle, icon: "clipboard-pulse-outline", tint: "#3F8E5C", onPress: () => navigation.navigate("HealthTracker", { petId: pet.id }), badge: overdueCount > 0 ? overdueCount : null },
     { key: "toxic",    title: "Toxic Foods & Plants", subtitle: "Quick reference — what to keep away",             icon: "leaf",           tint: theme.green,  onPress: () => navigation.navigate("Toxic") },
     { key: "age",      title: "Age Calculator",       subtitle: `${pet.name}'s human-equivalent age — multi-factor, not "1 yr = 7"`, icon: "calendar-heart", tint: "#7A4F0A", onPress: () => navigation.navigate("DogAge") },
@@ -285,22 +285,24 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                 height={HERO_HEIGHT}
                 onActivate={async (petId) => {
                   if (!petId || petId === pet.id) return;
+                  // Visual update FIRST (synchronous setPet) so
+                  // parent state matches FloofCardStack's internal
+                  // index immediately — no flash of mismatched
+                  // data on Quick Access subtitle, "This week"
+                  // counter, etc. (build-31 had this in the wrong
+                  // order, awaiting setActive first.) Storage
+                  // write happens after; per-pet screens get the
+                  // active pet via route params (see Today's
+                  // Pawgress / Health Tracker handlers below) so
+                  // they don't depend on the storage-write timing.
+                  const newPet = pets.find((p) => p.id === petId);
+                  if (newPet) {
+                    setPet(newPet);
+                    setItems(generateChecklist(newPet));
+                  }
                   try {
-                    // setActive FIRST so any quick navigation
-                    // (e.g. user taps "Today's Pawgress" right
-                    // after the swipe lands) reads the correct
-                    // active pet from storage. Earlier flow did
-                    // optimistic state updates BEFORE setActive,
-                    // which left a window where Pet.get() in the
-                    // next screen returned the OLD active pet —
-                    // user saw "Falafel's Pawgress" land as
-                    // "Paco's Pawgress" because Paco was still
-                    // the persisted active id.
                     await Pets.setActive(petId);
-                    const newPet = pets.find((p) => p.id === petId);
                     if (newPet) {
-                      setPet(newPet);
-                      setItems(generateChecklist(newPet));
                       const [nextState, nextDay, nextHr] = await Promise.all([
                         ChecklistState.get(newPet.id),
                         Pawgress.getDay(newPet.id, todayKey()),
@@ -311,11 +313,7 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                       setHealthRecords(nextHr);
                     }
                     await load();
-                  } catch {
-                    // Swallow — the swipe is non-destructive UX; if any
-                    // read fails we still want the visual swap to land
-                    // and the next interaction to retry.
-                  }
+                  } catch { /* swipe is non-destructive */ }
                 }}
                 onTapFront={async (tappedPet) => {
                   // Tap a card → activate that pet + open the
@@ -324,11 +322,10 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                   // the wrong pet's profile.
                   if (!tappedPet?.id) return;
                   if (tappedPet.id !== pet.id) {
+                    setPet(tappedPet);
+                    setItems(generateChecklist(tappedPet));
                     try {
-                      // Same setActive-first ordering as onActivate.
                       await Pets.setActive(tappedPet.id);
-                      setPet(tappedPet);
-                      setItems(generateChecklist(tappedPet));
                       const [nextState, nextDay, nextHr] = await Promise.all([
                         ChecklistState.get(tappedPet.id),
                         Pawgress.getDay(tappedPet.id, todayKey()),
@@ -385,7 +382,7 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
             entry point and reads as the "next thing to do today". */}
         {pawgressDay && (
           <TouchableOpacity
-            onPress={() => navigation.navigate("Pawgress")}
+            onPress={() => navigation.navigate("Pawgress", { petId: pet.id })}
             style={s.pawgressCard}
             activeOpacity={0.85}
             accessibilityRole="button"
