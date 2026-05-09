@@ -1,21 +1,22 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
   FloofLife brand mark — paw + green check on cream. Geometry is
-  the canonical PawIcon (src/components/PawIcon.js): the literal
-  MaterialDesignIcons "paw" glyph, 5 sub-paths in a 24×24 user-
-  space. Same silhouette used by the in-app PawgressPaw, Logo
-  header, and tab bar — no drift between surfaces.
+  the canonical PawIcon (src/components/PawIcon.js): a custom
+  5-shape paw silhouette matching the user-approved reference
+  (cartoon paw, 4 toe ellipses + 1 heel path).
 
-  The paw is rendered via a single <g transform="translate scale">
-  (NOT a nested <svg>) because macOS Quick Look's SVG renderer
-  (qlmanage) silently ignores nested SVG viewBoxes — the build-23
-  cycle hit this once already and the cached PNG looked correct
-  in Finder but skipped the paw geometry entirely.
+  Same silhouette used by the in-app PawgressPaw, Logo header,
+  tab bar, and pet-photo placeholders — no drift between surfaces.
 
-  Re-export PNGs:
+  Single-level (g transform="translate scale") (NOT nested svg)
+  because macOS Quick Look's SVG renderer (qlmanage) silently
+  ignores nested SVG viewBoxes.
+
+  Re-export PNGs (do not write the dash-dash flag inline here, it
+  breaks XML comment parsing in CoreSVG):
     qlmanage -t -s 1024 -o . logo-paw-check.svg
-    sips -Z 512 logo-paw-check@1024.png --out logo-paw-check@512.png
-    sips -Z 256 logo-paw-check@1024.png --out logo-paw-check@256.png
+    sips -Z 512 logo-paw-check@1024.png  -o logo-paw-check@512.png
+    sips -Z 256 logo-paw-check@1024.png  -o logo-paw-check@256.png
 -->
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 280" width="320" height="280">
   <!-- Cream background, rounded card -->
@@ -25,19 +26,24 @@
        scale 8.333 = 200 / 24. Translate (60, 40) lands the paw's
        0,0 origin at the canvas's top-left of the 200×200 region. -->
   <g transform="translate(60 40) scale(8.333)" fill="#C04A2C">
-    <path d="M8.35,3C7,2.85 5.62,4.1 5.34,5.84C5.06,7.57 5.96,9.13 7.34,9.27C8.71,9.42 10.09,8.17 10.37,6.43C10.65,4.69 9.75,3.13 8.35,3Z"/>
-    <path d="M15.65,3C14.25,3.13 13.35,4.69 13.63,6.43C13.91,8.17 15.29,9.42 16.66,9.27C18.04,9.13 18.94,7.57 18.66,5.84C18.38,4.1 17,2.85 15.65,3Z"/>
-    <path d="M3.79,9.5C2.45,9.78 1.71,11.55 2.16,13.21C2.6,14.86 4.04,15.97 5.38,15.7C6.71,15.42 7.45,13.65 7,12C6.5,10.34 5.12,9.23 3.79,9.5Z"/>
-    <path d="M20.21,9.5C18.88,9.23 17.5,10.34 17,12C16.55,13.65 17.29,15.42 18.62,15.7C19.96,15.97 21.4,14.86 21.84,13.21C22.29,11.55 21.55,9.78 20.21,9.5Z"/>
-    <path d="M11.59,11.46C10.83,11.5 10.11,11.84 9.5,12.32C8.39,13.21 7.5,14.34 6.62,15.5C5.77,16.65 4.86,17.81 4.5,19.16C4.18,20.41 4.5,21.94 5.71,22.6C7.06,23.34 8.78,23 10.16,22.69C11.53,22.38 12.93,22.31 14.32,22.42C15.59,22.5 16.91,22.83 18.13,22.34C18.95,22 19.66,21.13 19.59,20.18C19.51,18.84 18.61,17.7 17.81,16.66C16.93,15.5 16.07,14.32 14.96,13.4C13.82,12.45 12.84,11.4 11.59,11.46Z"/>
+    <!-- food (inner-left toe) -->
+    <ellipse cx="9.2"  cy="6"   rx="2.3" ry="3.4" transform="rotate(-6 9.2 6)"/>
+    <!-- mind (inner-right toe) -->
+    <ellipse cx="14.8" cy="6"   rx="2.3" ry="3.4" transform="rotate(6 14.8 6)"/>
+    <!-- movement (outer-left toe) -->
+    <ellipse cx="4.5"  cy="9.5" rx="2.0" ry="2.9" transform="rotate(-25 4.5 9.5)"/>
+    <!-- body (outer-right toe) -->
+    <ellipse cx="19.5" cy="9.5" rx="2.0" ry="2.9" transform="rotate(25 19.5 9.5)"/>
+    <!-- special (heel) — direct trace of the locked reference. -->
+    <path d="M 12 11.5 C 9.2 11.5 6.8 13.2 5.6 15.6 C 4.6 17.6 4.8 19.8 6 21.2 C 7.2 22.5 9.4 22.8 11 22.4 C 11.6 22.25 12.4 22.25 13 22.4 C 14.6 22.8 16.8 22.5 18 21.2 C 19.2 19.8 19.4 17.6 18.4 15.6 C 17.2 13.2 14.8 11.5 12 11.5 Z"/>
   </g>
 
   <!-- Green check badge — same anatomy as the in-app PawIcon's
        optional `withCheck`. Translated to land at the bottom-right
        of the paw silhouette. -->
-  <g transform="translate(216 200)">
+  <g transform="translate(216 207)">
     <circle r="28" fill="#FBE4DC"/>
-    <circle r="22" fill="#3F8E5C"/>
-    <path d="M -10 0 L -2 8 L 12 -8" stroke="#fff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle r="22.4" fill="#3F8E5C"/>
+    <path d="M -10.5 0 L -2.1 8.4 L 12.6 -8.4" stroke="#fff" stroke-width="4.4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
   </g>
 </svg>
