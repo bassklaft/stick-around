@@ -78,6 +78,24 @@
     "web": {
       "favicon": "./assets/icon.png"
     },
+    "plugins": [
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "FloofLife uses your photos so you can add a profile picture for your pet. Photos stay on your device and are never uploaded.",
+          "cameraPermission": "FloofLife uses your camera so you can take a profile picture of your pet. Photos stay on your device and are never uploaded.",
+          "microphonePermission": false
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "FloofLife uses your location to show nearby emergency veterinarians, fetch current weather for outdoor activity safety (hot pavement, freezing temperatures), and flag known regional risks like tick zones. Location is used in the moment and never stored.",
+          "locationAlwaysAndWhenInUsePermission": false,
+          "locationAlwaysPermission": false
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "87966e65-9a1f-4cd1-b768-c30a41608fdf"
