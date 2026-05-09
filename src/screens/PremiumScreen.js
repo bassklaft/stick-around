@@ -3,7 +3,7 @@
 // it's where the trial lives; the monthly card is now a real toggle
 // (the v0 "monthly button non-clickable" bug is fixed here).
 import React, { useState } from "react";
-import { View, Text, ScrollView, TouchableOpacity, Pressable, ActivityIndicator, Alert, StyleSheet } from "react-native";
+import { View, Text, ScrollView, TouchableOpacity, Pressable, ActivityIndicator, Alert, Linking, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Purchases from "react-native-purchases";
@@ -12,6 +12,9 @@ import { PREMIUM_ENTITLEMENT_ID } from "../lib/config";
 import { track } from "../lib/analytics";
 import { tapMedium, tapHeavy, notifySuccess, notifyError } from "../lib/haptics";
 import { theme } from "../theme";
+
+const PRIVACY_URL = "https://bassklaft.github.io/floof-life/legal/privacy-policy.html";
+const TERMS_URL = "https://bassklaft.github.io/floof-life/legal/terms-of-service.html";
 
 const FREE = [
   "1 pet profile",
@@ -323,6 +326,21 @@ export default function PremiumScreen({ navigation }) {
         <Text style={s.fineText}>
           Subscriptions are processed by Apple. Your subscription auto-renews unless canceled at least 24 hours before the end of the current period. Manage or cancel in Settings → Apple ID → Subscriptions.
         </Text>
+        <View style={s.legalLinkRow}>
+          <Pressable
+            onPress={() => { Linking.openURL(TERMS_URL).catch(() => {}); }}
+            hitSlop={8}
+          >
+            <Text style={s.legalLink}>Terms of Service</Text>
+          </Pressable>
+          <Text style={s.legalDot}> · </Text>
+          <Pressable
+            onPress={() => { Linking.openURL(PRIVACY_URL).catch(() => {}); }}
+            hitSlop={8}
+          >
+            <Text style={s.legalLink}>Privacy Policy</Text>
+          </Pressable>
+        </View>
         <Text style={[s.fineText, { marginTop: 8 }]}>
           FloofLife guidance is sourced from public veterinary references. It is not a substitute for veterinary advice.
         </Text>
@@ -359,4 +377,7 @@ const s = StyleSheet.create({
   loadingText:  { color: theme.muted, fontSize: 12 },
   fineprint:    { marginTop: 24 },
   fineText:     { fontSize: 11, color: theme.muted, lineHeight: 17 },
+  legalLinkRow: { flexDirection: "row", alignItems: "center", marginTop: 10 },
+  legalLink:    { fontSize: 12, fontWeight: "600", color: theme.accent },
+  legalDot:     { fontSize: 12, color: theme.muted },
 });
