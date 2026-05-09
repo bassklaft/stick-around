@@ -24,20 +24,22 @@ const titleCase = s => s.split(" ").map(w => w[0]?.toUpperCase() + w.slice(1)).j
 
 // Multi-pet hero collage. Adapts layout to family size:
 //   2 pets: side-by-side 50/50
-//   3 pets: 1 photo top, 2 photos bottom (50/50)
+//   3 pets: 3 vertical stripes (each 1/3 width) — symmetric so a
+//           floof without a photo doesn't make the whole hero look
+//           lopsided
 //   4 pets: 2x2 grid
 //   5+ pets: 2x2 grid with the 4th tile showing "+N more" overlay
 // Active pet's tile gets a subtle accent-color border so it reads as
 // "this is who's active right now" without forcing a single-photo
 // hero again. Photos come from each pet's stored documentDirectory
-// URI; pets without a photo get a breed-emoji placeholder tile.
+// URI; pets without a photo get a branded FloofLife placeholder
+// (paw + green check + pet name).
 function CollageTile({ pet, active, overflow = 0, tileIndex = 0 }) {
-  const primary = getPrimaryBreed(pet);
-  const placeholderEmoji = pet?.species === "cat" ? "🐈" : "🐕";
   // Each collage tile gets a different photo from the pet's set so two
   // tiles for the same pet wouldn't show the same image (single-pet
   // households still see the daily-rotated hero — different slot).
   const tileUri = pickPhotoForSlot(pet, "collage", { tileIndex });
+  const placeholderName = (pet?.name && pet.name.trim()) || "FloofLife";
   return (
     <View style={[collageStyles.tile, active && collageStyles.tileActive]}>
       {tileUri ? (
@@ -50,7 +52,18 @@ function CollageTile({ pet, active, overflow = 0, tileIndex = 0 }) {
         </ImageBackground>
       ) : (
         <View style={collageStyles.tileFallback}>
-          <Text style={{ fontSize: 42 }}>{placeholderEmoji}</Text>
+          {/* Branded placeholder — paw + green check (the FloofLife
+              mark) over the pet's name. Reads as "no photo yet" but
+              still feels like the app, not a missing-asset hole. */}
+          <View style={collageStyles.placeholderIconStack}>
+            <MaterialCommunityIcons name="paw" size={44} color={theme.accent} />
+            <View style={collageStyles.placeholderCheckBadge}>
+              <MaterialCommunityIcons name="check-bold" size={11} color="#fff" />
+            </View>
+          </View>
+          <Text style={collageStyles.placeholderName} numberOfLines={1}>
+            {placeholderName}
+          </Text>
           {overflow > 0 && (
             <View style={collageStyles.overflowOverlay}>
               <Text style={collageStyles.overflowText}>+{overflow} more</Text>
@@ -74,15 +87,14 @@ function FloofCollage({ pets, activeId }) {
     );
   }
   if (n === 3) {
+    // 3 vertical stripes — each pet gets 1/3 of the hero width across
+    // the full hero height. Symmetric (no "1 on top, 2 on bottom"
+    // asymmetry that lopsided when a tile is photoless).
     return (
-      <View style={[collageStyles.fill, { flexDirection: "column" }]}>
-        <View style={{ flex: 1, flexDirection: "row" }}>
-          <CollageTile pet={pets[0]} active={pets[0].id === activeId} tileIndex={0} />
-        </View>
-        <View style={{ flex: 1, flexDirection: "row" }}>
-          <CollageTile pet={pets[1]} active={pets[1].id === activeId} tileIndex={1} />
-          <CollageTile pet={pets[2]} active={pets[2].id === activeId} tileIndex={2} />
-        </View>
+      <View style={[collageStyles.fill, { flexDirection: "row" }]}>
+        {pets.slice(0, 3).map((p, i) => (
+          <CollageTile key={p.id} pet={p} active={p.id === activeId} tileIndex={i} />
+        ))}
       </View>
     );
   }
@@ -151,7 +163,10 @@ const collageStyles = StyleSheet.create({
   tileActive:     { borderWidth: 3, borderColor: theme.accent },
   tileImage:      { flex: 1 },
   tileImageInner: { resizeMode: "cover" },
-  tileFallback:   { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.accentSoft },
+  tileFallback:   { flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: theme.accentSoft, padding: 8, gap: 6 },
+  placeholderIconStack: { width: 50, height: 48, alignItems: "center", justifyContent: "center" },
+  placeholderCheckBadge:{ position: "absolute", bottom: 0, right: -2, width: 18, height: 18, borderRadius: 9, backgroundColor: "#3F8E5C", alignItems: "center", justifyContent: "center", borderWidth: 1.5, borderColor: theme.bg },
+  placeholderName:{ fontSize: 12, fontWeight: "800", color: theme.fg, letterSpacing: -0.2, textAlign: "center", maxWidth: "92%", textTransform: "capitalize" },
   overflowOverlay:{ ...StyleSheet.absoluteFillObject, backgroundColor: "rgba(0,0,0,0.55)", alignItems: "center", justifyContent: "center" },
   overflowText:   { color: "#fff", fontSize: 18, fontWeight: "800", letterSpacing: 0.4 },
 });

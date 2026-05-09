@@ -43,10 +43,15 @@ export async function pickPetPhoto({ petId } = {}) {
       Alert.alert("Photo access needed", "Allow photo access in Settings to add a picture of your pet.");
       return null;
     }
+    // allowsEditing: true falls back to the legacy
+    // UIImagePickerController on iOS, which does NOT show the search
+    // button. Dropping it routes through PHPickerViewController which
+    // includes search ("type 'dog' to find pet pics fast"), multi-
+    // album browsing, and Live Photo previews. Hero / collage tiles
+    // and avatar circles all use resizeMode: "cover", so non-square
+    // photos render fine without an explicit crop step.
     const result = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: imageMediaTypes(),
-      allowsEditing: true,
-      aspect: [1, 1],
       quality: 0.85,
     });
     if (result.canceled || !result.assets?.[0]?.uri) return null;
