@@ -1,10 +1,90 @@
-# Overnight Run — 2026-05-07 → 2026-05-08 (and ongoing through manifest closeouts)
+# Overnight Run — 2026-05-07 → 2026-05-10 (v1.2.0 cycle, ongoing)
 
-This file is the running log for the v1.2.0 cycle. The active section is the **v1.2.0 FINAL MANIFEST** below. Everything in the **Appendix** at the bottom is condensed historical context (merge resolution, audit findings, autonomous decisions) preserved for reference but not load-bearing for build 18.
+This file is the running log for the v1.2.0 cycle. The **CURRENT STATE** section directly below is the up-to-date authoritative summary as of 2026-05-10. The **v1.2.0 FINAL MANIFEST** further down captures the pre-build-18 spec lock and is preserved as historical record. The **Appendix** at the bottom holds older context (merge resolution, audits, side-quest write-ups).
 
 ---
 
-# 🚀 v1.2.0 FINAL MANIFEST — locked 2026-05-08
+# 📍 CURRENT STATE — 2026-05-10 (post-build-42, build 43 in flight)
+
+## Build state at-a-glance
+
+| Build | Commit | Status | Headline |
+|---|---|---|---|
+| **43** | `2a64be4` (HEAD) | **TRIGGERED, in flight** | Active-pet reactivity fix + dev-only `@expo/cli` devicectl patch |
+| 42 | `5f992b3` | Finished EAS, TestFlight status unknown to Claude | Fan-out: tap-anywhere-to-dismiss safety net |
+| 41 | `eac83ff` | Finished EAS | Haptics re-enabled on iOS 26.3.x (build 40 proved the disable was unneeded) |
+| 40 | `3868882` | Finished EAS | Lifestyle questionnaire ground-up rewrite (bare gesture-responder Views) |
+| 39 | `88a205d` | Finished EAS | Re-enabled lifestyle questionnaire with 3 defense-in-depth fixes |
+| 38 | `d4893fa` | Finished EAS | Skip photobooth animation (second TurboModule crash on Done tap) |
+| 37 | `d7144e5` | Finished EAS | Disabled lifestyle questionnaire app-wide to unblock screenshot capture |
+| 36 | `836f77f` | Finished EAS | PawgressPaw v2 ellipse geometry + tagline copy |
+| 35 | `b7983c4` | Finished EAS | Haptics 1-tick defer (didn't work, hard-disabled in 35.1 = commit `34dc5ac`) |
+| 34 | `7c2a9a3` | Finished EAS | Final paw silhouette — direct trace of reference, **LOCKED** |
+| 33 | `b5ae03c` | Finished EAS | Suppress autolinked unused permission strings (Apple privacy fix) |
+| 32 | `0794095` | Finished EAS | Optimistic-first active-pet sync, route params, MCI paw, chip layout |
+| 31 | `a9503c5` | Finished EAS | Active-pet sync race + empty paw matches filled |
+| 30 | `05ff8ab` | Finished EAS | Continuous-touch fan-out + paw match logo + delete-floof + Insider Tips polish |
+| 29 | `3884abd` | Finished EAS | Harden against unhandled-rejection paths that abort the JS bridge |
+| 28 | `2531771` | Finished EAS | Visual guided tour with arrows + spotlights (replaces text-bullet tutorial) |
+| 27 | `f415c31` | Finished EAS | Optimistic active-pet update on card-stack swipe / tap |
+| 26 | `c58c50b` | Finished EAS | Pawgress paw silhouette matches MCI tab/chip paw exactly |
+| 25 | `fc23865` | Finished EAS | Pawgress paw matches FloofLife logo + check gates on full completion |
+| 24 | `efaaa31` | Finished EAS | Collapse About-card by default on My Floofs |
+| 23 | `c9f0211` | Finished EAS | Smoother heart pad + clarify "all 5 pads" vs daily checklist |
+| 22 | `1c8e6f1` | Finished EAS | Universal PetAvatar — never blank, branded fallback |
+| 21 | `8aaf2f5` | Last build documented in pre-update OVERNIGHT_NOTES | Build 20 manifest + guardrail verification |
+
+**Build budget**: 97% of monthly EAS-included credits consumed before build 43. Build 43 onward in this cycle is pay-as-you-go (~$2/build). Next monthly cycle restores 12 included + 3 emergency reserve, ~3 weeks out.
+
+## The defining saga of builds 22→43 — iOS 26.3.x TurboModule crash
+
+This dominated the second half of the v1.2.0 cycle. Six builds (35-41) were spent diagnosing and curing a single recurring crash class.
+
+**Symptom**: `objc_exception_rethrow` on `com.meta.react.turbomodulemanager.queue` — SIGABRT in the native bridge that JavaScript's `Promise.catch` cannot intercept. Surfaced on iPhone 16 Pro / iOS 26.3.x during onboarding's lifestyle questionnaire, the photobooth Done tap, the fan-out gesture termination, and haptics calls.
+
+**Cure** (now an active memory rule — see `feedback_ios_26_3_turbomodule_cure.md`): bare-`View` + gesture-responder rewrites, no `<Pressable>`, no `MaterialCommunityIcons`, no `accessibilityRole` / `accessibilityState`, no emoji. Applied to:
+- **Lifestyle questionnaire** (build 40, commit `3868882`): full rewrite using the primitives stack.
+- **Fan-out overlay** (builds 41-42): close-on-gesture-terminate + 10s auto-close timer + tap-anywhere-to-dismiss on bare-gesture-responder scrim.
+- **Haptics** (builds 35→41): defer-by-1-tick (build 35, didn't work) → hard-disable (35.1) → re-enable (build 41) once the actual culprits were neutralized elsewhere.
+
+The 5-failed-bisect lesson from this saga is the reason `feedback_ios_26_3_turbomodule_cure.md` now says "default to this primitives stack instead of bisect-by-disable."
+
+## Other notable themes since build 21
+
+- **Paw silhouette iteration** (builds 25, 26, 33, 34, 36): five rounds before the silhouette **LOCKED** at build 34 (`7c2a9a3`, direct trace of user reference). PawgressPaw geometry caught up in build 36. The "stop iterating on visuals after 3 rounds" memory rule (`feedback_visual_iteration.md`) was authored partly in response to this stretch.
+- **Active-pet sync hardening** (builds 27, 31, 32, 43): three prior passes addressed swipe/tap optimism + AsyncStorage race. Build 43 closes the last gap — screens that didn't subscribe to `useActivePet`'s listener stayed stale after fan-out switches when they were already focused.
+- **Privacy / App Store readiness** (build 33): suppressed autolinked unused permission strings via plugins config (previous builds had auto-collected entitlements Apple flagged as undeclared).
+- **Onboarding stability** (builds 37-40): lifestyle questionnaire bounced from "disable to unblock screenshots" → "re-enable with 3 fixes" → "ground-up primitives rewrite" → re-enabled cleanly.
+- **Fan-out UX** (build 30 onward): continuous-touch slide-to-select, name labels only on hovered/active, three-layer dismiss safety net (terminate fallback + 10s timer + scrim-tap).
+- **Visual guided tour** (build 28): replaced the text-bullet welcome card with an arrows + spotlights overlay.
+
+## Build 43 contents (this build)
+
+- `9810d4e fix(active-pet): every per-pet screen now reacts to active changes, not just on focus` — adds `useActivePet` subscription + `activePetId` to load-callback deps on every per-pet screen (Home, Checklist, Health, Tummy, Pawgress, DogAge, Risk, Settings, YourPets); `HealthTracker` + `Pawgress` switch from `route.params.petId` primacy to active-pet primacy; `LogStool` + `LogDiet` resolve write target via `readActivePetId()` at save time; `YourPetsScreen` scrolls to the active pet's card on focus.
+- `2a64be4 chore(dev): patch @expo/cli devicectl.js to accept Xcode 26's jsonVersion 3` — dev-only, not in the user bundle. Future-proofs `expo run:ios` against Xcode 26's devicectl output format. Applied via `patch-package`; persists across `npm install` via the new `postinstall` script.
+
+## Open items / what's next
+
+1. **Build 43 → TestFlight smoke test** — focus the test on the active-pet fix:
+   - Switch floofs via fan-out from each tab (Pawgress / Home / Tummy / Health / My Floofs). Confirm the destination tab and Home itself show the newly-active pet immediately.
+   - Multi-pet swipe deck on Home + Quick Access card navigation should always carry the right pet.id.
+   - Log a stool entry while mid-switch (open Log Stool, fan-switch, save). Entry should land on the post-switch pet (write-time resolution).
+   - YourPets scroll-to-active when entering the tab with a non-eldest pet active.
+2. **TestFlight status of builds 22-42** — Claude has no visibility into Transporter delivery / ASC processing / App Store Review state; Max owns that pipeline.
+3. **Tosa Inu** — still parked, needs neutral-framing + BSL country list. Out of v1.2.0 scope.
+4. **Dev-client path** — partially diagnosed in the 2026-05-10 session. `@expo/cli` patch landed via `patch-package`; the actual blocker for `expo run:ios --device` is the iPhone-side Dev Mode setup, not the cli. Documented in `patches/@expo+cli+54.0.24.patch` + `package.json` postinstall script. Maestro install attempt was abandoned (wrong package installed, permission denials on installers). Tabled until a calmer session.
+5. **Jest test infrastructure** — agreed plan: set up `jest` + `jest-expo` + `@testing-library/react-native` during Apple's next review window so future React-level bugs (like the active-pet pattern) are catchable locally without an EAS build. Tabled for the post-43 review window.
+6. **My Vet contact integration** — still spec-stub, v1.4+ candidate (see Appendix section).
+
+## What's NOT in v1.2.0 (carry forward)
+
+The 2026-05-08 manifest below is the v1.2.0 spec lock. Nothing has been added to v1.2.0 scope since — every commit between then and now is a fix, polish, or hardening of items already in scope.
+
+---
+
+# 🚀 v1.2.0 FINAL MANIFEST — locked 2026-05-08 (HISTORICAL — preserved for context)
+
+This was the authoritative wrap-up before build 18 trigger. Builds 22-43 are all incremental fixes/polish on top of this manifest. The features list below is still accurate for what shipped.
 
 This is the authoritative wrap-up before build 18 trigger.
 
