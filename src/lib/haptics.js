@@ -7,51 +7,28 @@
 // (getHapticsPref / setHapticsPref) remain as no-ops so any old
 // import sites keep building, but the internals no longer read them.
 //
-// Build-36 fix for iOS 26.3.x TurboModule queue crash: hard-disable
-// every native expo-haptics call on iOS 26.3.x. Build 35's defer +
-// double-catch + circuit-breaker wrapper did NOT prevent the crash
-// — confirmed by a fresh crash report on build 35 with the SAME
-// signature: `objc_exception_rethrow` on
-// `com.meta.react.turbomodulemanager.queue` → SIGABRT.
+// Build-41: haptics re-enabled on iOS 26.3.x. Build 36's gate
+// disabled them all because we suspected expo-haptics was the
+// TurboModule throwing on iOS 26.3.x. Build 40 disproved that
+// hypothesis: the actual crash was the lifestyle questionnaire's
+// <Pressable> + <MaterialCommunityIcons> + accessibilityState
+// combo, not haptics. Build 40 cured the crash by stripping that
+// screen down to bare gesture-responder Views with no MCI / no
+// Pressable / no accessibilityState — and that fix worked WHILE
+// haptics were still disabled. The haptics gate was a red herring
+// from the start; the only reason it appeared to "help" was that
+// disabling haptics also stopped the user from interacting fast
+// enough to hit the lifestyle screen until later builds.
 //
-// Why JS-level wrapping can't fix this:
-//   The Obj-C exception thrown inside UIFeedbackGenerator's
-//   TurboModule invocation block unwinds the stack past the JS
-//   bridge boundary. It hits `_objc_terminate` → `abort()`
-//   BEFORE any Promise.catch / try/catch / circuit-breaker
-//   counter can fire. The defer-by-1-tick changed when JS
-//   scheduled the call but not where the native call ended up
-//   (still TurboModule queue) or how the dispatch lane handled
-//   the throw (still serial-drain abort). The wrapper looked
-//   defensive but architecturally couldn't intercept the crash.
-//
-// Pragmatic fix until upstream lands a patch (Expo SDK 54 →
-// 56 upgrade, or react-native-haptic-feedback as drop-in):
-// detect iOS 26.3.x via Platform.Version and bail before any
-// native call. Users on iOS ≤ 26.2.x and ≥ 26.4.x keep full
-// haptics. iOS 26.3.x users get a silent app — slightly
-// degraded UX, no crash.
-//
-// The defer + double-catch + circuit-breaker remain for
-// defense in depth on other OS versions where a similar
-// (but catchable) failure mode might arise.
+// The defer + double-catch + circuit-breaker remain for defense
+// in depth — they cost nothing and protect against an actual
+// future haptics-only failure.
 //
 // All calls are silent no-ops on platforms / devices where haptics
 // aren't supported. iOS users can still disable haptics globally
 // from iOS Settings → Sounds & Haptics; Expo Haptics respects
 // that, so we don't need an in-app override.
-import { Platform } from "react-native";
 import * as Haptics from "expo-haptics";
-
-// Hard-disable haptics on iOS 26.3.x. Platform.Version on iOS
-// is a string like "26.3.1". `startsWith("26.3")` covers
-// 26.3.0, 26.3.1, 26.3.2, etc. — the entire affected family.
-// Re-evaluate this gate when iOS 26.4 ships (might fix the
-// regression upstream) or when we upgrade Expo SDK.
-const IS_IOS_26_3 =
-  Platform.OS === "ios" &&
-  typeof Platform.Version === "string" &&
-  Platform.Version.startsWith("26.3");
 
 let consecutiveFailures = 0;
 const MAX_FAILURES = 3;
@@ -69,7 +46,6 @@ export async function setHapticsPref(_pref) { /* no-op */ }
 // drain to abort. The double catch (sync try + Promise.catch)
 // is for the rare case where expo-haptics throws synchronously.
 function safeFire(nativeCall) {
-  if (IS_IOS_26_3) return;
   if (consecutiveFailures >= MAX_FAILURES) return;
   setTimeout(() => {
     try {
