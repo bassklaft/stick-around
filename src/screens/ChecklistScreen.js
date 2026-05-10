@@ -48,15 +48,27 @@ export default function ChecklistScreen() {
   // the prior pet's checklist + paw fill.
   const { petId: activePetId } = useActivePet();
 
+  // Generation counter — discards stale async results when fast
+  // successive active-pet switches fire load() multiple times.
+  // See HomeScreen for the wraparound-swipe bug this protects.
+  const loadGenRef = useRef(0);
+
   const load = useCallback(async () => {
+    const gen = ++loadGenRef.current;
     const p = await Pet.get();
-    setPet(p);
+    if (gen !== loadGenRef.current) return;
     const all = await Pets.list();
+    if (gen !== loadGenRef.current) return;
+    setPet(p);
     setPets(all);
     setItems(generateChecklist(p));
-    setState(await ChecklistState.get(p?.id));
+    const nextState = await ChecklistState.get(p?.id);
+    if (gen !== loadGenRef.current) return;
+    setState(nextState);
     if (p?.id) {
-      setPawgressDay(await Pawgress.getDay(p.id, todayKey()));
+      const nextDay = await Pawgress.getDay(p.id, todayKey());
+      if (gen !== loadGenRef.current) return;
+      setPawgressDay(nextDay);
     }
   }, [activePetId]);
   useEffect(() => { load(); }, [load]);

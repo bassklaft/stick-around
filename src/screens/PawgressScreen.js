@@ -52,24 +52,38 @@ export default function PawgressScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedPetId]);
 
+  // Generation counter — discards stale async results if a newer
+  // active-pet switch supersedes this load. See HomeScreen for the
+  // wraparound-swipe race this protects against.
+  const loadGenRef = useRef(0);
+
   const load = useCallback(async () => {
+    const gen = ++loadGenRef.current;
     const targetId = activePetId || seedPetId;
     let p = null;
     if (targetId) {
       const all = await Pets.list();
+      if (gen !== loadGenRef.current) return;
       p = all.find((x) => x.id === targetId) || null;
     }
-    if (!p) p = await Pet.get();
+    if (!p) {
+      p = await Pet.get();
+      if (gen !== loadGenRef.current) return;
+    }
     setPet(p);
     if (!p?.id) return;
     const d = await Pawgress.getDay(p.id, dateKey);
+    if (gen !== loadGenRef.current) return;
     setDay(d);
-    setStreak(await Pawgress.getStreak(p.id));
+    const streakVal = await Pawgress.getStreak(p.id);
+    if (gen !== loadGenRef.current) return;
+    setStreak(streakVal);
     // Compute daily-checklist items still pending so the hero copy
     // can mention them when the 5 pads are all filled but breed-
     // specific daily care is still outstanding.
     const items = generateChecklist(p);
     const state = await ChecklistState.get(p.id);
+    if (gen !== loadGenRef.current) return;
     const dailyPending = items.filter((it) => {
       if (it.frequency !== "daily") return false;
       const status = effectiveStatus(it, state[it.id]);

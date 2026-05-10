@@ -5,7 +5,7 @@
 // the "+ Add entry" button shows the upsell instead. Edits + calendar
 // export are never gated — once a record exists we don't retroactively
 // take it away.
-import React, { useEffect, useState, useCallback, useLayoutEffect } from "react";
+import React, { useEffect, useState, useCallback, useLayoutEffect, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Modal, Alert, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
@@ -78,16 +78,27 @@ export default function HealthTrackerScreen({ navigation, route }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [seedPetId]);
 
+  // Generation counter — discards stale async results if a newer
+  // load supersedes this one. See HomeScreen for the
+  // wraparound-swipe race this protects against.
+  const loadGenRef = useRef(0);
+
   const load = useCallback(async () => {
+    const gen = ++loadGenRef.current;
     const all = await Pets.list();
-    setPets(all);
+    if (gen !== loadGenRef.current) return;
     const targetId = activePetId || seedPetId;
     let target = null;
     if (targetId) target = all.find((p) => p.id === targetId) || null;
-    if (!target) target = await Pet.get();
+    if (!target) {
+      target = await Pet.get();
+      if (gen !== loadGenRef.current) return;
+    }
     if (!target) return;
+    setPets(all);
     setPet(target);
     const list = await Pets.listHealthRecords(target.id);
+    if (gen !== loadGenRef.current) return;
     setRecords(list);
     if (!target.healthDisclaimerAcked) setShowDisclaimer(true);
   }, [activePetId, seedPetId]);

@@ -4,7 +4,7 @@
 // Free tier: 30-day window. Premium: 90-day / 365-day / all-time.
 //
 // Spec: docs/features/tummy-tracker.md.
-import React, { useState, useEffect, useCallback, useLayoutEffect } from "react";
+import React, { useState, useEffect, useCallback, useLayoutEffect, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, RefreshControl, Image, Alert, StyleSheet, Share } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
@@ -64,8 +64,15 @@ export default function TummyTrackerScreen() {
   // pet's stool/diet log on screen.
   const { petId: activePetId } = useActivePet();
 
+  // Generation counter — discards stale async results if a newer
+  // active-pet switch supersedes this load. See HomeScreen for the
+  // wraparound-swipe race this protects against.
+  const loadGenRef = useRef(0);
+
   const load = useCallback(async () => {
+    const gen = ++loadGenRef.current;
     const p = await Pet.get();
+    if (gen !== loadGenRef.current) return;
     setPet(p);
     if (!p?.id) return;
 
@@ -73,6 +80,7 @@ export default function TummyTrackerScreen() {
       StoolLog.list(p.id),
       DietLog.list(p.id),
     ]);
+    if (gen !== loadGenRef.current) return;
     setStoolEntries(stoolAll);
     setDietEntries(dietAll);
 
@@ -86,6 +94,7 @@ export default function TummyTrackerScreen() {
     // Always run recall match — free for everyone, runs locally.
     try {
       const { matches, recallsFetchedAt } = await findRecallMatches(p.id, { windowDays: 90 });
+      if (gen !== loadGenRef.current) return;
       setRecallMatches(matches);
       setRecallFetchedAt(recallsFetchedAt);
       if (matches.length > 0 && !recallShownTracked) {

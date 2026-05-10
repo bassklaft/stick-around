@@ -191,16 +191,39 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
   // an external switch on the focused tab stayed stale.
   const { petId: activePetId } = useActivePet();
 
+  // Generation counter for race-protection. Build 43 surfaced a
+  // wrap-around-the-carousel race: fast successive swipes
+  // (Elliot → Cricket → Falafel) fired multiple `load()`s and
+  // multiple `Pets.setActive` writes concurrently. Their
+  // `Pawgress.getDay` / `ChecklistState.get` / `listHealthRecords`
+  // promises resolved in non-deterministic order — the LATER
+  // setActive's data fetch sometimes settled BEFORE the earlier
+  // one, leaving the hero on the new pet but the Pawgress
+  // subtitle ("Today's 5 pads filled · Elliot") on the old. Each
+  // `load()` increments this counter; after every await it checks
+  // whether it is still the latest invocation, and bails if not.
+  const loadGenRef = useRef(0);
+
   const load = useCallback(async () => {
+    const gen = ++loadGenRef.current;
     const p = await Pet.get();
-    setPet(p);
+    if (gen !== loadGenRef.current) return;
     const all = await Pets.listSortedOldestFirst();
+    if (gen !== loadGenRef.current) return;
+    setPet(p);
     setPets(all);
     setItems(generateChecklist(p));
-    setState(await ChecklistState.get(p?.id));
+    const nextState = await ChecklistState.get(p?.id);
+    if (gen !== loadGenRef.current) return;
+    setState(nextState);
     if (p?.id) {
-      setHealthRecords(await Pets.listHealthRecords(p.id));
-      setPawgressDay(await Pawgress.getDay(p.id, todayKey()));
+      const [nextHr, nextDay] = await Promise.all([
+        Pets.listHealthRecords(p.id),
+        Pawgress.getDay(p.id, todayKey()),
+      ]);
+      if (gen !== loadGenRef.current) return;
+      setHealthRecords(nextHr);
+      setPawgressDay(nextDay);
     }
   }, [activePetId]);
 
@@ -289,57 +312,37 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                 height={HERO_HEIGHT}
                 onActivate={async (petId) => {
                   if (!petId || petId === pet.id) return;
-                  // Visual update FIRST (synchronous setPet) so
-                  // parent state matches FloofCardStack's internal
-                  // index immediately — no flash of mismatched
-                  // data on Quick Access subtitle, "This week"
-                  // counter, etc. (build-31 had this in the wrong
-                  // order, awaiting setActive first.) Storage
-                  // write happens after; per-pet screens get the
-                  // active pet via route params (see Today's
-                  // Pawgress / Health Tracker handlers below) so
-                  // they don't depend on the storage-write timing.
+                  // Optimistic visual update so parent state matches
+                  // FloofCardStack's internal index immediately. The
+                  // ACTUAL data fetch (pawgressDay / healthRecords /
+                  // checklistState) is owned by `load()` — kicked off
+                  // by `Pets.setActive` flipping the useActivePet
+                  // listener, which bumps `activePetId` and re-runs
+                  // load via its dep. Generation counter inside load
+                  // discards stale results if a newer swipe supersedes
+                  // this one. Build-43 lesson: fetching here AND in
+                  // load created two racing sources of truth that
+                  // de-synced under fast wraparound swipes (hero on
+                  // Cricket, "Today's pawgress · Elliot").
                   const newPet = pets.find((p) => p.id === petId);
                   if (newPet) {
                     setPet(newPet);
                     setItems(generateChecklist(newPet));
                   }
-                  try {
-                    await Pets.setActive(petId);
-                    if (newPet) {
-                      const [nextState, nextDay, nextHr] = await Promise.all([
-                        ChecklistState.get(newPet.id),
-                        Pawgress.getDay(newPet.id, todayKey()),
-                        Pets.listHealthRecords(newPet.id),
-                      ]);
-                      setState(nextState);
-                      setPawgressDay(nextDay);
-                      setHealthRecords(nextHr);
-                    }
-                    await load();
-                  } catch { /* swipe is non-destructive */ }
+                  try { await Pets.setActive(petId); }
+                  catch { /* swipe is non-destructive */ }
                 }}
                 onTapFront={async (tappedPet) => {
                   // Tap a card → activate that pet + open the
-                  // photo manager scoped to them. Resolves the
-                  // build-21 bug where tapping a tile routed to
-                  // the wrong pet's profile.
+                  // photo manager scoped to them. Same model as
+                  // onActivate above: optimistic setPet, then
+                  // setActive triggers load via the listener.
                   if (!tappedPet?.id) return;
                   if (tappedPet.id !== pet.id) {
                     setPet(tappedPet);
                     setItems(generateChecklist(tappedPet));
-                    try {
-                      await Pets.setActive(tappedPet.id);
-                      const [nextState, nextDay, nextHr] = await Promise.all([
-                        ChecklistState.get(tappedPet.id),
-                        Pawgress.getDay(tappedPet.id, todayKey()),
-                        Pets.listHealthRecords(tappedPet.id),
-                      ]);
-                      setState(nextState);
-                      setPawgressDay(nextDay);
-                      setHealthRecords(nextHr);
-                      await load();
-                    } catch { /* see onActivate */ }
+                    try { await Pets.setActive(tappedPet.id); }
+                    catch { /* see onActivate */ }
                   }
                   setShowPhotoManager(true);
                 }}
