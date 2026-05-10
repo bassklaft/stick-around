@@ -378,15 +378,19 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
       );
       return;
     }
-    // Show the photobooth strip animation if the user captured ≥1
-    // photo. It's skippable per guardrail C and auto-dismisses ≤3.5s.
-    // For edit-mode we skip the animation since the user's already
-    // seen these photos.
-    if (hasPhoto && !editMode) {
-      setShowPhotobooth(true);
-    } else {
-      onDone();
-    }
+    // Build-37 follow-up: skip the photobooth strip animation
+    // entirely. Build 37 (LIFESTYLE_DISABLED) got the user past
+    // the questionnaire crash, but tapping Done on the final
+    // page now crashes via the same TurboModule throw class —
+    // RN's convertNSExceptionToJSError is on the stack, meaning
+    // a native call threw and the Hermes wrapper itself crashed
+    // constructing the JS error. Most likely culprit:
+    // PhotoboothAnimation's Animated.parallel + Animated.sequence
+    // chain through NativeAnimatedModule on iOS 26.3.x. Same
+    // pragmatic decision as the lifestyle questionnaire: nuke
+    // it for now, re-introduce after we identify the exact
+    // offending native call. Direct onDone() in all paths.
+    onDone();
   }
 
   function handlePhotoboothDone() {
