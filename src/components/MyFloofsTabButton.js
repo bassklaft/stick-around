@@ -110,8 +110,18 @@ export default function MyFloofsTabButton(props) {
         }
       },
       onPanResponderTerminate: () => {
+        // The gesture was taken over by another responder (system
+        // gesture, multitasking, edge swipe, etc.). If a long-press
+        // had fired, fire onLongPressEnd with off-screen coords so
+        // the parent always closes the fan-out — otherwise the
+        // overlay stays on screen with no way to dismiss and the
+        // app appears frozen. This was the build 40/41 freeze bug
+        // surfaced via the slide-to-select on the My Floofs tab.
         clearLongPressTimer();
-        longPressFiredRef.current = false;
+        if (longPressFiredRef.current) {
+          longPressFiredRef.current = false;
+          onLongPressEnd?.(-1, -1);
+        }
       },
     }),
   ).current;

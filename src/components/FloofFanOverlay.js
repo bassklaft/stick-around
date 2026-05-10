@@ -156,9 +156,6 @@ export default function FloofFanOverlay({
                   isActive && styles.circleActive,
                   isHovered && styles.circleHovered,
                 ]}
-                accessibilityRole="button"
-                accessibilityLabel={`Switch to ${p.name}`}
-                accessibilityState={{ selected: isActive }}
               >
                 <PetAvatar pet={p} size={CIRCLE_DIAMETER - 6} slot="primary" />
                 {isActive && (

@@ -241,6 +241,21 @@ export default function App() {
   longPressActiveIdRef.current = longPressActiveId;
   longPressHoveredIdRef.current = longPressHoveredId;
 
+  // Safety auto-close: if the fan-out has been visible for more
+  // than 10s without a release, force-close it. Defends against
+  // any path where the PanResponder loses its release event (system
+  // gesture interrupt, multitasking, or any iOS-side regression
+  // we haven't yet identified). Should never fire in normal use —
+  // the user releases their finger within ~1-2s.
+  useEffect(() => {
+    if (!longPressSwitcherVisible) return;
+    const t = setTimeout(() => {
+      setLongPressSwitcherVisible(false);
+      setLongPressHoveredId(null);
+    }, 10000);
+    return () => clearTimeout(t);
+  }, [longPressSwitcherVisible]);
+
   async function handleFanLongPressStart() {
     const list = await Pets.listSortedOldestFirst();
     if (list.length <= 1) return; // no-op for single-pet households
