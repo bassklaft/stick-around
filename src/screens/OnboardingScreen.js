@@ -13,6 +13,24 @@ import PhotoboothAnimation from "../components/PhotoboothAnimation";
 import { PHOTO_PROMPTS, PROMPT_SLOTS } from "../lib/petPhotos";
 import { LIFESTYLE_QUESTIONS, LIFESTYLE_FIELDS } from "../data/lifestyleQuestions";
 
+// Build-37 unblock: skip the lifestyle questionnaire entirely on
+// iOS 26.3.x. Build 36 confirmed expo-haptics is NOT the
+// TurboModule that's throwing — disabling haptics didn't prevent
+// the crash. The remaining smoking gun in the user's repro is
+// that the crash always lands on the lifestyle step (couch-potato
+// option), and only on iOS 26.3.x. Without dSYM-symbolicated
+// frames we can't pin the exact offending native call. Skipping
+// the screen on the affected OS lets the user complete onboarding
+// and take App Store screenshots.
+//
+// Affects step 4 → 5 forward, step 5 → 4 back, step 6 → 5 back.
+// On iOS 26.3.x, those transitions go straight 4↔6 instead.
+// Users on other iOS versions are unchanged.
+const IS_IOS_26_3 =
+  Platform.OS === "ios" &&
+  typeof Platform.Version === "string" &&
+  Platform.Version.startsWith("26.3");
+
 // 5-photo onboarding reel — pulls prompt copy from petPhotos.js (single
 // source of truth shared with PhotoManagerSheet so existing users see
 // the same labels in the manager that new users saw at first run).
@@ -661,12 +679,23 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
               💡 Most US shelters and many breeders chip pets before adoption. Your vet can scan the chip in a few seconds at any visit.
             </Text>
 
-            <PrimaryButton label="Next" onPress={() => setStep(5)} />
+            <PrimaryButton label="Next" onPress={() => setStep(IS_IOS_26_3 ? 6 : 5)} />
             <SecondaryButton label="Back" onPress={() => setStep(3)} />
           </View>
         )}
 
         {step === 5 && (() => {
+          // Build-37 unblock: on iOS 26.3.x the lifestyle screen
+          // crashes the app via an unidentified void TurboModule
+          // method that throws. Auto-advance off step 5 so users
+          // on the affected OS skip past it on the way to step 6.
+          if (IS_IOS_26_3) {
+            // setState in render is safe here because it's a one-
+            // shot boot-out — the very next render hits step === 6
+            // and this branch is gone. React tolerates it.
+            setStep(6);
+            return null;
+          }
           // Defensive guard — never render with an out-of-range
           // lifestyleStep. Bail to step 6 if somehow misaligned;
           // the visible no-op render avoids a crash from accessing
@@ -785,7 +814,7 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
             </View>
 
             <PrimaryButton label={editMode ? `Save changes` : addMode ? `Add ${name.trim() || "this pet"}` : `Start with ${name.trim() || "your pet"}`} onPress={finish} />
-            <SecondaryButton label="Back" onPress={() => setStep(5)} />
+            <SecondaryButton label="Back" onPress={() => setStep(IS_IOS_26_3 ? 4 : 5)} />
           </View>
         )}
       </ScrollView>
