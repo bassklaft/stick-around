@@ -766,16 +766,36 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
               <View style={{ marginTop: 8 }}>
                 {q.options.map((opt) => {
                   const selected = isLifestyleSelected(q, opt.value);
+                  // Build-40 rewrite: replace <Pressable> + <MaterialCommunityIcons>
+                  // with a bare <View> using the React Native gesture
+                  // responder system directly. This bypasses every layer
+                  // that's a candidate for the iOS 26.3.x void TurboModule
+                  // throw on tap:
+                  //   • No <Pressable> press-state callback (build 39
+                  //     swap to Pressable did NOT fix the crash, ruling
+                  //     out NativeAnimated-via-TouchableOpacity).
+                  //   • No <MaterialCommunityIcons> custom-font glyph
+                  //     for the radio/checkbox indicator — those glyphs
+                  //     live in a custom font Private Use Area, and
+                  //     iOS 26.3.x's text-rendering regression may apply
+                  //     to that path the same way it applies to emoji
+                  //     variation selectors. Replaced with a plain
+                  //     two-View concentric circle.
+                  //   • No accessibilityState / accessibilityRole —
+                  //     AccessibilityInfo emission still routes through
+                  //     a TurboModule. We rely on the visible selected
+                  //     state for sighted users; v1.2.1 will add
+                  //     accessibilityLabel without the role.
+                  //   • Bare onStartShouldSetResponder + onResponderRelease
+                  //     — the most primitive React Native touch path,
+                  //     no Touchable/Pressable infrastructure, no opacity
+                  //     animation, no haptic call.
                   return (
-                    <Pressable
+                    <View
                       key={opt.value}
-                      onPress={() => { tapLight(); setLifestyleAnswer(q.key, opt.value, q.type); }}
-                      style={({ pressed }) => [
-                        s.lifestyleOption,
-                        selected && s.lifestyleOptionActive,
-                        pressed && { opacity: 0.85 },
-                      ]}
-                      accessibilityState={{ selected }}
+                      onStartShouldSetResponder={() => true}
+                      onResponderRelease={() => setLifestyleAnswer(q.key, opt.value, q.type)}
+                      style={[s.lifestyleOption, selected && s.lifestyleOptionActive]}
                     >
                       <View style={{ flex: 1 }}>
                         <Text style={[s.lifestyleOptionLabel, selected && s.lifestyleOptionLabelActive]}>
@@ -787,16 +807,31 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
                           </Text>
                         )}
                       </View>
-                      <MaterialCommunityIcons
-                        name={
-                          q.type === "multi"
-                            ? (selected ? "check-circle" : "circle-outline")
-                            : (selected ? "radiobox-marked" : "radiobox-blank")
-                        }
-                        size={22}
-                        color={selected ? theme.accent : theme.muted}
-                      />
-                    </Pressable>
+                      {/* Plain selection indicator — outer ring + inner
+                          dot when selected. No vector icons. */}
+                      <View
+                        style={{
+                          width: 22,
+                          height: 22,
+                          borderRadius: 11,
+                          borderWidth: 2,
+                          borderColor: selected ? theme.accent : theme.muted,
+                          alignItems: "center",
+                          justifyContent: "center",
+                        }}
+                      >
+                        {selected ? (
+                          <View
+                            style={{
+                              width: 10,
+                              height: 10,
+                              borderRadius: 5,
+                              backgroundColor: theme.accent,
+                            }}
+                          />
+                        ) : null}
+                      </View>
+                    </View>
                   );
                 })}
               </View>
@@ -820,15 +855,14 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
 
               <PrimaryButton label={isLast ? "Looking great — next" : "Next"} onPress={nextLifestyle} />
               <SecondaryButton label="Back" onPress={prevLifestyle} />
-              <Pressable
-                onPress={skipAllLifestyle}
-                style={({ pressed }) => [
-                  { alignSelf: "center", padding: 6 },
-                  pressed && { opacity: 0.7 },
-                ]}
+              {/* Bare responder — same pattern as option buttons above. */}
+              <View
+                onStartShouldSetResponder={() => true}
+                onResponderRelease={skipAllLifestyle}
+                style={{ alignSelf: "center", padding: 6 }}
               >
                 <Text style={s.skipAllText}>Skip the rest · I'll fill these in later</Text>
-              </Pressable>
+              </View>
             </View>
           );
         })()}
