@@ -4,6 +4,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Application from "expo-application";
 import { Pet, Pets } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { usePurchases } from "../lib/purchasesContext";
 import { getDeviceId } from "../lib/founderOverride";
 import { track, resetAnalytics } from "../lib/analytics";
@@ -23,8 +24,10 @@ export default function SettingsScreen({ navigation }) {
   const [deviceId, setDeviceId] = useState("");
   const { isPremium, isFounderDevice } = usePurchases();
 
-  useEffect(() => { Pet.get().then(setPet); }, []);
-  useEffect(() => { Pets.list().then(arr => setPetCount(arr.length)); }, []);
+  // Reactive active-pet — re-fetch when user switches floofs.
+  const { petId: activePetId } = useActivePet();
+  useEffect(() => { Pet.get().then(setPet); }, [activePetId]);
+  useEffect(() => { Pets.list().then(arr => setPetCount(arr.length)); }, [activePetId]);
   useEffect(() => { getDeviceId().then(setDeviceId); }, []);
 
   // Compose a mailto: link with diagnostic context (app version, OS,

@@ -19,6 +19,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { ageSummary, lifeStageTimeline, lifestyleMultiplier } from "../lib/dogAge";
 import { breedFacts, breedDisplayName, breedEmoji } from "../data/breeds";
 import { getPrimaryBreed, mixedBreedLabel } from "../lib/petBreeds";
@@ -78,10 +79,14 @@ export default function DogAgeScreen() {
   const fade = useRef(new Animated.Value(0)).current;
   const hasAnimatedRef = useRef(false);
 
+  // Reactive active-pet — re-runs load when the user switches floofs
+  // via any path (fan, chip, swipe), not just on tab focus.
+  const { petId: activePetId } = useActivePet();
+
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
-  }, []);
+  }, [activePetId]);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 

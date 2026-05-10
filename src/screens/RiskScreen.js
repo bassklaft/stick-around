@@ -10,6 +10,7 @@ import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Location from "expo-location";
 import { Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { breedFacts } from "../data/breeds";
 import { getPetBreeds } from "../lib/petBreeds";
 import { findHazards, findRegional } from "../data/hazardSites";
@@ -30,10 +31,14 @@ export default function RiskScreen() {
   const [weather, setWeather] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Reactive active-pet — re-runs load when the user switches floofs
+  // via any path (fan, chip, swipe), not just on tab focus.
+  const { petId: activePetId } = useActivePet();
+
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
-  }, []);
+  }, [activePetId]);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 

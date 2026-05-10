@@ -9,6 +9,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation, useRoute } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets, ChecklistState } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { Pawgress, PAW_SEGMENTS, SEGMENT_LABELS, SEGMENT_DESCRIPTIONS, todayKey, dailySpecialFor } from "../lib/pawgress";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { usePurchases } from "../lib/purchasesContext";
@@ -36,17 +37,27 @@ export default function PawgressScreen() {
 
   const dateKey = todayKey();
   const special = dailySpecialFor(dateKey);
-  // Caller passes petId as a route param so we don't have to read
-  // AsyncStorage's activeId — bulletproof against any race window
-  // where storage hasn't yet caught up with the user's most recent
-  // active-pet swipe on Home.
-  const routePetId = route?.params?.petId || null;
+  // The screen follows the active pet always. The route param is
+  // honoured ONLY as a one-shot seed (e.g., when opened from Home's
+  // Today's Pawgress card) — we then mirror it into the active-pet
+  // store so subsequent switches via the floof fan / chip propagate
+  // here without needing a navigate() with new params.
+  const { petId: activePetId } = useActivePet();
+  const seedPetId = route?.params?.petId || null;
+
+  useEffect(() => {
+    if (seedPetId && seedPetId !== activePetId) {
+      Pets.setActive(seedPetId).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedPetId]);
 
   const load = useCallback(async () => {
+    const targetId = activePetId || seedPetId;
     let p = null;
-    if (routePetId) {
+    if (targetId) {
       const all = await Pets.list();
-      p = all.find((x) => x.id === routePetId) || null;
+      p = all.find((x) => x.id === targetId) || null;
     }
     if (!p) p = await Pet.get();
     setPet(p);
@@ -65,7 +76,7 @@ export default function PawgressScreen() {
       return status !== "done" && status !== "skipped";
     }).length;
     setDailyRemaining(dailyPending);
-  }, [dateKey, routePetId]);
+  }, [dateKey, activePetId, seedPetId]);
 
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));

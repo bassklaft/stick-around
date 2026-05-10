@@ -1,7 +1,7 @@
 // Your Pets — multi-pet view sorted oldest-first. Each pet card shows
 // avatar (tap to set/change photo), name, breed badge, breed summary
 // + insider tips. Tap "Add another pet" to onboard a second.
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import { View, Text, ScrollView, TouchableOpacity, Image, RefreshControl, Linking, Alert, LayoutAnimation, Platform, UIManager, StyleSheet } from "react-native";
 
 // Enable LayoutAnimation on Android (iOS has it on by default).
@@ -12,6 +12,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pets } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { pickPhotoForSlot, MAX_PHOTOS_PER_PET } from "../lib/petPhotos";
 import { usePurchases } from "../lib/purchasesContext";
 import { getPetBreeds, getPrimaryBreed, mixedBreedLabel, isMixedBreed, shortBreedName } from "../lib/petBreeds";
@@ -81,6 +82,24 @@ export default function YourPetsScreen() {
   // Pet ID currently being edited in the photo manager sheet, or null.
   const [photoMgrPetId, setPhotoMgrPetId] = useState(null);
   const { isPremium } = usePurchases();
+  // Reactive active-pet — keeps activeId in sync if the user switched
+  // floofs via the floof fan or anywhere else while this tab was idle.
+  const { petId: liveActivePetId } = useActivePet();
+
+  // Scroll-to-active: when the user lands on this screen via a path
+  // that names a specific floof (Quick Access "My Floofs" card on
+  // Home, ActivePetChip in any pet-scoped header, fan release that
+  // routes here), the active pet's card should slide into view —
+  // not leave the user staring at the eldest pet at the top scrolled
+  // and having to manually find the floof they tapped.
+  //
+  // Pattern: each pet card calls onLayout with its top y-offset; we
+  // remember that in a ref-keyed-by-pet-id map, then animate the
+  // ScrollView to (yOffset - sticky-padding) when the screen
+  // focuses with an active pet that isn't the eldest one.
+  const scrollRef = useRef(null);
+  const cardYOffsetsRef = useRef({});
+  const lastScrolledForRef = useRef(null);
 
   function toggleAbout(sectionId) {
     LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -125,9 +144,47 @@ export default function YourPetsScreen() {
       active = list[0]?.id || null;
     }
     setActiveId(active);
-  }, []);
+  }, [liveActivePetId]);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  // Scroll the active pet's card into view whenever the screen gains
+  // focus with a non-eldest active floof selected. Eldest is already
+  // at the top — no scroll needed there. Skip if we already scrolled
+  // for this same activeId in this focus session, so we don't fight
+  // a user who manually scrolls afterward.
+  useFocusEffect(
+    useCallback(() => {
+      if (!activeId || pets.length === 0) return;
+      // Don't re-scroll if we already nudged for this active pet.
+      if (lastScrolledForRef.current === activeId) return;
+      const idx = pets.findIndex((p) => p.id === activeId);
+      if (idx <= 0) {
+        // Eldest is at the top; just remember we "handled" this one.
+        lastScrolledForRef.current = activeId;
+        return;
+      }
+      // Layout positions are populated by onLayout on each card.
+      // Wait one tick so the ScrollView has measured its children.
+      const timer = setTimeout(() => {
+        const y = cardYOffsetsRef.current[activeId];
+        if (typeof y === "number" && scrollRef.current?.scrollTo) {
+          // Subtract a small offset so the card isn't flush against
+          // the very top — leaves the active badge visible.
+          scrollRef.current.scrollTo({ y: Math.max(0, y - 12), animated: true });
+          lastScrolledForRef.current = activeId;
+        }
+      }, 220);
+      // On blur, drop the scroll-memo so the next focus re-scrolls
+      // even if the user lands on the same active pet — they may
+      // have manually scrolled elsewhere on the list and expect to
+      // be brought back to the active card on re-entry.
+      return () => {
+        clearTimeout(timer);
+        lastScrolledForRef.current = null;
+      };
+    }, [activeId, pets]),
+  );
 
   // Avatar tap opens the labeled photo-manager sheet so the user
   // sees their existing 5 prompt slots (with labels matching the
@@ -223,6 +280,7 @@ export default function YourPetsScreen() {
 
   return (
     <ScrollView
+      ref={scrollRef}
       style={{ backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingTop: 12, paddingBottom: insets.bottom + 60, paddingHorizontal: 20 }}
       refreshControl={<RefreshControl refreshing={refreshing} onRefresh={async () => { setRefreshing(true); await load(); setRefreshing(false); }} />}
@@ -262,6 +320,14 @@ export default function YourPetsScreen() {
           <CardWrap
             key={pet.id || idx}
             {...cardWrapProps}
+            onLayout={(e) => {
+              // Capture this card's y-offset within the ScrollView so
+              // the focus-time scroll-to-active effect can land on it.
+              const y = e?.nativeEvent?.layout?.y;
+              if (pet?.id && typeof y === "number") {
+                cardYOffsetsRef.current[pet.id] = y;
+              }
+            }}
             style={[s.petCard, isActive && s.petCardActive]}
             accessibilityRole={isMultiPet ? "button" : undefined}
             accessibilityLabel={isMultiPet ? `Make ${pet.name} the active floof` : undefined}

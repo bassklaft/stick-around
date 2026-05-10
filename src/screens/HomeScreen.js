@@ -8,6 +8,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets, ChecklistState } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { pickPhotoForSlot } from "../lib/petPhotos";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { breedFacts } from "../data/breeds";
@@ -182,6 +183,13 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
   const [pawgressDay, setPawgressDay] = useState(null);
   // Photo manager sheet — opened by tapping the single-pet hero banner.
   const [showPhotoManager, setShowPhotoManager] = useState(false);
+  // Reactive active-pet id. Reloads the whole hub when it changes —
+  // covers the case where the user switches via the floof fan (or any
+  // other path that doesn't unfocus Home), so the hero, Pawgress
+  // card, Health subtitle, and "This week" counter never lag behind
+  // the current active floof. Build-43 bug: focus-only reload meant
+  // an external switch on the focused tab stayed stale.
+  const { petId: activePetId } = useActivePet();
 
   const load = useCallback(async () => {
     const p = await Pet.get();
@@ -194,7 +202,7 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
       setHealthRecords(await Pets.listHealthRecords(p.id));
       setPawgressDay(await Pawgress.getDay(p.id, todayKey()));
     }
-  }, []);
+  }, [activePetId]);
 
   const petsCount = pets.length;
   useEffect(() => { load(); }, [load]);

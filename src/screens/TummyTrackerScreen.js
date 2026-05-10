@@ -12,6 +12,7 @@ import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Print from "expo-print";
 import * as Sharing from "expo-sharing";
 import { Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import {
   StoolLog, DietLog,
   BRISTOL_LABELS, STOOL_COLOR_LABELS, STOOL_VOLUME_LABELS, DIET_MEAL_TYPE_LABELS,
@@ -58,6 +59,11 @@ export default function TummyTrackerScreen() {
     navigation.setOptions({ title: pet?.name ? `${pet.name}'s Tummy` : "Tummy Tracker" });
   }, [navigation, pet]);
 
+  // Active-pet hook drives reload — without this, switching floofs
+  // via the fan-out while sitting on Tummy Tracker kept the prior
+  // pet's stool/diet log on screen.
+  const { petId: activePetId } = useActivePet();
+
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
@@ -96,7 +102,7 @@ export default function TummyTrackerScreen() {
     } catch {
       // Network failure leaves recallMatches as last-known; don't surface.
     }
-  }, [recallShownTracked]);
+  }, [recallShownTracked, activePetId]);
 
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));

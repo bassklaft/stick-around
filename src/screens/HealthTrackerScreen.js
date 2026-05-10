@@ -11,6 +11,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pets, Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { findType, statusFor, daysUntilDue, durationLabel, CATEGORIES } from "../lib/healthRecordTypes";
 import { shareCalendarExport } from "../lib/icalExport";
 import { usePurchases } from "../lib/purchasesContext";
@@ -56,23 +57,40 @@ export default function HealthTrackerScreen({ navigation, route }) {
   const [switcherVisible, setSwitcherVisible] = useState(false);
   const { isPremium } = usePurchases();
 
-  const petId = route?.params?.petId || null;
+  // Active-pet drives the screen. The route param is honoured ONLY as
+  // a one-shot seed (e.g., when navigated from a per-pet card on the
+  // YourPets screen) — we then mirror it into the global active-pet
+  // store so subsequent switches via the floof fan / chip / card
+  // swipe propagate here without needing a navigate() with new params.
+  const { petId: activePetId } = useActivePet();
+  const seedPetId = route?.params?.petId || null;
   const multiPet = pets.length > 1;
+
+  // If the screen was opened with a route-param petId that differs
+  // from the global active pet, mirror it into active so this screen
+  // and every other one stay in sync. Fire-and-forget; the
+  // useActivePet listener will re-run load with the new id.
+  useEffect(() => {
+    if (seedPetId && seedPetId !== activePetId) {
+      Pets.setActive(seedPetId).catch(() => {});
+    }
+    // Run once per route-param change.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [seedPetId]);
 
   const load = useCallback(async () => {
     const all = await Pets.list();
     setPets(all);
+    const targetId = activePetId || seedPetId;
     let target = null;
-    if (petId) {
-      target = all.find((p) => p.id === petId) || null;
-    }
+    if (targetId) target = all.find((p) => p.id === targetId) || null;
     if (!target) target = await Pet.get();
     if (!target) return;
     setPet(target);
     const list = await Pets.listHealthRecords(target.id);
     setRecords(list);
     if (!target.healthDisclaimerAcked) setShowDisclaimer(true);
-  }, [petId]);
+  }, [activePetId, seedPetId]);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
@@ -107,8 +125,7 @@ export default function HealthTrackerScreen({ navigation, route }) {
     track("active_pet_switched", { source: "health_tracker_switcher", pet_count: pets.length });
     tapLight();
     setSwitcherVisible(false);
-    // Update the route param so the screen reloads with the new pet's records.
-    navigation.setParams({ petId: newPetId });
+    // useActivePet listener picks up the new active pet and reloads.
   }
 
   async function ackDisclaimer() {

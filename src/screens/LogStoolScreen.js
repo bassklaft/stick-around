@@ -7,6 +7,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets } from "../lib/storage";
+import { readActivePetId } from "../lib/activePet";
 import { StoolLog, BRISTOL_LABELS, STOOL_COLORS, STOOL_COLOR_LABELS, STOOL_VOLUMES, STOOL_VOLUME_LABELS } from "../lib/tummy";
 import { pickTummyPhoto } from "../lib/photoPicker";
 import { track } from "../lib/analytics";
@@ -87,9 +88,14 @@ export default function LogStoolScreen() {
   }
 
   async function save() {
-    if (!pet?.id) return;
     setSaving(true);
     try {
+      // Resolve the write target via the authoritative active-pet
+      // store at the moment of save — bypasses any stale `pet` state
+      // if the user switched floofs (fan / chip / swipe) after this
+      // screen mounted but before they tapped Save.
+      const writeId = (await readActivePetId()) || pet?.id;
+      if (!writeId) { setSaving(false); return; }
       const payload = {
         bristol, color, volume,
         hasMucus, hasBlood, hasForeignMaterial, hasUndigestedFood,
@@ -97,9 +103,9 @@ export default function LogStoolScreen() {
         note: note.trim(),
       };
       if (editEntryId) {
-        await StoolLog.update(pet.id, editEntryId, payload);
+        await StoolLog.update(writeId, editEntryId, payload);
       } else {
-        await StoolLog.add(pet.id, payload);
+        await StoolLog.add(writeId, payload);
       }
       track("tummy_tracker_stool_log_created", {
         bristol_scale: bristol,

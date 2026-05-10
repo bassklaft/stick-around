@@ -10,6 +10,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useFocusEffect, useNavigation } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets, ChecklistState } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { generateChecklist, effectiveStatus } from "../lib/checklist";
 import { Pawgress, todayKey } from "../lib/pawgress";
 import { track } from "../lib/analytics";
@@ -40,6 +41,13 @@ export default function ChecklistScreen() {
   const multiPet = pets.length > 1;
   const dayLabel = WEEKDAY_LABELS[new Date().getDay()];
 
+  // Reactive active-pet id — re-loads the screen whenever active pet
+  // changes via any path (floof fan, swipe on Home, switcher modal),
+  // not just when the tab gets focus. Without this, switching to a
+  // different floof while sitting on the Pawgress tab kept showing
+  // the prior pet's checklist + paw fill.
+  const { petId: activePetId } = useActivePet();
+
   const load = useCallback(async () => {
     const p = await Pet.get();
     setPet(p);
@@ -50,7 +58,7 @@ export default function ChecklistScreen() {
     if (p?.id) {
       setPawgressDay(await Pawgress.getDay(p.id, todayKey()));
     }
-  }, []);
+  }, [activePetId]);
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 

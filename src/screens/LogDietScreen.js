@@ -6,6 +6,7 @@ import { View, Text, ScrollView, TouchableOpacity, TextInput, Alert, StyleSheet 
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { Pet } from "../lib/storage";
+import { readActivePetId } from "../lib/activePet";
 import { DietLog, SavedFoods, DIET_MEAL_TYPES, DIET_MEAL_TYPE_LABELS } from "../lib/tummy";
 import { track } from "../lib/analytics";
 import { tapMedium, tapLight, notifySuccess } from "../lib/haptics";
@@ -58,9 +59,13 @@ export default function LogDietScreen() {
   }
 
   async function save() {
-    if (!pet?.id) return;
     setSaving(true);
     try {
+      // Authoritative active-pet read at write time — same pattern as
+      // LogStool. If the user switched floofs after the screen
+      // mounted, writes still land on the right pet.
+      const writeId = (await readActivePetId()) || pet?.id;
+      if (!writeId) { setSaving(false); return; }
       const payload = {
         mealType,
         brand: brand.trim(),
@@ -69,9 +74,9 @@ export default function LogDietScreen() {
         note: note.trim(),
       };
       if (editEntryId) {
-        await DietLog.update(pet.id, editEntryId, payload);
+        await DietLog.update(writeId, editEntryId, payload);
       } else {
-        await DietLog.add(pet.id, payload);
+        await DietLog.add(writeId, payload);
       }
       track("tummy_tracker_diet_log_created", {
         meal_type: mealType,
