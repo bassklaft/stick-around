@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useLayoutEffect } from "react";
-import { View, Text, TextInput, TouchableOpacity, ScrollView, Image, Alert, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, Pressable, ScrollView, Image, Alert, KeyboardAvoidingView, Platform, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { Pet, Pets } from "../lib/storage";
@@ -13,20 +13,47 @@ import PhotoboothAnimation from "../components/PhotoboothAnimation";
 import { PHOTO_PROMPTS, PROMPT_SLOTS } from "../lib/petPhotos";
 import { LIFESTYLE_QUESTIONS, LIFESTYLE_FIELDS } from "../data/lifestyleQuestions";
 
-// Build-37: lifestyle questionnaire DISABLED app-wide. Crash on
-// the questionnaire's couch-potato screen prevented the user from
-// finishing onboarding to take App Store screenshots. Until we
-// can pull dSYM-symbolicated frames and fix the underlying
-// TurboModule throw, the screen is hidden from every user, every
-// platform. Step 5 is bypassed: step 4 (microchip) → step 6
-// (age/weight) directly; step 6 Back returns to step 4.
+// Build-39: lifestyle questionnaire RE-ENABLED with three
+// defense-in-depth changes targeting the iOS 26.3.x crash
+// without root-cause-fixing it (we still don't have dSYM-
+// symbolicated proof of which TurboModule was throwing):
 //
-// LIFESTYLE_QUESTIONS / LIFESTYLE_FIELDS imports are kept so the
-// compactLifestyle() saver still produces a clean (empty) object
-// when finish() runs. When we re-introduce the feature with
-// fresh code, this gate flips back off and the data layer needs
-// no changes.
-const LIFESTYLE_DISABLED = true;
+//   1. <Pressable> instead of <TouchableOpacity> for option
+//      taps. TouchableOpacity uses Animated internally for
+//      its opacity transition, which routes through
+//      NativeAnimatedModule (a TurboModule). Pressable's
+//      default press feedback is a CSS-style style override,
+//      no native-driver Animated calls.
+//
+//   2. No accessibilityRole={"checkbox"|"radio"} on the
+//      option Pressable. AccessibilityInfo emission for those
+//      roles routes through a TurboModule. The role is
+//      omitted; press semantics are clear from layout +
+//      accessibilityState (selected) which uses generic
+//      semantics.
+//
+//   3. cleanLabel() strips ALL emoji + variation selectors
+//      from option / title / help strings at render time.
+//      The "🛋️" couch emoji has a variation selector
+//      (U+FE0F) and was the very first option the user
+//      tapped before the crash. Other questions also include
+//      VS-bearing emoji (⛈️ thunder). Stripping all of them
+//      removes that suspect entirely. The data file is
+//      unchanged — when emoji are safe to render again on
+//      iOS 26.3.x, this helper becomes a no-op.
+//
+// LIFESTYLE_DISABLED kept as a kill switch — flip to true to
+// hide the questionnaire app-wide if a new repro lands.
+const LIFESTYLE_DISABLED = false;
+
+// Strip emoji + variation selectors + ZWJ from a label string.
+// See the build-39 comment above for why.
+function cleanLabel(s) {
+  return String(s || "")
+    .replace(/[\u{1F000}-\u{1FFFF}\u{2600}-\u{27FF}️︎‍]/gu, "")
+    .replace(/\s+/g, " ")
+    .trim();
+}
 
 // 5-photo onboarding reel — pulls prompt copy from petPhotos.js (single
 // source of truth shared with PhotoManagerSheet so existing users see
@@ -732,29 +759,31 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
                   );
                 })}
               </View>
-              <Text style={s.eyebrow}>🐾  {q.section} · {stepNum} of {total}</Text>
-              <Text style={s.h1}>{promptTitle}</Text>
-              <Text style={s.sub}>{q.sub}</Text>
+              <Text style={s.eyebrow}>{cleanLabel(q.section)} · {stepNum} of {total}</Text>
+              <Text style={s.h1}>{cleanLabel(promptTitle)}</Text>
+              <Text style={s.sub}>{cleanLabel(q.sub)}</Text>
 
               <View style={{ marginTop: 8 }}>
                 {q.options.map((opt) => {
                   const selected = isLifestyleSelected(q, opt.value);
                   return (
-                    <TouchableOpacity
+                    <Pressable
                       key={opt.value}
                       onPress={() => { tapLight(); setLifestyleAnswer(q.key, opt.value, q.type); }}
-                      style={[s.lifestyleOption, selected && s.lifestyleOptionActive]}
-                      activeOpacity={0.7}
-                      accessibilityRole={q.type === "multi" ? "checkbox" : "radio"}
+                      style={({ pressed }) => [
+                        s.lifestyleOption,
+                        selected && s.lifestyleOptionActive,
+                        pressed && { opacity: 0.85 },
+                      ]}
                       accessibilityState={{ selected }}
                     >
                       <View style={{ flex: 1 }}>
                         <Text style={[s.lifestyleOptionLabel, selected && s.lifestyleOptionLabelActive]}>
-                          {opt.label}
+                          {cleanLabel(opt.label)}
                         </Text>
                         {opt.help && (
                           <Text style={[s.lifestyleOptionHelp, selected && s.lifestyleOptionHelpActive]}>
-                            {opt.help}
+                            {cleanLabel(opt.help)}
                           </Text>
                         )}
                       </View>
@@ -767,14 +796,14 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
                         size={22}
                         color={selected ? theme.accent : theme.muted}
                       />
-                    </TouchableOpacity>
+                    </Pressable>
                   );
                 })}
               </View>
 
               {q.cta === "tummyTracker" && (
                 <View style={s.lifestyleCta}>
-                  <Text style={s.lifestyleCtaTitle}>💩😉  Track {petPossessive} input + output</Text>
+                  <Text style={s.lifestyleCtaTitle}>Track {petPossessive} input + output</Text>
                   <Text style={s.lifestyleCtaBody}>
                     The Tummy Tracker on Home logs every meal + every poop, scans for FDA recalls (locally — third-party never sees what you log), and turns into a vet-share PDF when you need it. Open it from Home anytime.
                   </Text>
@@ -782,7 +811,7 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
               )}
               {q.cta === "healthTracker" && (
                 <View style={s.lifestyleCta}>
-                  <Text style={s.lifestyleCtaTitle}>🏥  Add {petPossessive} health records</Text>
+                  <Text style={s.lifestyleCtaTitle}>Add {petPossessive} health records</Text>
                   <Text style={s.lifestyleCtaBody}>
                     Vaccines, preventatives, and full health history go in Health Tracker on My Floofs — keeps you ahead of every due date and gives your vet a one-tap PDF for visits.
                   </Text>
@@ -791,9 +820,15 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
 
               <PrimaryButton label={isLast ? "Looking great — next" : "Next"} onPress={nextLifestyle} />
               <SecondaryButton label="Back" onPress={prevLifestyle} />
-              <TouchableOpacity onPress={skipAllLifestyle} style={{ alignSelf: "center", padding: 6 }}>
+              <Pressable
+                onPress={skipAllLifestyle}
+                style={({ pressed }) => [
+                  { alignSelf: "center", padding: 6 },
+                  pressed && { opacity: 0.7 },
+                ]}
+              >
                 <Text style={s.skipAllText}>Skip the rest · I'll fill these in later</Text>
-              </TouchableOpacity>
+              </Pressable>
             </View>
           );
         })()}
