@@ -83,22 +83,36 @@ export default function FloofFanOverlay({
       onRequestClose={onClose}
       statusBarTranslucent
     >
-      {/* No PanResponder here anymore — the gesture lives on the
-          custom My Floofs tab button so the long-press → slide can
-          be a single continuous touch session. The modal is purely
-          a visual layer rendered based on hoveredId from above. */}
-      <View pointerEvents="none" style={StyleSheet.absoluteFill}>
-        <Animated.View
-          style={[
-            StyleSheet.absoluteFill,
-            { backgroundColor: "rgba(0,0,0,0.45)", opacity: animProgress },
-          ]}
-        />
+      {/* The slide-to-select gesture lives on the custom My Floofs
+          tab button (a single continuous touch session). New touches
+          that START on the dim scrim are dismiss-taps — they only
+          fire when the long-press gesture has already ended (because
+          a touch can't be in two places at once), so they don't
+          interfere with mid-slide tracking. Bare gesture-responder
+          system, NOT <Pressable> — same primitives the lifestyle
+          questionnaire (build 40) needed to dodge the iOS 26.3.x
+          TurboModule throw. */}
+      <View style={StyleSheet.absoluteFill}>
+        {/* Dim scrim — accepts new touches; tap-anywhere-to-dismiss. */}
+        <View
+          style={StyleSheet.absoluteFill}
+          onStartShouldSetResponder={() => true}
+          onResponderRelease={onClose}
+        >
+          <Animated.View
+            style={[
+              StyleSheet.absoluteFill,
+              { backgroundColor: "rgba(0,0,0,0.45)", opacity: animProgress },
+            ]}
+          />
+        </View>
         {/* Hero title — updates as the finger slides. Positioned at
             vertical mid-screen so the user reading the name is close
             to where their finger is hovering. Falls back to the
-            active pet's name when nothing is hovered. */}
+            active pet's name when nothing is hovered. Non-interactive
+            — taps fall through to the scrim's dismiss responder. */}
         <Animated.View
+          pointerEvents="none"
           style={[
             styles.titleHero,
             { top: height * 0.34, opacity: animProgress },
@@ -137,6 +151,7 @@ export default function FloofFanOverlay({
           return (
             <Animated.View
               key={p.id || i}
+              pointerEvents="none"
               style={[
                 styles.circleAnchor,
                 {
