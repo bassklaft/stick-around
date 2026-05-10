@@ -21,13 +21,14 @@
 // screen-level.
 import React, { useEffect, useRef } from "react";
 import { View, Animated, StyleSheet } from "react-native";
-import Svg, { Path, G } from "react-native-svg";
+import Svg, { Path, Ellipse, G } from "react-native-svg";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
-import { PAW_VIEWBOX, PAW_PATHS, PAW_CENTROIDS, PAW_TAP_TARGETS } from "./PawIcon";
+import { PAW_VIEWBOX, PAW_TOES, PAW_HEEL_PATH, PAW_CENTROIDS, PAW_TAP_TARGETS } from "./PawIcon";
 import { theme } from "../theme";
 
 const PAW_SEGMENT_KEYS = ["food", "movement", "body", "mind", "special"];
 
+const TOE_BY_KEY = PAW_TOES.reduce((acc, t) => { acc[t.key] = t; return acc; }, {});
 const AnimatedG = Animated.createAnimatedComponent(G);
 
 // Per the spec, each color mode renders the filled segments in a
@@ -40,10 +41,11 @@ const COLORS = {
   year:  { fill: "#9C2A0F", stroke: "#9C2A0F", dim: "#9C2A0F33" },
 };
 
-// Geometry + tap-target fractions come from the canonical PawIcon
-// (PAW_PATHS, PAW_CENTROIDS, PAW_TAP_TARGETS), so the Pawgress
-// activity ring renders the IDENTICAL MCI paw vector as the Logo
-// header, the tab bar, and the asset PNGs.
+// Geometry comes from the canonical PawIcon (PAW_TOES + PAW_HEEL_PATH +
+// PAW_CENTROIDS + PAW_TAP_TARGETS), so the Pawgress activity ring
+// renders the IDENTICAL custom paw vector as the Logo header, tab
+// bar, and asset PNGs. 4 toes are <Ellipse> with rotation; the heel
+// is a single <Path>.
 
 function Segment({ kind, filled, color }) {
   const scale = useRef(new Animated.Value(filled ? 1 : 0.92)).current;
@@ -56,19 +58,36 @@ function Segment({ kind, filled, color }) {
   }, [filled, scale]);
 
   // Both states use fill (no stroke). Empty: low-opacity tint of
-  // the color theme. Filled: solid theme color. Same vector path
-  // either way — identical geometry between empty and filled.
+  // the color theme. Filled: solid theme color. Same vector either
+  // way — identical geometry between empty and filled.
   const fillColor = filled ? color.fill : color.dim;
   const centroid = PAW_CENTROIDS[kind];
-  const d = PAW_PATHS[kind];
-  if (!centroid || !d) return null;
+  if (!centroid) return null;
+
+  if (kind === "special") {
+    return (
+      <AnimatedG
+        transform={[{ scale }]}
+        originX={String(centroid.x)}
+        originY={String(centroid.y)}
+      >
+        <Path d={PAW_HEEL_PATH} fill={fillColor} />
+      </AnimatedG>
+    );
+  }
+  const t = TOE_BY_KEY[kind];
+  if (!t) return null;
   return (
     <AnimatedG
       transform={[{ scale }]}
-      originX={String(centroid.x)}
-      originY={String(centroid.y)}
+      originX={String(t.cx)}
+      originY={String(t.cy)}
     >
-      <Path d={d} fill={fillColor} />
+      <Ellipse
+        cx={t.cx} cy={t.cy} rx={t.rx} ry={t.ry}
+        transform={`rotate(${t.rot} ${t.cx} ${t.cy})`}
+        fill={fillColor}
+      />
     </AnimatedG>
   );
 }

@@ -383,7 +383,7 @@ export default function OnboardingScreen({ onDone, addMode = false, editMode = f
     <KeyboardAvoidingView behavior={Platform.OS === "ios" ? "padding" : undefined} style={{ flex: 1, backgroundColor: theme.bg }}>
       <ScrollView contentContainerStyle={{ paddingTop: insets.top + 32, paddingBottom: 60, paddingHorizontal: 22 }} keyboardShouldPersistTaps="handled">
         <Text style={s.brand}>{editMode ? `Edit ${name.trim() || "this pet"}` : addMode ? "Add a floof" : "FloofLife"}</Text>
-        <Text style={s.tagline}>{editMode ? "Update the details for your floof." : addMode ? "A few quick details about your new floof." : "Better pet parenting, on autopilot"}</Text>
+        <Text style={s.tagline}>{editMode ? "Update the details for your floof." : addMode ? "A few quick details about your new floof." : "Here to help you keep your Floof thriving"}</Text>
 
         {step === 0 && (
           <View style={s.section}>

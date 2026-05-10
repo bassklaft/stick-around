@@ -20,7 +20,7 @@ export default function AboutScreen() {
       contentContainerStyle={{ paddingHorizontal: 22, paddingTop: 18, paddingBottom: insets.bottom + 60 }}
     >
       <Text style={s.brand}>FloofLife</Text>
-      <Text style={s.tagline}>Better pet parenting, on autopilot.</Text>
+      <Text style={s.tagline}>Here to help you keep your Floof thriving.</Text>
 
       <Text style={s.sectionHd}>STORY</Text>
       <View style={s.card}>

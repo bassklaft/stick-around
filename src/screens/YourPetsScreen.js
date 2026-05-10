@@ -202,7 +202,7 @@ export default function YourPetsScreen() {
         </View>
         <Text style={s.emptyTitle}>Welcome to FloofLife</Text>
         <Text style={s.emptyBody}>
-          Better pet parenting, on autopilot. Add your first floof and we'll personalize a weekly checklist, breed-specific health considerations, and insider tips just for them.
+          Here to help you keep your Floof thriving. Add your first floof and we'll personalize a weekly checklist, breed-specific health considerations, and insider tips just for them.
         </Text>
         <TouchableOpacity
           onPress={() => navigation.navigate("AddPet")}
