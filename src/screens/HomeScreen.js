@@ -416,8 +416,8 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
               );
             })()}
             <View style={{ flex: 1, marginLeft: 14 }}>
-              <Text style={s.pawgressTitle}>{pet.name}'s Pawgress</Text>
-              <Text style={s.pawgressSubtitle}>
+              <Text style={s.pawgressTitle} numberOfLines={1}>{pet.name}'s Pawgress</Text>
+              <Text style={s.pawgressSubtitle} numberOfLines={2}>
                 {Pawgress.isAllFive(pawgressDay)
                   ? `Today's 5 pads filled — sweet dreams`
                   : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — complete today's checklist to fill the paw`}
@@ -449,8 +449,8 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
                 <MaterialCommunityIcons name={c.icon} size={26} color={c.tint} />
               </View>
               <View style={{ flex: 1 }}>
-                <Text style={s.cardTitle}>{c.title}</Text>
-                <Text style={s.cardSubtitle}>{c.subtitle}</Text>
+                <Text style={s.cardTitle} numberOfLines={1}>{c.title}</Text>
+                <Text style={s.cardSubtitle} numberOfLines={2}>{c.subtitle}</Text>
               </View>
               {c.badge ? (
                 <View style={s.cardBadge}><Text style={s.cardBadgeText}>{c.badge}</Text></View>
