@@ -1,10 +1,70 @@
-# Overnight Run — 2026-05-07 → 2026-05-10 (v1.2.0 cycle, ongoing)
+# Overnight Run — 2026-05-07 → 2026-05-11 (v1.2.0 cycle, ongoing)
 
-This file is the running log for the v1.2.0 cycle. The **CURRENT STATE** section directly below is the up-to-date authoritative summary as of 2026-05-10. The **v1.2.0 FINAL MANIFEST** further down captures the pre-build-18 spec lock and is preserved as historical record. The **Appendix** at the bottom holds older context (merge resolution, audits, side-quest write-ups).
+This file is the running log for the v1.2.0 cycle. The **SESSION CHECKPOINT** section directly below captures where the 2026-05-10 session paused mid-pass — read it first when reopening. After that, the **CURRENT STATE** section is the up-to-date authoritative summary. The **v1.2.0 FINAL MANIFEST** further down is the pre-build-18 spec lock (historical record). The **Appendix** at the bottom holds older context.
 
 ---
 
-# 📍 CURRENT STATE — 2026-05-10 (post-build-42, build 43 in flight)
+# 🛑 SESSION CHECKPOINT — paused 2026-05-10 PM / 2026-05-11
+
+## What's shipped (committed + pushed, on `origin/v1.2-work`)
+
+| Commit | Subject | In which build |
+|---|---|---|
+| `9810d4e` | fix(active-pet): every per-pet screen now reacts to active changes, not just on focus | **Build 43 (in TestFlight pipeline)** |
+| `2a64be4` | chore(dev): patch @expo/cli devicectl.js to accept Xcode 26's jsonVersion 3 | Build 43 (dev-only, not in bundle) |
+| `9a40e96` | docs: refresh OVERNIGHT_NOTES — builds 22→43 + iOS 26.3.x TurboModule saga | Build 43 (docs only) |
+| `0b471be` | fix(active-pet): generation-counter race-protection on every per-pet screen's load() | **Build 44 (not yet triggered)** |
+| `e4702bd` | fix(visual): ActivePetChip white-crescent + DogAge stuck-shimmer | **Build 44 (not yet triggered)** |
+
+**Build 43 shipped**: artifact at https://expo.dev/artifacts/eas/t2GrCeMNWmW79RkoJTVStA.ipa — also pre-downloaded to `/tmp/floof-build43.ipa`. Max confirmed it landed on TestFlight and immediately found the carousel-wraparound race + visual bugs that drove the next pass.
+
+**Build 44 NOT YET TRIGGERED.** Two commits are queued on top of build 43's HEAD but the build is held intentionally — the comprehensive review pass was paused mid-flight to save context before laptop close. See "What's in progress" below.
+
+## What's in progress (NOT yet committed — to resume)
+
+Max's ask for this pass: a true one-and-done re-engineering so every switching path (Home swipe carousel, fan-out long-press, ActivePetChip top-right, PetSwitcherModal, My Floofs card tap) propagates to every per-pet card and screen, with no visual glitches, no stuck-loading states, no text/card overflow, no crashes from click-throughs. Specifically called out by Max as "ideal one-and-done — don't be lazy."
+
+### Done in this pass (already committed in `0b471be` + `e4702bd`)
+
+- ✅ Race condition: gen-counter discards stale async results on Home / Checklist / Health / Tummy / Pawgress (`0b471be`). Fixes the "hero card on Cricket, Pawgress subtitle 'Today's 5 pads filled · Elliot'" mismatch from fast wraparound swipes.
+- ✅ ActivePetChip avatar size 32 inside 28-px ring → switched to render PetAvatar at size 26 directly with no ring wrapper (`e4702bd`). Removes the visible white crescent in the top-right chip on every pet-scoped screen.
+- ✅ DogAgeScreen stuck-shimmer when pet changes mid-animation → replaced one-shot `hasAnimatedRef` gate with a `pet.id`-keyed effect that resets + restarts the shimmer for every pet change (`e4702bd`).
+
+### Still to do — RESUME HERE NEXT SESSION
+
+Each item is a discrete code change; none requires architecture-level rework. Estimated total: 60-90 min of focused work, then commit + push + trigger build 44.
+
+1. **Diet & Care species filter** — `src/screens/DietScreen.js`. Items already have `species: ["dog"|"cat"]` arrays. Add `useActivePet()` + filter `ITEMS` by active species so cat-owner sees only cat-applicable supplements/foods. Add pet name to the header ("Cricket's Diet & Care" or similar). Add a "show items for all species" toggle so the catalog stays discoverable.
+
+2. **Training Exercises species filter / cat banner** — `src/screens/TrainingScreen.js`. Content is dog-focused (intro literally says "A balanced DOG needs all four..."). When active pet is a cat, either: filter to a cat-specific exercise list (content task — likely TBD content), OR show a polite banner: "Training exercises geared for dogs. Cat enrichment ideas coming soon." + show the dog content anyway so single-cat-household users aren't staring at an empty screen. Add pet name to header.
+
+3. **Toxic Foods + Plants species filter** — `src/screens/ToxicScreen.js`. Items already have `species` arrays. Default to filter-by-active-species but include a toggle "Show all species" because toxics-list is often consulted as a reference even for hypotheticals. Add pet name to header.
+
+4. **Trip Planning** — `src/screens/TripScreen.js` (not read yet). Verify it's pet-aware. At minimum, add pet name to header.
+
+5. **Recalls** — `src/screens/RecallsScreen.js` (not read yet). Probably already filters by active pet via the Tummy Tracker match service, but verify. Add pet name to header.
+
+6. **Pawgress card subtitle on Home** — `src/screens/HomeScreen.js` line ~415. Currently:
+   ```js
+   {Pawgress.isAllFive(pawgressDay)
+     ? `Today's 5 pads filled · ${pet.name}`
+     : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — complete today's checklist to fill the paw`}
+   ```
+   The not-all-five branch lacks the pet name, which is inconsistent. Make both branches include the pet name so the card consistently reads as "for this floof."
+
+7. **My Floofs text-overflow** — Screenshot showed `Health Considerations · 9 to know about for Domestic Shorth...` truncated. `src/screens/YourPetsScreen.js` `cardHeaderSubtitle` uses `numberOfLines={1}`. Either bump to `numberOfLines={2}` or shorten "Domestic Shorthair" → "Shorthair" in display.
+
+8. **Photo manager active-pet correctness** — `src/components/PhotoManagerSheet.js` (not re-audited). When the user opens PhotoManagerSheet from Home, switches via fan-out while it's open (Modal pageSheet doesn't cover the tab bar entirely on iOS), then uploads a photo — does it land on the right pet? `readActivePetId()` at write time should handle this but verify with a code read.
+
+9. **Monkey-test pass (code-level)** — read through each per-pet screen looking for: places where `pet.X` is rendered without numberOfLines/maxWidth (overflow risk), places where ${pet.name} is interpolated but pet might be null (crash risk), places where stale closures over pet/petId in async callbacks could fire after pet changes (residual race risk).
+
+10. **Visual review across screens** — when iOS Simulator runtime is downloaded (still a deferred side-quest), run Maestro or manual click-through to confirm: no spillover, no ugly transitions, no stuck loaders, smooth gestures, no crash on rapid clicks.
+
+### Triggering build 44
+
+DO NOT trigger until items 1-9 are complete (or Max explicitly says "ship what you have"). Build budget reminder: 97% of monthly EAS credits already consumed before build 43; build 44 is pay-as-you-go (~$2). Confirm with Max via the EAS build confirmation rule before triggering.
+
+---
 
 ## Build state at-a-glance
 
