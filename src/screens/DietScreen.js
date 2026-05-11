@@ -1,10 +1,20 @@
 // Diet & Supplements — universally helpful additions to the average pet
 // diet. Curated based on owner-community consensus + AVMA + Tufts vet
 // nutrition guidance. Everything here is general, not medical advice.
-import React, { useState, useMemo } from "react";
+//
+// Filters by the active pet's species by default so a cat owner doesn't
+// scroll past 12 dog-only joint supplements to find the 3 things that
+// apply to cats. Toggle "Show all species" reveals the full catalog
+// (useful when researching for a hypothetical future floof). Header
+// reads "[Name]'s Diet & Care" so the user feels the screen is
+// tailored to whoever is active.
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { View, Text, TextInput, ScrollView, TouchableOpacity, Linking, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { theme } from "../theme";
 
 const ITEMS = [
@@ -183,16 +193,32 @@ export default function DietScreen() {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState("All");
   const [query, setQuery] = useState("");
+  const [pet, setPet] = useState(null);
+  const [showAllSpecies, setShowAllSpecies] = useState(false);
+
+  // Active-pet — drives the species filter + the header. Reacts to
+  // switches from anywhere (fan, chip, swipe, switcher).
+  const { petId: activePetId } = useActivePet();
+  const load = useCallback(async () => { setPet(await Pet.get()); }, [activePetId]);
+  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const activeSpecies = pet?.species || null;
 
   const filtered = useMemo(() => {
     let list = ITEMS;
+    // Species filter first: only items applicable to the active pet's
+    // species, unless the user has toggled "show all".
+    if (!showAllSpecies && activeSpecies) {
+      list = list.filter(it => Array.isArray(it.species) && it.species.includes(activeSpecies));
+    }
     if (filter !== "All") list = list.filter(it => it.section === filter);
     if (query.trim()) {
       const q = query.toLowerCase();
       list = list.filter(it => it.name.toLowerCase().includes(q) || it.blurb.toLowerCase().includes(q));
     }
     return list;
-  }, [filter, query]);
+  }, [filter, query, showAllSpecies, activeSpecies]);
 
   // Group filtered items by section for headers
   const grouped = useMemo(() => {
@@ -209,6 +235,12 @@ export default function DietScreen() {
       style={{ backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 60 }}
     >
+      {pet?.name ? (
+        <Text style={s.petHeader} numberOfLines={1}>
+          {pet.name}'s Diet & Care
+        </Text>
+      ) : null}
+
       <View style={s.intro}>
         <Text style={s.introBody}>
           Supplements, fresh foods, clean-ingredient treats, and grooming/skin-care products owner communities and integrative vets consistently recommend. Always verify with your veterinarian.
@@ -230,6 +262,27 @@ export default function DietScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
+
+      {activeSpecies ? (
+        <TouchableOpacity
+          onPress={() => setShowAllSpecies(v => !v)}
+          style={s.speciesToggle}
+          activeOpacity={0.7}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: showAllSpecies }}
+        >
+          <MaterialCommunityIcons
+            name={showAllSpecies ? "checkbox-marked-circle-outline" : "checkbox-blank-circle-outline"}
+            size={18}
+            color={theme.accent}
+          />
+          <Text style={s.speciesToggleText}>
+            {showAllSpecies
+              ? `Showing all species — tap to filter to ${activeSpecies === "cat" ? "cat" : "dog"}-applicable only`
+              : `Showing ${activeSpecies === "cat" ? "cat" : "dog"}-applicable items — tap to show all species`}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
 
       {Object.entries(grouped).map(([section, items]) => (
         <View key={section}>
@@ -265,6 +318,9 @@ export default function DietScreen() {
 }
 
 const s = StyleSheet.create({
+  petHeader:    { fontSize: 22, fontWeight: "800", color: theme.fg, letterSpacing: -0.4, marginBottom: 10, textTransform: "capitalize" },
+  speciesToggle:{ flexDirection: "row", alignItems: "center", gap: 8, paddingVertical: 8, paddingHorizontal: 12, marginBottom: 10, borderRadius: 10, borderWidth: 1, borderColor: theme.accent + "33", backgroundColor: theme.accentSoft },
+  speciesToggleText: { flex: 1, fontSize: 12, color: theme.fg, lineHeight: 17 },
   intro:        { padding: 14, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 12 },
   introBody:    { fontSize: 13, color: theme.fg, lineHeight: 19 },
   search:       { backgroundColor: theme.card, borderRadius: 10, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, color: theme.fg, borderWidth: 1, borderColor: theme.line, marginBottom: 10 },
