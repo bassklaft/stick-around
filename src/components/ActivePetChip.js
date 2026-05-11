@@ -40,9 +40,13 @@ export default function ActivePetChip({ pet, onPress }) {
 
 const s = StyleSheet.create({
   // Compact pill that fits the navigation header's right slot
-  // without cropping. Earlier 32px avatar + thick white border was
-  // bleeding off the right edge; ring color now blends with the
-  // chip background so no visible "white perimeter."
-  chip:          { flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 4, paddingRight: 10, paddingVertical: 3, borderRadius: 999, backgroundColor: theme.accentSoft, borderWidth: 1.5, borderColor: theme.accent + "66", marginRight: 12, maxWidth: 130 },
+  // without cropping.
+  //
+  // Border removed in build 45 — the 1.5px accent-at-40% border
+  // over the cream header bg read as a washed-out halo even after
+  // the avatar wrapper was dropped (the user kept circling it).
+  // The accentSoft fill is already enough contrast against the
+  // header bg to read as a distinct chip.
+  chip:          { flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 4, paddingRight: 10, paddingVertical: 3, borderRadius: 999, backgroundColor: theme.accentSoft, marginRight: 12, maxWidth: 130 },
   name:          { fontSize: 13, fontWeight: "700", color: theme.fg, textTransform: "capitalize", maxWidth: 70 },
 });
