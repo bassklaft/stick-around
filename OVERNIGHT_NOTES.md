@@ -30,35 +30,51 @@ Max's ask for this pass: a true one-and-done re-engineering so every switching p
 - ✅ ActivePetChip avatar size 32 inside 28-px ring → switched to render PetAvatar at size 26 directly with no ring wrapper (`e4702bd`). Removes the visible white crescent in the top-right chip on every pet-scoped screen.
 - ✅ DogAgeScreen stuck-shimmer when pet changes mid-animation → replaced one-shot `hasAnimatedRef` gate with a `pet.id`-keyed effect that resets + restarts the shimmer for every pet change (`e4702bd`).
 
-### Still to do — RESUME HERE NEXT SESSION
+### Comprehensive review pass — COMPLETE (2026-05-11 AM, queued for build 44)
 
-Each item is a discrete code change; none requires architecture-level rework. Estimated total: 60-90 min of focused work, then commit + push + trigger build 44.
+All 9 punch-list items cleared. The single deferred item (#10, visual review via Maestro) stays on hold until the iOS Simulator runtime side-quest is unblocked.
 
-1. **Diet & Care species filter** — `src/screens/DietScreen.js`. Items already have `species: ["dog"|"cat"]` arrays. Add `useActivePet()` + filter `ITEMS` by active species so cat-owner sees only cat-applicable supplements/foods. Add pet name to the header ("Cricket's Diet & Care" or similar). Add a "show items for all species" toggle so the catalog stays discoverable.
+1. ✅ **Diet & Care species filter + pet header + show-all toggle** (`fe89567`) — `DietScreen.js` subscribes to `useActivePet()`, filters ITEMS by active species, shows "[Name]'s Diet & Care" header, "Show all species" toggle for reference use.
 
-2. **Training Exercises species filter / cat banner** — `src/screens/TrainingScreen.js`. Content is dog-focused (intro literally says "A balanced DOG needs all four..."). When active pet is a cat, either: filter to a cat-specific exercise list (content task — likely TBD content), OR show a polite banner: "Training exercises geared for dogs. Cat enrichment ideas coming soon." + show the dog content anyway so single-cat-household users aren't staring at an empty screen. Add pet name to header.
+2. ✅ **Training Exercises active-pet header + cat-banner** (`014a84f`) — `TrainingScreen.js` shows "[Name]'s Training Exercises" header and a polite cat-banner when active pet is a cat (catalog is dog-focused; cat-specific content queued for future). Content still displayed for single-cat households.
 
-3. **Toxic Foods + Plants species filter** — `src/screens/ToxicScreen.js`. Items already have `species` arrays. Default to filter-by-active-species but include a toggle "Show all species" because toxics-list is often consulted as a reference even for hypotheticals. Add pet name to header.
+3. ✅ **Toxic Foods + Plants species filter + pet header + show-all toggle** (`bb0716f`) — `ToxicScreen.js` filters foods/plants by active species, "[Name]'s Toxic Foods & Plants" header, "Show all species" toggle.
 
-4. **Trip Planning** — `src/screens/TripScreen.js` (not read yet). Verify it's pet-aware. At minimum, add pet name to header.
+4. ✅ **Trip Planning active-pet header** (`fac4390`) — `TripScreen.js` shows "Planning a trip with [Name]" header. Content is species-universal so no filter needed.
 
-5. **Recalls** — `src/screens/RecallsScreen.js` (not read yet). Probably already filters by active pet via the Tummy Tracker match service, but verify. Add pet name to header.
+5. ✅ **Recalls active-pet header** (`4fb64a7`) — `RecallsScreen.js` shows "Recalls & Concerns for [Name]" header. Entries don't carry per-species tags by design — Tummy Tracker already does pet-specific recall-match against logged foods.
 
-6. **Pawgress card subtitle on Home** — `src/screens/HomeScreen.js` line ~415. Currently:
-   ```js
-   {Pawgress.isAllFive(pawgressDay)
-     ? `Today's 5 pads filled · ${pet.name}`
-     : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — complete today's checklist to fill the paw`}
-   ```
-   The not-all-five branch lacks the pet name, which is inconsistent. Make both branches include the pet name so the card consistently reads as "for this floof."
+6. ✅ **Home Pawgress card consistency** (`f20dbfd`) — Title is now "[Name]'s Pawgress" (always present, always correct). Subtitle is progress-only. Eliminates the "Today's 5 pads filled · Elliot" mismatch class entirely by moving pet.name out of the conditional branch.
 
-7. **My Floofs text-overflow** — Screenshot showed `Health Considerations · 9 to know about for Domestic Shorth...` truncated. `src/screens/YourPetsScreen.js` `cardHeaderSubtitle` uses `numberOfLines={1}`. Either bump to `numberOfLines={2}` or shorten "Domestic Shorthair" → "Shorthair" in display.
+7. ✅ **YourPets text-overflow fix** (`453c249`) — `cardHeaderSubtitle` bumped to `numberOfLines={2}` on both Health Considerations and Insider Tips so long breed names ("Domestic Shorthair", "Cavalier King Charles Spaniel") aren't truncated mid-word.
 
-8. **Photo manager active-pet correctness** — `src/components/PhotoManagerSheet.js` (not re-audited). When the user opens PhotoManagerSheet from Home, switches via fan-out while it's open (Modal pageSheet doesn't cover the tab bar entirely on iOS), then uploads a photo — does it land on the right pet? `readActivePetId()` at write time should handle this but verify with a code read.
+8. ✅ **PhotoManagerSheet write-time correctness — AUDITED, no fix needed.** `persist()` / `pickPhotoIntoSlot()` / `handleAddExtra()` all already resolve `await readActivePetId()` at write time per the defensive pattern from commit `ebc591c`. Photo array re-derives via `useMemo([pet])`, broken-slot tracking resets on `pet?.id` change. `onAfterChange(livePetId)` carries the write-time id so parent reloads against the actual write target.
 
-9. **Monkey-test pass (code-level)** — read through each per-pet screen looking for: places where `pet.X` is rendered without numberOfLines/maxWidth (overflow risk), places where ${pet.name} is interpolated but pet might be null (crash risk), places where stale closures over pet/petId in async callbacks could fire after pet changes (residual race risk).
+9. ✅ **Monkey-test code pass + overflow polish** (`d1d3f7f`):
+   - **Null-pet crash risk** — every screen that uses `pet.name` unguarded (HomeScreen, HealthTrackerScreen, DogAgeScreen, PawgressScreen, AddHealthRecordScreen, TummyTrackerScreen, SettingsScreen) has an early-return `if (!pet) return <View />` guard upstream. ActivePetTitle handles null-pet by rendering the screen name without a possessive prefix. No crash risk found.
+   - **Overflow risk** — Home Pawgress title + subtitle now have `numberOfLines={1}` and `{2}` respectively; Quick Access card title + subtitle now have `{1}` and `{2}`. All other pet-name interpolations are either inside `numberOfLines` parents (cards, chips, list rows) or short-headline contexts that don't wrap problematically.
+   - **Stale-closure async race risk** — gen-counter (`0b471be`) protects every `load()` on every per-pet screen. Write paths use either `readActivePetId()` at write time (LogStool/LogDiet/PhotoManagerSheet) or route-param-pinned ids inside modals that cover the tab bar (AddHealthRecord). Checklist + Pawgress toggle handlers use tap-time `pet.id` — semantically correct (user tapped that pet's checkbox) and the race window is microseconds (AsyncStorage write completes before any long-press would trigger fan-out).
 
-10. **Visual review across screens** — when iOS Simulator runtime is downloaded (still a deferred side-quest), run Maestro or manual click-through to confirm: no spillover, no ugly transitions, no stuck loaders, smooth gestures, no crash on rapid clicks.
+### Items 1-9 commit chain (on top of build 43's HEAD `2a64be4`)
+
+```
+d1d3f7f fix(home): numberOfLines guards on Pawgress + Quick Access cards
+453c249 fix(yourpets): bump cardHeaderSubtitle to 2 lines — fixes breed-name truncation
+f20dbfd fix(home): Pawgress card title carries pet.name; subtitle is progress-only
+4fb64a7 feat(recalls): active-pet header
+fac4390 feat(trip): active-pet header
+bb0716f feat(toxic): active-pet header + species filter + show-all toggle
+014a84f feat(training): active-pet header + cat-banner
+fe89567 feat(diet): species filter + active-pet header + show-all toggle
+e4702bd fix(visual): ActivePetChip white-crescent + DogAge stuck-shimmer
+0b471be fix(active-pet): generation-counter race-protection on every per-pet screen's load()
+```
+
+10. ⏸ **Visual review via Maestro / iOS Simulator** — deferred. Still blocked on iOS Simulator runtime download (~7-10 GB, requires user action in Xcode → Settings → Components). When unblocked, run a Maestro flow that exercises the active-pet switching paths across all tabs.
+
+### Triggering build 44
+
+Ready to trigger. EAS build confirmation rule applies. Build budget: pay-as-you-go this cycle (~$2).
 
 ### Triggering build 44
 
