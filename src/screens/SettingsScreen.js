@@ -93,6 +93,16 @@ export default function SettingsScreen({ navigation }) {
 
   return (
     <ScrollView style={{ backgroundColor: theme.bg }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 16, paddingBottom: insets.bottom + 60 }}>
+      {/* Prominent top-of-screen vet disclaimer — liability-protective
+          but framed warmly. Visible without scrolling on every Settings
+          visit, distinct from the small bottom-of-screen reminder. */}
+      <View style={s.vetDisclaimer}>
+        <Text style={s.vetDisclaimerHd}>FloofLife is not a substitute for your vet.</Text>
+        <Text style={s.vetDisclaimerBody}>
+          We're here to help you keep track of your floof's health and give you and your vet more to work with — patterns, logs, dates — so the conversations you have with your vet are richer. For any medical concern, your vet comes first.
+        </Text>
+      </View>
+
       <View style={s.card}>
         <Text style={s.h2}>{pet.name}</Text>
         <Text style={s.sub}>{titleCase(pet.breed || "")} {pet.species} · {pet.ageYears} yr{pet.weightLbs ? ` · ${pet.weightLbs} lb` : ""}</Text>
@@ -179,6 +189,9 @@ const s = StyleSheet.create({
   rowLabel:     { flex: 1, fontSize: 14, color: theme.fg },
   disclaimer:   { marginTop: 24, padding: 14, borderRadius: 10, backgroundColor: theme.accentSoft },
   disclaimerText:{ fontSize: 11, color: theme.fg, lineHeight: 17 },
+  vetDisclaimer:    { padding: 14, marginBottom: 14, borderRadius: 12, backgroundColor: theme.accentSoft, borderWidth: 1, borderColor: theme.accent + "55" },
+  vetDisclaimerHd:  { fontSize: 14, fontWeight: "800", color: theme.accent, letterSpacing: -0.2, marginBottom: 6 },
+  vetDisclaimerBody:{ fontSize: 12, color: theme.fg, lineHeight: 18 },
   premiumBadge: { flexShrink: 0, backgroundColor: theme.accent, paddingHorizontal: 8, paddingVertical: 3, borderRadius: 4 },
   premiumBadgeText:{ color: "#fff", fontSize: 9, fontWeight: "800", letterSpacing: 0.6 },
 });
