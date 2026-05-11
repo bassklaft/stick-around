@@ -77,7 +77,6 @@ export default function DogAgeScreen() {
   const [computing, setComputing] = useState(false);
   const [stepIdx, setStepIdx] = useState(0);
   const fade = useRef(new Animated.Value(0)).current;
-  const hasAnimatedRef = useRef(false);
 
   // Reactive active-pet — re-runs load when the user switches floofs
   // via any path (fan, chip, swipe), not just on tab focus.
@@ -90,12 +89,18 @@ export default function DogAgeScreen() {
   useEffect(() => { load(); }, [load]);
   useFocusEffect(useCallback(() => { load(); }, [load]));
 
-  // First-mount-only shimmer. Loop through factors, total budget ~1.5s.
+  // Shimmer animation per pet — loops through factors, total budget
+  // ~1.5s. Runs every time pet.id changes so switching floofs gets
+  // its own "calculating for [Cricket]" moment instead of being
+  // stuck at the previous pet's spinner. Build ≤43 used a one-shot
+  // hasAnimatedRef gate that combined with the cleanup to leave the
+  // shimmer stuck whenever pet changed mid-animation: the cleanup
+  // killed the timer, and the gate prevented restart.
   useEffect(() => {
-    if (!pet || hasAnimatedRef.current) return;
-    hasAnimatedRef.current = true;
+    if (!pet?.id) return;
     setComputing(true);
     setStepIdx(0);
+    fade.setValue(0);
     const tick = setInterval(() => {
       setStepIdx((i) => (i + 1 >= SHIMMER_STEPS.length ? i : i + 1));
     }, 280);
@@ -104,7 +109,7 @@ export default function DogAgeScreen() {
       Animated.timing(fade, { toValue: 1, duration: 350, useNativeDriver: true }).start();
     }, 1500);
     return () => { clearInterval(tick); clearTimeout(done); };
-  }, [pet, fade]);
+  }, [pet?.id, fade]);
 
   async function setLifestyleField(field, value) {
     if (!pet) return;

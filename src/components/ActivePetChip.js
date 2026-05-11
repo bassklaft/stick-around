@@ -27,9 +27,12 @@ export default function ActivePetChip({ pet, onPress }) {
       accessibilityLabel={`Active floof: ${pet.name}. Tap to switch.`}
       hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
     >
-      <View style={s.avatarRing}>
-        <PetAvatar pet={pet} size={32} slot="chip" />
-      </View>
+      {/* PetAvatar handles its own circular shape via size/2 radius.
+          Wrapping it in a 28×28 ring while passing size={32} (build
+          ≤43) caused a visible white crescent because the avatar's
+          radius (16) didn't match the ring's clip (14). Render the
+          avatar at the chip's intended size directly — no wrapper. */}
+      <PetAvatar pet={pet} size={26} slot="chip" />
       <Text style={s.name} numberOfLines={1}>{firstName}</Text>
     </TouchableOpacity>
   );
@@ -41,6 +44,5 @@ const s = StyleSheet.create({
   // bleeding off the right edge; ring color now blends with the
   // chip background so no visible "white perimeter."
   chip:          { flexDirection: "row", alignItems: "center", gap: 6, paddingLeft: 4, paddingRight: 10, paddingVertical: 3, borderRadius: 999, backgroundColor: theme.accentSoft, borderWidth: 1.5, borderColor: theme.accent + "66", marginRight: 12, maxWidth: 130 },
-  avatarRing:    { width: 28, height: 28, borderRadius: 14, alignItems: "center", justifyContent: "center", overflow: "hidden" },
   name:          { fontSize: 13, fontWeight: "700", color: theme.fg, textTransform: "capitalize", maxWidth: 70 },
 });
