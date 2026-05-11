@@ -268,8 +268,8 @@ export default function DietScreen() {
           onPress={() => setShowAllSpecies(v => !v)}
           style={s.speciesToggle}
           activeOpacity={0.7}
-          accessibilityRole="switch"
-          accessibilityState={{ checked: showAllSpecies }}
+          accessibilityRole="button"
+          accessibilityLabel={showAllSpecies ? "Tap to filter to active pet's species" : "Tap to show all species"}
         >
           <MaterialCommunityIcons
             name={showAllSpecies ? "checkbox-marked-circle-outline" : "checkbox-blank-circle-outline"}
