@@ -6,10 +6,21 @@
 //
 // Liability framing: every entry is "investigated by FDA" / "owner
 // reports" / "class action filed" — never "this product is dangerous".
-import React, { useState, useMemo } from "react";
+//
+// The Tummy Tracker already does pet-specific recall matching against
+// what the user has logged. This screen is the broader reference
+// catalog — entries don't carry per-species tags because most recalls
+// (kibble, grain-free DCM, treats, supplements) apply to whichever
+// species is on the label. Showing the active pet in the header keeps
+// the screen feeling tailored even when the underlying list isn't
+// species-gated.
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { View, Text, TextInput, ScrollView, TouchableOpacity, Linking, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { theme } from "../theme";
 
 // Each entry carries: source (regulatory / aggregator / class-action),
@@ -129,6 +140,11 @@ const SOURCE_TAG = {
 export default function RecallsScreen() {
   const insets = useSafeAreaInsets();
   const [query, setQuery] = useState("");
+  const [pet, setPet] = useState(null);
+  const { petId: activePetId } = useActivePet();
+  const load = useCallback(async () => { setPet(await Pet.get()); }, [activePetId]);
+  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
 
   const filtered = useMemo(() => {
     if (!query.trim()) return ENTRIES;
@@ -145,6 +161,11 @@ export default function RecallsScreen() {
       style={{ backgroundColor: theme.bg }}
       contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 60 }}
     >
+      {pet?.name ? (
+        <Text style={s.petHeader} numberOfLines={1}>
+          Recalls & Concerns for {pet.name}
+        </Text>
+      ) : null}
       <View style={s.intro}>
         <Text style={s.introHd}>⚠ HOW TO READ THIS LIST</Text>
         <Text style={s.introBody}>
@@ -222,6 +243,7 @@ export default function RecallsScreen() {
 }
 
 const s = StyleSheet.create({
+  petHeader:   { fontSize: 22, fontWeight: "800", color: theme.fg, letterSpacing: -0.4, marginBottom: 10, textTransform: "capitalize" },
   intro:       { padding: 14, backgroundColor: "#FCE9C8", borderRadius: 12, borderWidth: 1, borderColor: "#E0A82E", marginBottom: 12 },
   introHd:     { fontSize: 11, fontWeight: "800", color: "#7A4F0A", letterSpacing: 1.2, marginBottom: 4 },
   introBody:   { fontSize: 12, color: "#5A3F0A", lineHeight: 18 },
