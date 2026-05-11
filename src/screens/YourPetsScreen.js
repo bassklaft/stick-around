@@ -430,8 +430,17 @@ export default function YourPetsScreen() {
                     }}
                     style={s.breedHeader}
                   >
-                    <Text style={s.breedTitle}>🐾 {pet.name}'s lifestyle · {answered.length} of {total}</Text>
-                    <Text style={s.breedHeaderHint}>{expanded ? "Tap to hide" : "Tap to expand"}</Text>
+                    {/* Non-breaking spaces between "N", "of", "M" keep
+                        the count token together so we never get an
+                        orphaned "of 12" on its own line. Same chevron
+                        affordance as the About / Health / Tips cards
+                        below so the row is consistent + compact. */}
+                    <Text style={s.breedTitle} numberOfLines={2}>{`🐾 ${pet.name}'s lifestyle · ${answered.length} of ${total}`}</Text>
+                    <MaterialCommunityIcons
+                      name={expanded ? "chevron-up" : "chevron-down"}
+                      size={22}
+                      color={theme.muted}
+                    />
                   </TouchableOpacity>
                   {expanded && (
                     <>
@@ -490,10 +499,12 @@ export default function YourPetsScreen() {
                       onPress={() => toggleAbout(sectionId)}
                       style={s.breedHeader}
                     >
-                      <Text style={s.breedTitle}>About {breedDisplayName(breedKey)}</Text>
-                      <Text style={s.breedHeaderHint}>
-                        {aboutExpanded ? "Tap to hide" : "Tap to expand"}
-                      </Text>
+                      <Text style={s.breedTitle} numberOfLines={2}>About {breedDisplayName(breedKey)}</Text>
+                      <MaterialCommunityIcons
+                        name={aboutExpanded ? "chevron-up" : "chevron-down"}
+                        size={22}
+                        color={theme.muted}
+                      />
                     </TouchableOpacity>
                     {aboutExpanded && (<>
                       {breed.origin && <Text style={s.breedOrigin}>📍 {breed.origin}</Text>}
