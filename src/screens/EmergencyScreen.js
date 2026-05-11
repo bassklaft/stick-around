@@ -46,8 +46,11 @@ export default function EmergencyScreen() {
         </Text>
         {POISON_HOTLINES.map((h, i) => (
           <TouchableOpacity key={i} onPress={() => Linking.openURL(`tel:${h.phone}`)} style={s.callBtn}>
-            <MaterialCommunityIcons name="phone" size={18} color="#fff" />
-            <Text style={s.callBtnText} numberOfLines={2}>{h.name}: {h.display}</Text>
+            <MaterialCommunityIcons name="phone" size={20} color="#fff" />
+            <View style={s.callBtnTextWrap}>
+              <Text style={s.callBtnPhone} numberOfLines={1}>{h.display}</Text>
+              <Text style={s.callBtnName} numberOfLines={1}>{h.name}</Text>
+            </View>
           </TouchableOpacity>
         ))}
         <Text style={s.alarmFee}>Both poison-control lines charge a consultation fee (~$85–95) and operate 24/7.</Text>
@@ -77,7 +80,10 @@ export default function EmergencyScreen() {
       </Text>
       <TouchableOpacity onPress={() => Linking.openURL("https://www.redcross.org/take-a-class/classes/cat-and-dog-first-aid/online-LP-00012380.html")} style={s.linkBtn}>
         <MaterialCommunityIcons name="open-in-new" size={16} color={theme.accent} />
-        <Text style={s.linkBtnText}>American Red Cross — Cat & Dog First Aid Course</Text>
+        {/* Shortened from "American Red Cross — Cat & Dog First Aid
+            Course" (which wrapped "Course" to its own line) to fit
+            comfortably on one row at typical phone widths. */}
+        <Text style={s.linkBtnText} numberOfLines={2}>Red Cross · Pet First Aid Course</Text>
       </TouchableOpacity>
       <Text style={s.linkHint}>Online, ~$25 one-time, lifetime access. Recognized standard for non-vet pet first aid.</Text>
 
@@ -129,7 +135,10 @@ const s = StyleSheet.create({
   alarmHd:        { fontSize: 12, fontWeight: "800", color: "#9C2A0F", letterSpacing: 1.2, marginBottom: 6 },
   alarmBody:      { fontSize: 13, color: "#5A1A0A", lineHeight: 19, marginBottom: 12 },
   alarmFee:       { fontSize: 11, color: "#7A2A0F", marginTop: 6, fontStyle: "italic" },
-  callBtn:        { flexDirection: "row", alignItems: "center", justifyContent: "center", backgroundColor: "#C04A2C", paddingVertical: 12, paddingHorizontal: 14, borderRadius: 10, marginBottom: 8, gap: 10 },
+  callBtn:        { flexDirection: "row", alignItems: "center", backgroundColor: "#C04A2C", paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, marginBottom: 8, gap: 12 },
+  callBtnTextWrap:{ flex: 1, flexShrink: 1, alignItems: "flex-start" },
+  callBtnPhone:   { color: "#fff", fontWeight: "800", fontSize: 16, letterSpacing: 0.3 },
+  callBtnName:    { color: "rgba(255,255,255,0.9)", fontWeight: "600", fontSize: 11, marginTop: 1 },
   callBtnText:    { flexShrink: 1, color: "#fff", fontWeight: "700", fontSize: 14, textAlign: "center" },
   sectionHd:      { marginTop: 22, marginBottom: 6, fontSize: 11, fontWeight: "800", color: theme.muted, letterSpacing: 1.2 },
   sectionSub:     { fontSize: 12, color: theme.muted, marginBottom: 10, lineHeight: 18, fontStyle: "italic" },
