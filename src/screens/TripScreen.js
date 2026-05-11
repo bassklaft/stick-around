@@ -1,10 +1,19 @@
 // Trip Planning — weekend & travel guide. Pre-trip prep, packing list,
 // transit-mode safety. Items pulled from AVMA travel-with-pets guidance,
 // AAA pet travel resources, and owner-community packing lists.
-import React from "react";
+//
+// Content is universal across species (a cat in a carrier and a dog in
+// a carrier need almost the same prep). We surface the active pet's
+// name in the header so the page reads as tailored, and call out the
+// few species-specific items inline where relevant (brachycephalic
+// flight risk is dog-specific; carrier-only for cats; etc.).
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { theme } from "../theme";
 
 const SECTIONS = [
@@ -98,8 +107,19 @@ const SECTIONS = [
 
 export default function TripScreen() {
   const insets = useSafeAreaInsets();
+  const [pet, setPet] = useState(null);
+  const { petId: activePetId } = useActivePet();
+  const load = useCallback(async () => { setPet(await Pet.get()); }, [activePetId]);
+  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
   return (
     <ScrollView style={{ backgroundColor: theme.bg }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 60 }}>
+      {pet?.name ? (
+        <Text style={s.petHeader} numberOfLines={1}>
+          Planning a trip with {pet.name}
+        </Text>
+      ) : null}
       <View style={s.intro}>
         <Text style={s.introBody}>
           A weekend trip with your pet is a gift — the planning is what keeps it that way. Sourced from AVMA travel guidance, AAA pet travel data, and owner community packing lists.
@@ -134,6 +154,7 @@ export default function TripScreen() {
 }
 
 const s = StyleSheet.create({
+  petHeader:    { fontSize: 22, fontWeight: "800", color: theme.fg, letterSpacing: -0.4, marginBottom: 10, textTransform: "capitalize" },
   intro:        { padding: 14, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 14 },
   introBody:    { fontSize: 13, color: theme.fg, lineHeight: 19 },
   section:      { marginBottom: 22 },
