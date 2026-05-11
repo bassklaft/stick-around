@@ -49,6 +49,32 @@ export default function MyFloofsTabButton(props) {
   const startXRef = useRef(0);
   const startYRef = useRef(0);
 
+  // Hold parent callbacks in refs so the PanResponder closure (created
+  // once via useRef below) always invokes the LATEST onPress /
+  // onShortTap / onLongPress* — not the ones captured at first render.
+  //
+  // The build-45 bug "haptic fires but My Floofs doesn't open" was
+  // exactly this. React Navigation passes a fresh `onPress` (its
+  // navigate function) every time the tab bar re-renders. The
+  // PanResponder.create closure captured the FIRST one. As soon as
+  // RN's internal nav state advanced past the captured function's
+  // reference, calling that stale onPress was a no-op (haptic still
+  // fired because onShortTap is the stable `() => tapLight()` arrow).
+  //
+  // Same fix shape as FloofCardStack (commit 8ae513f): mirror props
+  // into refs that update on every render, read .current inside the
+  // PanResponder callbacks.
+  const onPressRef = useRef(onPress);
+  const onShortTapRef = useRef(onShortTap);
+  const onLongPressStartRef = useRef(onLongPressStart);
+  const onLongPressMoveRef = useRef(onLongPressMove);
+  const onLongPressEndRef = useRef(onLongPressEnd);
+  onPressRef.current = onPress;
+  onShortTapRef.current = onShortTap;
+  onLongPressStartRef.current = onLongPressStart;
+  onLongPressMoveRef.current = onLongPressMove;
+  onLongPressEndRef.current = onLongPressEnd;
+
   function clearLongPressTimer() {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -70,11 +96,11 @@ export default function MyFloofsTabButton(props) {
         longPressTimerRef.current = setTimeout(() => {
           if (!movedRef.current) {
             longPressFiredRef.current = true;
-            onLongPressStart?.();
+            onLongPressStartRef.current?.();
             // Seed the hover with the touch's current position so
             // the fan can show the active pet highlighted before
             // the user moves.
-            onLongPressMove?.(startXRef.current, startYRef.current);
+            onLongPressMoveRef.current?.(startXRef.current, startYRef.current);
           }
         }, LONG_PRESS_MS);
       },
@@ -90,23 +116,24 @@ export default function MyFloofsTabButton(props) {
           clearLongPressTimer();
         }
         if (longPressFiredRef.current) {
-          onLongPressMove?.(pageX, pageY);
+          onLongPressMoveRef.current?.(pageX, pageY);
         }
       },
       onPanResponderRelease: (e) => {
         clearLongPressTimer();
         if (longPressFiredRef.current) {
           longPressFiredRef.current = false;
-          onLongPressEnd?.(e.nativeEvent.pageX, e.nativeEvent.pageY);
+          onLongPressEndRef.current?.(e.nativeEvent.pageX, e.nativeEvent.pageY);
           return;
         }
         if (!movedRef.current) {
           // Short tap → caller's "navigate to My Floofs" path. We
           // pass through to props.onPress (React Nav's default
           // navigate handler) AND fire onShortTap for any extra
-          // haptic / analytics the parent wants.
-          onShortTap?.();
-          onPress?.();
+          // haptic / analytics the parent wants. Refs ensure both
+          // are the LATEST ones.
+          onShortTapRef.current?.();
+          onPressRef.current?.();
         }
       },
       onPanResponderTerminate: () => {
@@ -120,7 +147,7 @@ export default function MyFloofsTabButton(props) {
         clearLongPressTimer();
         if (longPressFiredRef.current) {
           longPressFiredRef.current = false;
-          onLongPressEnd?.(-1, -1);
+          onLongPressEndRef.current?.(-1, -1);
         }
       },
     }),
