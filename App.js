@@ -14,6 +14,7 @@ import FloofFanOverlay from "./src/components/FloofFanOverlay";
 import MyFloofsTabButton from "./src/components/MyFloofsTabButton";
 import PawIcon from "./src/components/PawIcon";
 import GuidedTour from "./src/components/GuidedTour";
+import AppHeader from "./src/components/AppHeader";
 import { computeFanCenters, hitTestFan } from "./src/lib/fanGeometry";
 import { useActivePet } from "./src/lib/activePet";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -315,8 +316,18 @@ export default function App() {
   }
 
   // Shared push-screen options (Toxic, Vets, Diet, Recalls, Settings).
+  //
+  // Uses a custom JS `header` component (AppHeader) instead of the
+  // native UINavigationBar. iOS 26 auto-applies a "Liquid Glass"
+  // capsule background behind every native nav-bar button, which
+  // the user kept circling as a "white border around the floof
+  // icon" in builds 43-45 even after we removed the chip's own
+  // border. A JS header bypasses iOS 26's button-appearance entirely.
   const pushScreenOptions = {
     headerShown: true,
+    header: (props) => <AppHeader {...props} />,
+    // The below options are kept for backwards-compat / accessibility
+    // fallbacks but are not used by AppHeader directly.
     headerStyle: { backgroundColor: theme.bg },
     headerTitleStyle: { color: theme.fg, fontWeight: "700" },
     headerTintColor: theme.accent,
