@@ -134,6 +134,39 @@ export default function FloofCardStack({
   const movedRef = useRef(false);
   const isCommittingRef = useRef(false);
 
+  // Refs keep the PanResponder closures pointed at the LATEST values
+  // for index, pets, and the parent callbacks. Build ≤44 only ref'd
+  // index + pets; onActivate / onTapFront / onLongPress were captured
+  // by the PanResponder.create closure at FIRST render and never
+  // updated.
+  //
+  // That was the root cause of the build-44 carousel-wraparound bug
+  // ("hero on Cricket, Pawgress card on Elliot" — issue #44b in the
+  // 2026-05-11 11:23 recording): the captured first-render onActivate
+  // closure had a stale `pet` value (whatever was active at app
+  // launch). Its `if (petId === pet.id) return` bail check compared
+  // against that stale launch-time pet, so any swipe back to the
+  // launch-time pet bailed entirely — setPet didn't fire, Pets.setActive
+  // didn't fire, useActivePet didn't notify, load() didn't refresh.
+  // Hero advanced via internal setIndex, everything else stayed on
+  // the previous pet. The gen-counter in load() can't help when
+  // load() is never invoked.
+  //
+  // Holding the parent callbacks in refs + reading via ref inside the
+  // PanResponder makes every swipe invoke the LATEST inline arrow,
+  // which captures the LATEST pet / pets from the parent's most
+  // recent render. The bail check is then accurate.
+  const indexRef = useRef(index);
+  const petsRef = useRef(pets);
+  const onActivateRef = useRef(onActivate);
+  const onTapFrontRef = useRef(onTapFront);
+  const onLongPressRef = useRef(onLongPress);
+  indexRef.current = index;
+  petsRef.current = pets;
+  onActivateRef.current = onActivate;
+  onTapFrontRef.current = onTapFront;
+  onLongPressRef.current = onLongPress;
+
   function clearLongPressTimer() {
     if (longPressTimerRef.current) {
       clearTimeout(longPressTimerRef.current);
@@ -153,7 +186,7 @@ export default function FloofCardStack({
         longPressTimerRef.current = setTimeout(() => {
           if (!movedRef.current) {
             tapMedium();
-            onLongPress?.();
+            onLongPressRef.current?.();
           }
         }, LONG_PRESS_MS);
       },
@@ -178,7 +211,7 @@ export default function FloofCardStack({
         if (Math.abs(dx) < TAP_THRESHOLD && !movedRef.current) {
           Animated.spring(dragX, { toValue: 0, friction: 7, useNativeDriver: true }).start();
           tapLight();
-          onTapFront?.(petsRef.current[indexRef.current]);
+          onTapFrontRef.current?.(petsRef.current[indexRef.current]);
           return;
         }
 
@@ -197,7 +230,7 @@ export default function FloofCardStack({
             dragX.setValue(0);
             isCommittingRef.current = false;
             tapLight();
-            onActivate?.(petsRef.current[newIdx]?.id);
+            onActivateRef.current?.(petsRef.current[newIdx]?.id);
           });
           return;
         }
@@ -211,13 +244,6 @@ export default function FloofCardStack({
       },
     }),
   ).current;
-
-  // Keep the responder closures pointed at the latest index/pets
-  // without re-creating the responder on every render.
-  const indexRef = useRef(index);
-  const petsRef = useRef(pets);
-  indexRef.current = index;
-  petsRef.current = pets;
 
   const len = pets.length;
   if (len === 0) return null;
