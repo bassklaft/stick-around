@@ -1,8 +1,12 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useEffect, useCallback } from "react";
 import { View, Text, TextInput, FlatList, TouchableOpacity, Linking, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { toxicFoods } from "../data/toxicFoods";
 import { toxicPlants } from "../data/toxicPlants";
+import { Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { theme } from "../theme";
 
 const SEV_COLOR = {
@@ -15,16 +19,38 @@ export default function ToxicScreen() {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState("foods");
   const [query, setQuery] = useState("");
+  const [pet, setPet] = useState(null);
+  const [showAllSpecies, setShowAllSpecies] = useState(false);
 
+  // Active pet drives header + default species filter. Reference
+  // catalog so we still let the user toggle to show all species
+  // (cross-species households, hypothetical pets, general curiosity).
+  const { petId: activePetId } = useActivePet();
+  const load = useCallback(async () => { setPet(await Pet.get()); }, [activePetId]);
+  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const activeSpecies = pet?.species || null;
   const data = tab === "foods" ? toxicFoods : toxicPlants;
   const filtered = useMemo(() => {
-    if (!query.trim()) return data;
-    const q = query.toLowerCase();
-    return data.filter(d => d.name.toLowerCase().includes(q) || (d.note || "").toLowerCase().includes(q));
-  }, [data, query]);
+    let list = data;
+    if (!showAllSpecies && activeSpecies) {
+      list = list.filter(d => Array.isArray(d.species) && d.species.includes(activeSpecies));
+    }
+    if (query.trim()) {
+      const q = query.toLowerCase();
+      list = list.filter(d => d.name.toLowerCase().includes(q) || (d.note || "").toLowerCase().includes(q));
+    }
+    return list;
+  }, [data, query, showAllSpecies, activeSpecies]);
 
   return (
     <View style={{ flex: 1, backgroundColor: theme.bg, paddingTop: 8 }}>
+      {pet?.name ? (
+        <Text style={s.petHeader} numberOfLines={1}>
+          {pet.name}'s Toxic Foods & Plants
+        </Text>
+      ) : null}
       <View style={s.disclaimer}>
         <Text style={s.disclaimerHd}>⚠ NOT EXHAUSTIVE</Text>
         <Text style={s.disclaimerBody}>
@@ -49,6 +75,26 @@ export default function ToxicScreen() {
         placeholder={`Search ${tab}…`} placeholderTextColor={theme.muted}
         style={s.search}
       />
+      {activeSpecies ? (
+        <TouchableOpacity
+          onPress={() => setShowAllSpecies(v => !v)}
+          style={s.speciesToggle}
+          activeOpacity={0.7}
+          accessibilityRole="switch"
+          accessibilityState={{ checked: showAllSpecies }}
+        >
+          <MaterialCommunityIcons
+            name={showAllSpecies ? "checkbox-marked-circle-outline" : "checkbox-blank-circle-outline"}
+            size={18}
+            color={theme.accent}
+          />
+          <Text style={s.speciesToggleText}>
+            {showAllSpecies
+              ? `Showing all species — tap to filter to ${activeSpecies === "cat" ? "cat" : "dog"}-relevant only`
+              : `Showing ${activeSpecies === "cat" ? "cat" : "dog"}-relevant — tap to show all species`}
+          </Text>
+        </TouchableOpacity>
+      ) : null}
       <FlatList
         contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: insets.bottom + 60 }}
         data={filtered}
@@ -86,6 +132,9 @@ export default function ToxicScreen() {
 }
 
 const s = StyleSheet.create({
+  petHeader:    { fontSize: 22, fontWeight: "800", color: theme.fg, letterSpacing: -0.4, marginHorizontal: 20, marginBottom: 8, textTransform: "capitalize" },
+  speciesToggle:{ flexDirection: "row", alignItems: "center", gap: 8, marginHorizontal: 20, marginBottom: 10, paddingVertical: 8, paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.accent + "33", backgroundColor: theme.accentSoft },
+  speciesToggleText: { flex: 1, fontSize: 12, color: theme.fg, lineHeight: 17 },
   tab:        { paddingVertical: 10, paddingHorizontal: 16, borderRadius: 999, borderWidth: 1, borderColor: theme.line, backgroundColor: theme.card },
   tabActive:  { backgroundColor: theme.accent, borderColor: theme.accent },
   tabText:    { color: theme.fg, fontWeight: "600", fontSize: 14 },
