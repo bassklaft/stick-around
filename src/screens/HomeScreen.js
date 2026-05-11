@@ -416,10 +416,10 @@ export default function HomeScreen({ navigation, onShowFloofFan }) {
               );
             })()}
             <View style={{ flex: 1, marginLeft: 14 }}>
-              <Text style={s.pawgressTitle}>Today's Pawgress</Text>
+              <Text style={s.pawgressTitle}>{pet.name}'s Pawgress</Text>
               <Text style={s.pawgressSubtitle}>
                 {Pawgress.isAllFive(pawgressDay)
-                  ? `Today's 5 pads filled · ${pet.name}`
+                  ? `Today's 5 pads filled — sweet dreams`
                   : `${Pawgress.countCompleted(pawgressDay)} of 5 pads filled — complete today's checklist to fill the paw`}
               </Text>
             </View>
