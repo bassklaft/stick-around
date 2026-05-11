@@ -2,10 +2,19 @@
 // socialization). Each exercise has cadence + the "why". Keeps it
 // universal across breeds; breed-specific tips already live on the
 // Your Pets screen.
-import React, { useState } from "react";
+//
+// Content is dog-focused (recall, loose-leash walking, fetch, etc.).
+// For cat-active households we surface a banner up top acknowledging
+// the catalog leans dog and pointing toward the cat-enrichment work
+// that's queued for a future content pass — but still display the
+// exercises so single-cat-household users don't see an empty screen.
+import React, { useState, useEffect, useCallback } from "react";
 import { View, Text, ScrollView, TouchableOpacity, StyleSheet } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { useFocusEffect } from "@react-navigation/native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { Pet } from "../lib/storage";
+import { useActivePet } from "../lib/activePet";
 import { theme } from "../theme";
 
 const CATEGORIES = [
@@ -140,10 +149,35 @@ const EXERCISES = [
 export default function TrainingScreen() {
   const insets = useSafeAreaInsets();
   const [filter, setFilter] = useState("all");
+  const [pet, setPet] = useState(null);
   const list = filter === "all" ? EXERCISES : EXERCISES.filter(e => e.cat === filter);
+
+  // Active-pet header + cat-banner driver. Re-runs on every active-pet
+  // switch path so the header stays accurate.
+  const { petId: activePetId } = useActivePet();
+  const load = useCallback(async () => { setPet(await Pet.get()); }, [activePetId]);
+  useEffect(() => { load(); }, [load]);
+  useFocusEffect(useCallback(() => { load(); }, [load]));
+
+  const isCat = pet?.species === "cat";
 
   return (
     <ScrollView style={{ backgroundColor: theme.bg }} contentContainerStyle={{ paddingHorizontal: 20, paddingTop: 12, paddingBottom: insets.bottom + 60 }}>
+      {pet?.name ? (
+        <Text style={s.petHeader} numberOfLines={1}>
+          {pet.name}'s Training Exercises
+        </Text>
+      ) : null}
+
+      {isCat ? (
+        <View style={s.catBanner}>
+          <MaterialCommunityIcons name="cat" size={18} color={theme.accent} />
+          <Text style={s.catBannerText}>
+            These exercises are written for dogs. Cat-specific enrichment ideas (clicker training, puzzle feeders, structured play) are queued for a future update — for now, the principles (mental work, novelty, handling drills) translate.
+          </Text>
+        </View>
+      ) : null}
+
       <View style={s.intro}>
         <Text style={s.introBody}>
           A balanced dog needs all four: behavioral training (house manners), physical exercise (body), mental enrichment (brain), and socialization (confidence with novelty). Doing only one is what creates anxious or reactive dogs.
@@ -194,6 +228,9 @@ export default function TrainingScreen() {
 }
 
 const s = StyleSheet.create({
+  petHeader:    { fontSize: 22, fontWeight: "800", color: theme.fg, letterSpacing: -0.4, marginBottom: 10, textTransform: "capitalize" },
+  catBanner:    { flexDirection: "row", alignItems: "flex-start", gap: 10, padding: 12, marginBottom: 10, borderRadius: 10, borderWidth: 1, borderColor: theme.accent + "55", backgroundColor: theme.accentSoft },
+  catBannerText:{ flex: 1, fontSize: 12, color: theme.fg, lineHeight: 17 },
   intro:        { padding: 14, backgroundColor: theme.accentSoft, borderRadius: 12, marginBottom: 12 },
   introBody:    { fontSize: 13, color: theme.fg, lineHeight: 19 },
   filter:       { flexDirection: "row", alignItems: "center", paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1, borderColor: theme.line, backgroundColor: theme.card, marginRight: 8 },
