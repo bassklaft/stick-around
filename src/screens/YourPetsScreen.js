@@ -563,7 +563,7 @@ export default function YourPetsScreen() {
                         <Text style={s.cardHeaderEmoji}>💛</Text>
                         <View style={{ flex: 1 }}>
                           <Text style={s.cardHeaderTitle}>Health Considerations</Text>
-                          <Text style={s.cardHeaderSubtitle} numberOfLines={1}>
+                          <Text style={s.cardHeaderSubtitle} numberOfLines={2}>
                             {breed.health.length} to know about for {breedDisplayName(breedKey)}
                           </Text>
                         </View>
@@ -614,7 +614,7 @@ export default function YourPetsScreen() {
                     <Text style={s.cardHeaderEmoji}>💡</Text>
                     <View style={{ flex: 1 }}>
                       <Text style={s.cardHeaderTitle}>Insider Tips</Text>
-                      <Text style={s.cardHeaderSubtitle} numberOfLines={1}>
+                      <Text style={s.cardHeaderSubtitle} numberOfLines={2}>
                         {breed.tips.length} {breed.tips.length === 1 ? "thing" : "things"} only {breedAdjective(breedKey)} owners know
                       </Text>
                     </View>
